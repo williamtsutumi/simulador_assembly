@@ -86,10 +86,38 @@ int main(int argc, char *argv[])
     Functional_unit mul;
     Functional_unit integer;
  
+    int memory_size=32;
+
     int memory[32];
+
     FILE *arq = fopen("input.sb", "rb");
 
-    read_config(arq);
+
+    FILE* output = stdout;
+
+    for(int i = 1; i < argc; i+=2){
+
+      if(strcmp(argv[i], "-p") == 0){
+        if((arq = fopen(argv[i+1], "r")) == NULL){
+          printf("Falha na leitura do arquivo %s.\n", argv[i+1]);
+        }
+        read_config(arq);
+        printf("Arquivo %s lido com sucesso.\n", argv[i+1]);
+      }
+      
+      else if(strcmp(argv[i], "-m") == 0){
+        // TODO
+        // validar que argv[i+1] é uma inteiro
+        memory_size = atoi(argv[i+1]);
+      }
+
+      else if(strcmp(argv[i], "-o") == 0){
+        output = fopen(argv[i+1], "w");
+      }
+    }
+
+    fprintf(output, "se n tiver -o vai na saída padrão, senao vai no arquivo...");
 
     return 0;
+
 }
