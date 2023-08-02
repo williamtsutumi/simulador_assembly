@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 // int add(int addres1, int addres2)
 // {
 //     return memory[addres1] + memory[addres2];
@@ -36,21 +37,72 @@ void create_add_uf()
 
 }
 
+const int MAX_NUM_CONFIG_TOKENS = 1000;
+const int MAX_CONFIG_TOKEN_LENGTH = 50;
+
+void extract_config_text(FILE *arq, char* config_text){
+
+  int char_idx=0;
+  char ch;
+  bool inside_comment = false;
+
+  while((ch = fgetc(arq)) != EOF){
+
+    if(inside_comment){
+
+      if(ch == '*' && fgetc(arq) == '/'){
+        inside_comment = false;
+        break;
+      }
+
+      else
+        config_text[char_idx++] = putchar(ch); 
+    }
+    else{
+      if (ch == '/' && fgetc(arq) == '*')
+        inside_comment = true;
+    }
+  }
+  config_text[char_idx] = '\0';
+  printf("%s\n", config_text);
+  
+}
+
+void extract_tokens(char* text, const char* delimiters, char** tokens){
+
+  int token_idx=0;
+  char *token;
+
+  token = strtok(text, delimiters);
+
+
+  while(token != NULL){
+    //printf("%s\n", token);
+    tokens[token_idx++] = token;
+    token = strtok(NULL, delimiters);
+  }
+
+}
+
+void interpret_config(char** tokens){
+
+}
+
 void read_config(FILE *arq)
 {
-    char buffer[1000];
+    char config_text[MAX_NUM_CONFIG_TOKENS*MAX_CONFIG_TOKEN_LENGTH];
+    extract_config_text(arq, config_text);
 
-    fread(buffer, 2, 1, arq);
-    if (strcmp(buffer, "/*") != 0)
-        return;
+    char* config_tokens[MAX_NUM_CONFIG_TOKENS];
+    const char* delimiters = ": \t\n";
+    extract_tokens(config_text, delimiters, config_tokens);
 
-    fseek(arq, 2, SEEK_CUR);
-    fread(buffer, 3, 1, arq);
-    if (strcmp(buffer, "UF:") != 0)
-        return;
+    interpret_config(config_tokens);
+}
 
-    printf("A\n");
-    read_UF(arq);
+void read_instructions(FILE *arq)
+{
+  
 }
 
 int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
@@ -102,6 +154,7 @@ int main(int argc, char *argv[])
           printf("Falha na leitura do arquivo %s.\n", argv[i+1]);
         }
         read_config(arq);
+        read_instructions(arq);
         printf("Arquivo %s lido com sucesso.\n", argv[i+1]);
       }
       
@@ -116,7 +169,7 @@ int main(int argc, char *argv[])
       }
     }
 
-    fprintf(output, "se n tiver -o vai na saída padrão, senao vai no arquivo...");
+    fprintf(output, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
 
     return 0;
 
