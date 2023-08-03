@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <cassert>
 // int add(int addres1, int addres2)
 // {
 //     return memory[addres1] + memory[addres2];
@@ -41,6 +42,7 @@ const char* JMP = "jmp";
 const char* MOV = "sub";
 const char* UF_SYMBOL = "UF";
 const char* INST_SYMBOL = "INST";
+const char* code_file_name;
 
 
 
@@ -50,6 +52,7 @@ void fpeek(FILE* arq, char* peekBuffer, int peekSize){
   int i=0;
   fseek(arq, -1, SEEK_CUR);
   for(; i < peekSize; i++){
+
     if((character = fgetc(arq)) != EOF){
       peekBuffer[i] = character;
     }
@@ -115,6 +118,39 @@ void skip(FILE *arq){
 
 }
 
+void die(FILE* arq, char* error_msg){
+  int err_pos = ftell(arq);
+  int pos = 0;
+  char c;
+  char line_buffer[200];
+
+  int line_number = 0, row_number = 0;
+  fseek(arq, 0, SEEK_SET);
+
+  while((c = fgetc(arq)) != EOF){
+
+    if(c == '\n' || feof(arq)){
+      if(pos >= err_pos){
+        line_buffer[row_number] = '\0';
+        fprintf(stderr, "%s:%d:%d: %s\n", code_file_name, line_number+1, row_number+1, error_msg);
+        fprintf(stderr, " %d |      %s\n", line_number+1, line_buffer);
+        for(int i = 0; i < row_number-1; i++){
+          line_buffer[i] = ' ';
+        }
+        line_buffer[row_number-1] = '^';
+        line_buffer[row_number] = '\0';
+        fprintf(stderr, "          %s\n", line_buffer);
+        exit(EXIT_FAILURE);
+      }
+      line_number++, row_number = 0;
+    }
+    else{
+      line_buffer[row_number++] = c;
+    }
+    pos++;
+  }
+}
+
 // lê o arquivo de configurações, falta terminar
 void read_config(FILE *arq)
 {
@@ -125,16 +161,34 @@ void read_config(FILE *arq)
   bool reading_uf_info = false;
   bool reading_inst_info = false;
 
+  fpeek(arq, peek_buffer, 2);
+
+
+  if(strncmp(peek_buffer, "/*", 2) != 0){
+    die(arq, "Expected '/*'");
+  }
+
+  fseek(arq, 2, SEEK_CUR);
+
   while((c = fgetc(arq)) != EOF){
     fpeek(arq, peek_buffer, 10);
 
     if(strncmp(UF_SYMBOL, peek_buffer, strlen(UF_SYMBOL)) == 0){
+      fseek(arq, strlen(UF_SYMBOL), SEEK_CUR);
+      putchar(c);
+
+      skip(arq);
+
       reading_uf_info = true;
       reading_inst_info = false;
     }
     if(strncmp(INST_SYMBOL, peek_buffer, strlen(INST_SYMBOL)) == 0){
       reading_uf_info = false;
       reading_inst_info = true;
+    }
+
+    else{
+      die(arq, "No valid symbol found");
     }
   }
 
@@ -271,6 +325,9 @@ int read_instruction(int opcode, FILE* arq){
       return read_instructionJ(opcode, 1);
   }
 
+  assert(false);
+  return -1;
+
 }
 
 
@@ -293,7 +350,6 @@ void read_data_section(FILE *arq){
 void parse_assembly(FILE *arq){
   skip(arq);
   read_config(arq);
-  skip(arq);
 
   char c;
 
@@ -323,6 +379,8 @@ void parse_assembly(FILE *arq){
 
 int main(int argc, char *argv[])
 {
+    code_file_name = argv[0];
+
     Functional_unit add;
     Functional_unit mul;
     Functional_unit integer;
@@ -358,6 +416,7 @@ int main(int argc, char *argv[])
       printf("Falha na leitura do arquivo %s.\n", file_name);
     }
     else{
+      puts("lendo arquivo assembly...");
       parse_assembly(arq);
       printf("Arquivo %s lido com sucesso.\n", file_name);
     }
