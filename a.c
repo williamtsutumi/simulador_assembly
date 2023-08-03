@@ -3,14 +3,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <cassert>
+#include <assert.h>
 // int add(int addres1, int addres2)
 // {
 //     return memory[addres1] + memory[addres2];
 // }
 
-int* memory;
+#define int unsigned
 
+int* memory;
 int instruction_count = 0;
 
 typedef enum UF_type
@@ -64,6 +65,7 @@ void fpeek(FILE* arq, char* peekBuffer, int peekSize){
   fseek(arq, -i+1, SEEK_CUR);
 }
 
+
 int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
 {
     int op = opcode << 26;
@@ -72,7 +74,7 @@ int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
     int d = rd << 11;
     int e = extra << 0;
 
-    return 0 | op | s | t | d | e;
+    return op | s | t | d | e;
 }
 
 int read_instructionI(int opcode, int rs, int rt, int imm)
@@ -175,7 +177,6 @@ void read_config(FILE *arq)
 
     if(strncmp(UF_SYMBOL, peek_buffer, strlen(UF_SYMBOL)) == 0){
       fseek(arq, strlen(UF_SYMBOL), SEEK_CUR);
-      putchar(c);
 
       skip(arq);
 
@@ -187,8 +188,12 @@ void read_config(FILE *arq)
       reading_inst_info = true;
     }
 
+    if(strncmp("*/", peek_buffer, 2)){
+      break;
+    }
     else{
-      die(arq, "No valid symbol found");
+      continue;
+      //die(arq, "No valid symbol found");
     }
   }
 
@@ -202,26 +207,149 @@ void decapitalize(char *str){
   }
 }
 
+int get_opcode(char* str){
+
+  puts(str);
+  if(strncmp("addi", str, 4) == 0)
+    return 1;
+  if(strncmp("subi", str, 4) == 0)
+    return 3;
+  if(strncmp("exit", str, 4) == 0)
+    return 16;
+  if(strncmp("add", str, 3) == 0)
+    return 0;
+  if(strncmp("sub", str, 3) == 0)
+    return 2;
+  if(strncmp("mul", str, 3) == 0)
+    return 4;
+  if(strncmp("div", str, 3) == 0)
+    return 5;
+  if(strncmp("and", str, 3) == 0)
+    return 6;
+  if(strncmp("or", str, 2) == 0)
+    return 7;
+  if(strncmp("not", str, 3) == 0)
+    return 8;
+  if(strncmp("blt", str, 3) == 0)
+    return 9;
+  if(strncmp("bgt", str, 3) == 0)
+    return 10;
+  if(strncmp("beq", str, 3) == 0)
+    return 11;
+  if(strncmp("bne", str, 3) == 0)
+    return 12;
+  if(strncmp("j", str, 1) == 0)
+    return 13;
+  if(strncmp("lw", str, 2) == 0)
+    return 14;
+  if(strncmp("sw", str, 2) == 0)
+    return 15;
+  else
+    return -1;
+  
+
+}
+bool validate_number(char *c){
+  return true;
+}
+
 // verifica se a partir de SEEK_CUR, existe uma instrução
 // por exemplo, "add rs,rs,rt" e retorna apenas seu opcode.
 // se não existe nenhum, retorna -1
 int read_instruction_name(FILE* arq){
 
-  // pula espaço em branco no fim da execução
+  char buffer[10];
+  char c;
+  int cnt=0;
+
+  while((c = fgetc(arq)) != EOF){
+    if(c == ' '){
+      break;
+    }
+    buffer[cnt++] = c;
+  }
+  buffer[cnt] = '\0';
+
+  int opcode = get_opcode(buffer);
+  printf("%d\n", opcode);
+
   skip(arq);
-  return 0;
+  return opcode;
+}
+
+int read_register_id(FILE *arq){
+  char reg_start = fgetc(arq);
+
+  if(reg_start != 'r'){
+    die(arq, "Unexpected symbol");
+
+  }
+
+  char buffer[10];
+  char c;
+  int cnt=0;
+
+  while((c = fgetc(arq)) != EOF){
+    if(c == ' ' || c == ','){
+      if(c == ',')
+        fseek(arq, -1, SEEK_CUR);
+      break;
+    }
+    buffer[cnt++] = c;
+  }
+  buffer[cnt] = '\0';
+
+  if(!validate_number(buffer)){
+    die(arq, "invalid register id");
+  }
+  return atoi(buffer);
+
 }
 
 // retorna um inteiro que representa um operando do tipo type
 // a partir de SEEK_CUR, se não exister nenhum, retorna -1;
-int read_operand(FILE* arq, OPERAND_TYPE type){
+int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
+  
+  puts("here");
+
+
+  if(type == REGISTER){
+    int register_id = read_register_id(arq);
+    skip(arq);
+    if(expect_comma){
+      char comma = fgetc(arq);
+      if(comma != ','){
+        die(arq, "Expected ','");
+      }
+    }
+    skip(arq);
+
+    return register_id;
+  }
+  else if(type == IMM){
+    return -1;
+  }
+  else if(type == MEMORY){
+    return -1;
+  }
 
   // pula espaço em branco no fim da execução
   skip(arq);
+
   return 0;
 }
 
 
+int dec_to_bin(int num){
+
+
+
+  for(int i = 0; i < 32; i++){
+    printf("%d", (num&(1 << (31-i)))!=0);
+  }
+  putchar('\n');
+
+}
 
 int read_instruction(int opcode, FILE* arq){
 
@@ -231,94 +359,105 @@ int read_instruction(int opcode, FILE* arq){
 
     // tratar erros
     case 0:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, false);
+
+      printf("%d %d %d\n", rd, rs, rt);
+      printf("%d\n", read_instructionR(opcode, rd, rs, rt, 0));
+      die(arq, "Morri");
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 1:
-      rt = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rt = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 2:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 3:
-      rt = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rt = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 4:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, false);
+
+      printf("%d %d %d\n", rd, rs, rt);
+      printf("%d\n", read_instructionR(opcode, rd, rs, rt, 0));
+
+      dec_to_bin(read_instructionR(opcode, rd, rs, rt, 0));
+      die(arq, "morri");
+
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 5:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 6:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 7:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 8:
-      rd = read_operand(arq, REGISTER);
-      rs = read_operand(arq, REGISTER);
+      rd = read_operand(arq, REGISTER, true);
+      rs = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 9:
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 10:
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 11:
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 12:
-      rs = read_operand(arq, REGISTER);
-      rt = read_operand(arq, REGISTER);
-      imm = read_operand(arq, IMM);
+      rs = read_operand(arq, REGISTER, true);
+      rt = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 13:
-      imm = read_operand(arq, IMM);
+      imm = read_operand(arq, IMM, false);
       return read_instructionJ(opcode, imm);
 
     case 14:
-      rt = read_operand(arq, REGISTER);
-      imm = read_operand(arq, MEMORY);
+      rt = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, MEMORY, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 15:
-      rt = read_operand(arq, REGISTER);
-      imm = read_operand(arq, MEMORY);
+      rt = read_operand(arq, REGISTER, true);
+      imm = read_operand(arq, MEMORY, false);
       return read_instructionI(opcode, rs, rt, imm);
 
     case 16:
@@ -349,17 +488,17 @@ void read_data_section(FILE *arq){
 
 void parse_assembly(FILE *arq){
   skip(arq);
-  read_config(arq);
+  //read_config(arq);
 
-  char c;
+  char _;
 
-  while((c = fgetc(arq)) != EOF){
+  do{
 
     int opcode=-1, section=-1;
 
     if((opcode = read_instruction_name(arq)) != -1){
+      printf("READ INSTRUCTION %d\n", opcode);
       int instruction = read_instruction(opcode, arq);
-      // 
     }
 
     else if((section = find_section(arq)) != -1){
@@ -370,7 +509,7 @@ void parse_assembly(FILE *arq){
         continue;
       }
     }
-  }
+  }while((_ = fgetc(arq)) != EOF);
 
 
 
