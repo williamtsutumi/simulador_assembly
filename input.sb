@@ -7,7 +7,4 @@ INST:
 	add:2
 	mul:10*/
 
-.data
-
-.text
- addr eax ebx ecx
+add eax ebx ecx

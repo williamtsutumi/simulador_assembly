@@ -8,6 +8,10 @@
 //     return memory[addres1] + memory[addres2];
 // }
 
+int* memory;
+
+int instruction_count = 0;
+
 typedef enum UF_type
 {
     add,
@@ -22,87 +26,39 @@ typedef struct Functional_unit
 
 } Functional_unit;
 
-void read_UF(FILE *arq)
+typedef enum OPERAND_TYPE
 {
-    char buffer[1000];
-    while (strcmp(fread(buffer, 1, 1, arq), "INST:") != 0)
-    {
-        if (strcmp(buffer, "add:") == 0)
-            create_add_uf();
-    }
-}
+    REGISTER,
+    IMM,
+    MEMORY,
+} OPERAND_TYPE;
 
-void create_add_uf()
-{
+const char* MUL = "mul";
+const char* ADD = "add";
+const char* DIV = "div";
+const char* SUB = "sub";
+const char* JMP = "jmp";
+const char* MOV = "sub";
+const char* UF_SYMBOL = "UF";
+const char* INST_SYMBOL = "INST";
 
-}
 
-const int MAX_NUM_CONFIG_TOKENS = 1000;
-const int MAX_CONFIG_TOKEN_LENGTH = 50;
 
-void extract_config_text(FILE *arq, char* config_text){
+void fpeek(FILE* arq, char* peekBuffer, int peekSize){
 
-  int char_idx=0;
-  char ch;
-  bool inside_comment = false;
-
-  while((ch = fgetc(arq)) != EOF){
-
-    if(inside_comment){
-
-      if(ch == '*' && fgetc(arq) == '/'){
-        inside_comment = false;
-        break;
-      }
-
-      else
-        config_text[char_idx++] = putchar(ch); 
+  char character;
+  int i=0;
+  fseek(arq, -1, SEEK_CUR);
+  for(; i < peekSize; i++){
+    if((character = fgetc(arq)) != EOF){
+      peekBuffer[i] = character;
     }
     else{
-      if (ch == '/' && fgetc(arq) == '*')
-        inside_comment = true;
+      break; 
     }
   }
-  config_text[char_idx] = '\0';
-  printf("%s\n", config_text);
-  
-}
-
-void extract_tokens(char* text, const char* delimiters, char** tokens){
-
-  int token_idx=0;
-  char *token;
-
-  token = strtok(text, delimiters);
-
-
-  while(token != NULL){
-    //printf("%s\n", token);
-    tokens[token_idx++] = token;
-    token = strtok(NULL, delimiters);
-  }
-
-}
-
-void interpret_config(char** tokens){
-
-}
-
-void read_config(FILE *arq)
-{
-    char config_text[MAX_NUM_CONFIG_TOKENS*MAX_CONFIG_TOKEN_LENGTH];
-    extract_config_text(arq, config_text);
-
-    char* config_tokens[MAX_NUM_CONFIG_TOKENS];
-    const char* delimiters = ": \t\n";
-    extract_tokens(config_text, delimiters, config_tokens);
-
-    interpret_config(config_tokens);
-}
-
-void read_instructions(FILE *arq)
-{
-  
+  peekBuffer[i] = '\0';
+  fseek(arq, -i+1, SEEK_CUR);
 }
 
 int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
@@ -132,6 +88,239 @@ int read_instructionJ(int opcode, int address)
     return op | address;
 }
 
+// le espaços brancos, tabs, comentários, etc até que encontre alguma 
+// coisa interessante;
+void skip(FILE *arq){
+  char c;
+
+  bool on_single_line_comment = false;
+
+  while((c = fgetc(arq)) != EOF){
+
+    if(c == '#'){
+      on_single_line_comment = true;
+    }
+    else if(on_single_line_comment && c == '\n'){
+      on_single_line_comment = false;
+    }
+    else if(on_single_line_comment || c == ' ' 
+        || c == '\t' || c == '\n'){
+      continue;
+    }
+    else{
+      break;
+    }
+  }
+  fseek(arq, -1, SEEK_CUR);
+
+}
+
+// lê o arquivo de configurações, falta terminar
+void read_config(FILE *arq)
+{
+  
+  char c;
+  char peek_buffer[20];
+
+  bool reading_uf_info = false;
+  bool reading_inst_info = false;
+
+  while((c = fgetc(arq)) != EOF){
+    fpeek(arq, peek_buffer, 10);
+
+    if(strncmp(UF_SYMBOL, peek_buffer, strlen(UF_SYMBOL)) == 0){
+      reading_uf_info = true;
+      reading_inst_info = false;
+    }
+    if(strncmp(INST_SYMBOL, peek_buffer, strlen(INST_SYMBOL)) == 0){
+      reading_uf_info = false;
+      reading_inst_info = true;
+    }
+  }
+
+  skip(arq);
+}
+
+void decapitalize(char *str){
+  int len = strlen(str);
+  for(int i = 0; i < len; i++){
+    if('A' <= str[i] && str[i] <= 'Z') str[i] -= 'A';
+  }
+}
+
+// verifica se a partir de SEEK_CUR, existe uma instrução
+// por exemplo, "add rs,rs,rt" e retorna apenas seu opcode.
+// se não existe nenhum, retorna -1
+int read_instruction_name(FILE* arq){
+
+  // pula espaço em branco no fim da execução
+  skip(arq);
+  return 0;
+}
+
+// retorna um inteiro que representa um operando do tipo type
+// a partir de SEEK_CUR, se não exister nenhum, retorna -1;
+int read_operand(FILE* arq, OPERAND_TYPE type){
+
+  // pula espaço em branco no fim da execução
+  skip(arq);
+  return 0;
+}
+
+
+
+int read_instruction(int opcode, FILE* arq){
+
+  int rd=0, rs=0, rt=0, imm=0, extra=0;
+
+  switch(opcode){
+
+    // tratar erros
+    case 0:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 1:
+      rt = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 2:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 3:
+      rt = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 4:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 5:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 6:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 7:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 8:
+      rd = read_operand(arq, REGISTER);
+      rs = read_operand(arq, REGISTER);
+      return read_instructionR(opcode, rs, rs, rt, 0);
+
+    case 9:
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 10:
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 11:
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 12:
+      rs = read_operand(arq, REGISTER);
+      rt = read_operand(arq, REGISTER);
+      imm = read_operand(arq, IMM);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 13:
+      imm = read_operand(arq, IMM);
+      return read_instructionJ(opcode, imm);
+
+    case 14:
+      rt = read_operand(arq, REGISTER);
+      imm = read_operand(arq, MEMORY);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 15:
+      rt = read_operand(arq, REGISTER);
+      imm = read_operand(arq, MEMORY);
+      return read_instructionI(opcode, rs, rt, imm);
+
+    case 16:
+      return read_instructionJ(opcode, 1);
+  }
+
+}
+
+
+// verifica se na posição SEEK_CUR do arq, existe uma string do tipo 
+// .secao, onde secao é o nome da seção, se o nome é .data, retorna 0,
+// se for .text, retorna 1, se não tiver seção, retorna -1;
+// 
+int find_section(FILE *arq){
+
+  skip(arq);
+  return -1;
+}
+
+// Lê as informações da seção .data, que está no SEEK_CUR
+void read_data_section(FILE *arq){
+
+  skip(arq);
+}
+
+void parse_assembly(FILE *arq){
+  skip(arq);
+  read_config(arq);
+  skip(arq);
+
+  char c;
+
+  while((c = fgetc(arq)) != EOF){
+
+    int opcode=-1, section=-1;
+
+    if((opcode = read_instruction_name(arq)) != -1){
+      int instruction = read_instruction(opcode, arq);
+      // 
+    }
+
+    else if((section = find_section(arq)) != -1){
+      if(section == 0){
+        read_data_section(arq);
+      }
+      else if(section == 1){
+        continue;
+      }
+    }
+  }
+
+
+
+}
+
+
 int main(int argc, char *argv[])
 {
     Functional_unit add;
@@ -140,36 +329,41 @@ int main(int argc, char *argv[])
  
     int memory_size=32;
 
-    int memory[32];
 
-    FILE *arq = fopen("input.sb", "rb");
+    FILE* output_stream = stdout;
 
-
-    FILE* output = stdout;
+    char* file_name = "input.sb";
 
     for(int i = 1; i < argc; i+=2){
 
       if(strcmp(argv[i], "-p") == 0){
-        if((arq = fopen(argv[i+1], "r")) == NULL){
-          printf("Falha na leitura do arquivo %s.\n", argv[i+1]);
-        }
-        read_config(arq);
-        read_instructions(arq);
-        printf("Arquivo %s lido com sucesso.\n", argv[i+1]);
+        file_name = argv[i+1];
       }
       
       else if(strcmp(argv[i], "-m") == 0){
         // TODO
         // validar que argv[i+1] é uma inteiro
         memory_size = atoi(argv[i+1]);
+        memory = (int*)(malloc(sizeof(int)*memory_size));
       }
 
       else if(strcmp(argv[i], "-o") == 0){
-        output = fopen(argv[i+1], "w");
+        output_stream = fopen(argv[i+1], "w");
       }
     }
 
-    fprintf(output, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
+    FILE* arq;
+
+    if((arq = fopen(file_name, "r")) == NULL){
+      printf("Falha na leitura do arquivo %s.\n", file_name);
+    }
+    else{
+      parse_assembly(arq);
+      printf("Arquivo %s lido com sucesso.\n", file_name);
+    }
+
+
+    fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
 
     return 0;
 
