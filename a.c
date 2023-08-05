@@ -39,21 +39,21 @@ const char* UF_SYMBOL = "UF";
 const char* INST_SYMBOL = "INST";
 const char* code_file_name;
 
-char *trim(char *str)
-{
-  char *end;
-
-  while(isspace((unsigned char)*str)) str++;
-
-  if(*str == 0)
-    return str;
-
-  end = str + strlen(str) - 1;
-  while(end > str && isspace((unsigned char)*end)) end--;
-
-  end[1] = '\0';
-
-  return str;
+void print_str_int(char *string){
+  printf("*");
+  for(int i=0; i<strlen(string)-1; i++){
+    printf("%d ", string[i]);
+  }
+  printf("%d", string[strlen(string)-1]);
+  printf("*\n");
+}
+void print_str_char(char *string){
+  printf("*");
+  for(int i=0; i<strlen(string)-1; i++){
+    printf("%c ", string[i]);
+  }
+  printf("%c", string[strlen(string)-1]);
+  printf("*\n");
 }
 
 void fpeek(FILE* arq, char* peekBuffer, int peekSize){
@@ -156,6 +156,45 @@ void die(FILE* arq, char* error_msg){
   }
 }
 
+char *trim(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(str == 0)  // All spaces?
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+
+  return str;
+}
+
+void read_uf(FILE *arq){
+  char peek_buffer[10];
+
+  fpeek(arq, peek_buffer, 10);
+  strcpy(peek_buffer, trim(peek_buffer));
+  print_str_int(peek_buffer);
+  print_str_char(peek_buffer);
+
+  if (strncmp("add", peek_buffer, 3) == 0){
+    printf("add encontrado\n");
+  }
+  else if (strncmp("mul", peek_buffer, 3) == 0){
+    printf("mul encontrado\n");
+  }
+  else if (strncmp("integer", peek_buffer, 7) == 0){
+    printf("integer encontrado\n");
+  }
+}
+
 // lê o arquivo de configurações, falta terminar
 void read_config(FILE *arq)
 {
@@ -169,23 +208,21 @@ void read_config(FILE *arq)
   if(strncmp(peek_buffer, "/*", 2) != 0){
     die(arq, "Expected '/*'");
   }
+  printf("/* encontrado\n");
 
   fseek(arq, 2, SEEK_CUR);
 
   while((c = fgetc(arq)) != EOF){
     fpeek(arq, peek_buffer, 10);
-    printf("*");
-    // *peek_buffer = trim(peek_buffer);
-    printf("%s\n", peek_buffer);
-    printf("*");
+    strcpy(peek_buffer, trim(peek_buffer));
     if(strncmp(UF_SYMBOL, peek_buffer, strlen(UF_SYMBOL)) == 0){
       printf("UF encontrado\n");
-      fseek(arq, strlen(UF_SYMBOL), SEEK_CUR);
-
+      // TODO
+      // verificar espacos: UF     :   \n
+      fseek(arq, strlen(UF_SYMBOL)+2, SEEK_CUR);
       skip(arq);
-
-      reading_uf_info = true;
-      reading_inst_info = false;
+      
+      read_uf(arq);
     }
     if(strncmp(INST_SYMBOL, peek_buffer, strlen(INST_SYMBOL)) == 0){
       printf("INST encontrado\n");
@@ -194,6 +231,7 @@ void read_config(FILE *arq)
     }
 
     if(strncmp("*/", peek_buffer, 2)){
+      printf("*/ encontrado\n");
       break;
     }
     else{
@@ -538,13 +576,7 @@ bool read_args(int argc, char *argv[], int *memory_size, char *input_file_name, 
   }
 
   *input_file = fopen(input_file_name, "r");
-  if (*input_file != NULL){
-    printf("Lendo arquivo %s ...\n", input_file_name);
-    parse_assembly(*input_file);
-  }
-  else{
-    printf("Falha na leitura do arquivo %s.\n", input_file_name);
-  }
+  return *input_file != NULL;
 }
 
 int main(int argc, char *argv[])
@@ -558,8 +590,14 @@ int main(int argc, char *argv[])
   FILE* output_stream = stdout;
   char* input_file_name = "input.txt";
   FILE* input_file;
-  read_args(argc, argv, &memory_size, input_file_name, &input_file, &output_stream);
   
+  if (read_args(argc, argv, &memory_size, input_file_name, &input_file, &output_stream)){
+    printf("Lendo arquivo %s ...\n", input_file_name);
+    parse_assembly(input_file);
+  }
+  else{
+    printf("Falha na leitura do arquivo %s.\n", input_file_name);
+  }
 
   fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
 
