@@ -520,6 +520,33 @@ void parse_assembly(FILE *arq){
 
 }
 
+bool read_args(int argc, char *argv[], int *memory_size, char *input_file_name, FILE **input_file, FILE **output_stream){
+  for(int i = 1; i < argc; i+=2){
+
+    if(strcmp(argv[i], "-p") == 0){
+      input_file_name = argv[i+1];
+    }
+    else if(strcmp(argv[i], "-m") == 0){
+      // TODO
+      // validar que argv[i+1] é uma inteiro
+      *memory_size = atoi(argv[i+1]);
+      memory = (int*)(malloc(sizeof(int)*(*memory_size)));
+    }
+    else if(strcmp(argv[i], "-o") == 0){
+      *output_stream = fopen(argv[i+1], "w");
+    }
+  }
+
+  *input_file = fopen(input_file_name, "r");
+  if (*input_file != NULL){
+    printf("Lendo arquivo %s ...\n", input_file_name);
+    parse_assembly(*input_file);
+  }
+  else{
+    printf("Falha na leitura do arquivo %s.\n", input_file_name);
+  }
+}
+
 int main(int argc, char *argv[])
 {
   code_file_name = argv[0];
@@ -531,31 +558,8 @@ int main(int argc, char *argv[])
   FILE* output_stream = stdout;
   char* input_file_name = "input.txt";
   FILE* input_file;
-
-  for(int i = 1; i < argc; i+=2){
-
-    if(strcmp(argv[i], "-p") == 0){
-      input_file_name = argv[i+1];
-    }
-    else if(strcmp(argv[i], "-m") == 0){
-      // TODO
-      // validar que argv[i+1] é uma inteiro
-      memory_size = atoi(argv[i+1]);
-      memory = (int*)(malloc(sizeof(int)*memory_size));
-    }
-    else if(strcmp(argv[i], "-o") == 0){
-      output_stream = fopen(argv[i+1], "w");
-    }
-  }
-
-  input_file = fopen(input_file_name, "r");
-  if (input_file != NULL){
-    printf("Lendo arquivo %s ...\n", input_file_name);
-    parse_assembly(input_file);
-  }
-  else{
-    printf("Falha na leitura do arquivo %s.\n", input_file_name);
-  }
+  read_args(argc, argv, &memory_size, input_file_name, &input_file, &output_stream);
+  
 
   fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
 
