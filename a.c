@@ -5,8 +5,18 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#define MUL "mul"
+#define ADD "add"
+#define DIV "div"
+#define SUB "sub"
+#define JMP "jmp"
+#define MOV "sub"
+#define UF_SYMBOL "UF"
+#define INST_SYMBOL "INST"
+
 int* memory;
 int instruction_count = 0;
+const char* code_file_name;
 
 typedef enum UF_type
 {
@@ -29,31 +39,21 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
-const char* MUL = "mul";
-const char* ADD = "add";
-const char* DIV = "div";
-const char* SUB = "sub";
-const char* JMP = "jmp";
-const char* MOV = "sub";
-const char* UF_SYMBOL = "UF";
-const char* INST_SYMBOL = "INST";
-const char* code_file_name;
-
 void print_str_int(char *string){
-  printf("*");
+  printf("String:");
   for(int i=0; i<strlen(string)-1; i++){
     printf("%d ", string[i]);
   }
   printf("%d", string[strlen(string)-1]);
-  printf("*\n");
+  printf(":Fim da string\n");
 }
 void print_str_char(char *string){
-  printf("*");
+  printf("String:");
   for(int i=0; i<strlen(string)-1; i++){
-    printf("%c ", string[i]);
+    printf("%c", string[i]);
   }
   printf("%c", string[strlen(string)-1]);
-  printf("*\n");
+  printf(":Fim da string\n");
 }
 
 void fpeek(FILE* arq, char* peekBuffer, int peekSize){
@@ -176,71 +176,91 @@ char *trim(char *str)
   return str;
 }
 
-void read_uf(FILE *arq){
-  char peek_buffer[10];
+bool read_next_token(FILE *arq, char *expected_token){
+  char c = fgetc(arq);
+  while (c != EOF && isspace(c)){
+    c = fgetc(arq);
+  }
+  fseek(arq, -1, SEEK_CUR);
 
-  fpeek(arq, peek_buffer, 10);
-  strcpy(peek_buffer, trim(peek_buffer));
-  print_str_int(peek_buffer);
-  print_str_char(peek_buffer);
+  char token[strlen(expected_token)];
+  fread(token, strlen(expected_token), 1, arq);
+  return strncmp(token, expected_token, strlen(expected_token)) == 0;
+}
 
-  if (strncmp("add", peek_buffer, 3) == 0){
-    printf("add encontrado\n");
+// falta verificar se tem não digitos entre os dígitos
+int read_number(FILE *arq){
+  char c = fgetc(arq);
+  while (c != EOF && isspace(c)){
+    c = fgetc(arq);
   }
-  else if (strncmp("mul", peek_buffer, 3) == 0){
-    printf("mul encontrado\n");
+  char buffer[10];
+  int index = 0;
+  while (isdigit(c)){
+    buffer[index++] = c;
+    c = fgetc(arq);
   }
-  else if (strncmp("integer", peek_buffer, 7) == 0){
-    printf("integer encontrado\n");
+  buffer[index] = '\0';
+  return atoi(buffer);
+}
+
+// Falta ler em qualquer ordem
+bool read_uf(FILE *arq){
+  printf("Lendo Uf\n");
+  if (!read_next_token(arq, "add")){
+    printf("add nao encontrado\n");
+    return false;
   }
+  if (!read_next_token(arq, ":")){
+    printf(": nao encontrado\n");
+    return false;
+  }
+  int add_ufs = read_number(arq);
+  printf("add ufs: %d\n", add_ufs);
+
+  return true;
+}
+
+bool read_inst(FILE *arq){
+  printf("Lendo inst\n");
+  return true;
+}
+
+bool try_read_token(FILE *arq, char *expected_token){
+  bool output = read_next_token(arq, expected_token);
+
+  fseek(arq, -strlen(expected_token), SEEK_CUR);
+  return output;
 }
 
 // lê o arquivo de configurações, falta terminar
-void read_config(FILE *arq)
+bool read_config(FILE *arq)
 {
-  char c;
-  char peek_buffer[10];
-
-  bool reading_uf_info = false;
-  bool reading_inst_info = false;
-  fpeek(arq, peek_buffer, 2);
-
-  if(strncmp(peek_buffer, "/*", 2) != 0){
-    die(arq, "Expected '/*'");
-  }
-  printf("/* encontrado\n");
-
-  fseek(arq, 2, SEEK_CUR);
-
-  while((c = fgetc(arq)) != EOF){
-    fpeek(arq, peek_buffer, 10);
-    strcpy(peek_buffer, trim(peek_buffer));
-    if(strncmp(UF_SYMBOL, peek_buffer, strlen(UF_SYMBOL)) == 0){
-      printf("UF encontrado\n");
-      // TODO
-      // verificar espacos: UF     :   \n
-      fseek(arq, strlen(UF_SYMBOL)+2, SEEK_CUR);
-      skip(arq);
-      
-      read_uf(arq);
-    }
-    if(strncmp(INST_SYMBOL, peek_buffer, strlen(INST_SYMBOL)) == 0){
-      printf("INST encontrado\n");
-      reading_uf_info = false;
-      reading_inst_info = true;
-    }
-
-    if(strncmp("*/", peek_buffer, 2)){
-      printf("*/ encontrado\n");
-      break;
-    }
-    else{
-      continue;
-      //die(arq, "No valid symbol found");
-    }
+  if (!read_next_token(arq, "/*")){
+    return false;
   }
 
-  skip(arq);
+  char *next_tokens[2] = { UF_SYMBOL, INST_SYMBOL };
+  bool completed_uf = false;
+  bool completed_inst = false;
+
+  for(int i = 0; i < 2; i++){
+    if (try_read_token(arq, next_tokens[0])){
+      read_next_token(arq, next_tokens[0]);
+
+      if (!read_next_token(arq, ":")) return false;
+      if (!read_uf(arq)) return false;
+      else completed_uf = true;
+    }
+    else if(try_read_token(arq, next_tokens[1])){
+      read_next_token(arq, next_tokens[1]);
+
+      if (!read_next_token(arq, ":")) return false;
+      if (!read_inst(arq)) return false;
+      else completed_inst = true;
+    }
+  }
+  return completed_uf && completed_inst;
 }
 
 void decapitalize(char *str){
@@ -531,7 +551,10 @@ void read_data_section(FILE *arq){
 void parse_assembly(FILE *arq){
   // skip(arq);
   printf("Lendo configs\n");
-  read_config(arq);
+  if (!read_config(arq)){
+    printf("Erro ao ler as configuracoes\n");
+    return;
+  }
   printf("Fim da leitura das configs\n");
 
 
@@ -558,11 +581,11 @@ void parse_assembly(FILE *arq){
 
 }
 
-bool read_args(int argc, char *argv[], int *memory_size, char *input_file_name, FILE **input_file, FILE **output_stream){
+bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
   for(int i = 1; i < argc; i+=2){
 
     if(strcmp(argv[i], "-p") == 0){
-      input_file_name = argv[i+1];
+      *input_file_name = argv[i+1];
     }
     else if(strcmp(argv[i], "-m") == 0){
       // TODO
@@ -575,7 +598,7 @@ bool read_args(int argc, char *argv[], int *memory_size, char *input_file_name, 
     }
   }
 
-  *input_file = fopen(input_file_name, "r");
+  *input_file = fopen(*input_file_name, "r");
   return *input_file != NULL;
 }
 
@@ -591,7 +614,7 @@ int main(int argc, char *argv[])
   char* input_file_name = "input.txt";
   FILE* input_file;
   
-  if (read_args(argc, argv, &memory_size, input_file_name, &input_file, &output_stream)){
+  if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     printf("Lendo arquivo %s ...\n", input_file_name);
     parse_assembly(input_file);
   }
