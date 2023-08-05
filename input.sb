@@ -1,3 +1,14 @@
+/*
+UF:
+    add : 2
+    mul: 3
+    integer :2
+INST:
+    add: 2
+    mul :15
+    integer : 4
+*/
+
 mul r3,      r7,  r15
 add r3,      r7,  r15
 

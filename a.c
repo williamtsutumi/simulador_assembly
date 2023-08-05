@@ -4,12 +4,6 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <assert.h>
-// int add(int addres1, int addres2)
-// {
-//     return memory[addres1] + memory[addres2];
-// }
-
-#define int unsigned
 
 int* memory;
 int instruction_count = 0;
@@ -45,26 +39,38 @@ const char* UF_SYMBOL = "UF";
 const char* INST_SYMBOL = "INST";
 const char* code_file_name;
 
+char *trim(char *str)
+{
+  char *end;
 
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)
+    return str;
+
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  end[1] = '\0';
+
+  return str;
+}
 
 void fpeek(FILE* arq, char* peekBuffer, int peekSize){
-
   char character;
   int i=0;
   fseek(arq, -1, SEEK_CUR);
-  for(; i < peekSize; i++){
-
+  for(i=0; i < peekSize; i++){
     if((character = fgetc(arq)) != EOF){
       peekBuffer[i] = character;
     }
     else{
-      break; 
+      break;
     }
   }
   peekBuffer[i] = '\0';
   fseek(arq, -i+1, SEEK_CUR);
 }
-
 
 int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
 {
@@ -97,19 +103,17 @@ int read_instructionJ(int opcode, int address)
 // coisa interessante;
 void skip(FILE *arq){
   char c;
-
+  
   bool on_single_line_comment = false;
 
   while((c = fgetc(arq)) != EOF){
-
     if(c == '#'){
       on_single_line_comment = true;
     }
     else if(on_single_line_comment && c == '\n'){
       on_single_line_comment = false;
     }
-    else if(on_single_line_comment || c == ' ' 
-        || c == '\t' || c == '\n'){
+    else if(on_single_line_comment || c == ' ' || c == '\t' || c == '\n'){
       continue;
     }
     else{
@@ -117,7 +121,6 @@ void skip(FILE *arq){
     }
   }
   fseek(arq, -1, SEEK_CUR);
-
 }
 
 void die(FILE* arq, char* error_msg){
@@ -156,15 +159,12 @@ void die(FILE* arq, char* error_msg){
 // lê o arquivo de configurações, falta terminar
 void read_config(FILE *arq)
 {
-  
   char c;
-  char peek_buffer[20];
+  char peek_buffer[10];
 
   bool reading_uf_info = false;
   bool reading_inst_info = false;
-
   fpeek(arq, peek_buffer, 2);
-
 
   if(strncmp(peek_buffer, "/*", 2) != 0){
     die(arq, "Expected '/*'");
@@ -174,8 +174,12 @@ void read_config(FILE *arq)
 
   while((c = fgetc(arq)) != EOF){
     fpeek(arq, peek_buffer, 10);
-
+    printf("*");
+    // *peek_buffer = trim(peek_buffer);
+    printf("%s\n", peek_buffer);
+    printf("*");
     if(strncmp(UF_SYMBOL, peek_buffer, strlen(UF_SYMBOL)) == 0){
+      printf("UF encontrado\n");
       fseek(arq, strlen(UF_SYMBOL), SEEK_CUR);
 
       skip(arq);
@@ -184,6 +188,7 @@ void read_config(FILE *arq)
       reading_inst_info = false;
     }
     if(strncmp(INST_SYMBOL, peek_buffer, strlen(INST_SYMBOL)) == 0){
+      printf("INST encontrado\n");
       reading_uf_info = false;
       reading_inst_info = true;
     }
@@ -249,6 +254,7 @@ int get_opcode(char* str){
   
 
 }
+
 bool validate_number(char *c){
   return true;
 }
@@ -338,7 +344,6 @@ int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
 
   return 0;
 }
-
 
 int dec_to_bin(int num){
 
@@ -469,7 +474,6 @@ int read_instruction(int opcode, FILE* arq){
 
 }
 
-
 // verifica se na posição SEEK_CUR do arq, existe uma string do tipo 
 // .secao, onde secao é o nome da seção, se o nome é .data, retorna 0,
 // se for .text, retorna 1, se não tiver seção, retorna -1;
@@ -487,82 +491,74 @@ void read_data_section(FILE *arq){
 }
 
 void parse_assembly(FILE *arq){
-  skip(arq);
-  //read_config(arq);
-
-  char _;
-
-  do{
-
-    int opcode=-1, section=-1;
-
-    if((opcode = read_instruction_name(arq)) != -1){
-      printf("READ INSTRUCTION %d\n", opcode);
-      int instruction = read_instruction(opcode, arq);
-    }
-
-    else if((section = find_section(arq)) != -1){
-      if(section == 0){
-        read_data_section(arq);
-      }
-      else if(section == 1){
-        continue;
-      }
-    }
-  }while((_ = fgetc(arq)) != EOF);
+  // skip(arq);
+  printf("Lendo configs\n");
+  read_config(arq);
+  printf("Fim da leitura das configs\n");
 
 
+  // char _;
+
+  // do{
+
+  //   int opcode=-1, section=-1;
+
+  //   if((opcode = read_instruction_name(arq)) != -1){
+  //     printf("READ INSTRUCTION %d\n", opcode);
+  //     int instruction = read_instruction(opcode, arq);
+  //   }
+
+  //   else if((section = find_section(arq)) != -1){
+  //     if(section == 0){
+  //       read_data_section(arq);
+  //     }
+  //     else if(section == 1){
+  //       continue;
+  //     }
+  //   }
+  // }while((_ = fgetc(arq)) != EOF);
 
 }
 
-
 int main(int argc, char *argv[])
 {
-    code_file_name = argv[0];
+  code_file_name = argv[0];
+  // Functional_unit add;
+  // Functional_unit mul;
+  // Functional_unit integer;
 
-    Functional_unit add;
-    Functional_unit mul;
-    Functional_unit integer;
- 
-    int memory_size=32;
+  int memory_size = 32;
+  FILE* output_stream = stdout;
+  char* input_file_name = "input.txt";
+  FILE* input_file;
 
+  for(int i = 1; i < argc; i+=2){
 
-    FILE* output_stream = stdout;
-
-    char* file_name = "input.sb";
-
-    for(int i = 1; i < argc; i+=2){
-
-      if(strcmp(argv[i], "-p") == 0){
-        file_name = argv[i+1];
-      }
-      
-      else if(strcmp(argv[i], "-m") == 0){
-        // TODO
-        // validar que argv[i+1] é uma inteiro
-        memory_size = atoi(argv[i+1]);
-        memory = (int*)(malloc(sizeof(int)*memory_size));
-      }
-
-      else if(strcmp(argv[i], "-o") == 0){
-        output_stream = fopen(argv[i+1], "w");
-      }
+    if(strcmp(argv[i], "-p") == 0){
+      input_file_name = argv[i+1];
     }
-
-    FILE* arq;
-
-    if((arq = fopen(file_name, "r")) == NULL){
-      printf("Falha na leitura do arquivo %s.\n", file_name);
+    else if(strcmp(argv[i], "-m") == 0){
+      // TODO
+      // validar que argv[i+1] é uma inteiro
+      memory_size = atoi(argv[i+1]);
+      memory = (int*)(malloc(sizeof(int)*memory_size));
     }
-    else{
-      puts("lendo arquivo assembly...");
-      parse_assembly(arq);
-      printf("Arquivo %s lido com sucesso.\n", file_name);
+    else if(strcmp(argv[i], "-o") == 0){
+      output_stream = fopen(argv[i+1], "w");
     }
+  }
 
+  input_file = fopen(input_file_name, "r");
+  if (input_file != NULL){
+    printf("Lendo arquivo %s ...\n", input_file_name);
+    parse_assembly(input_file);
+  }
+  else{
+    printf("Falha na leitura do arquivo %s.\n", input_file_name);
+  }
 
-    fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
+  fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
 
-    return 0;
+  return 0;
 
 }
