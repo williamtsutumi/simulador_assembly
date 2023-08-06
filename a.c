@@ -291,6 +291,7 @@ bool read_config(FILE *input, FILE *output)
     for (int j=0; j<num_tokens; j++){
       if (read_next_token(input, next_tokens[j])){
         if (!read_next_token(input, ":")) return false;
+        if (completed[j]) return false; // config duplicada
 
         switch (j){
           case 0:
