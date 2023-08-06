@@ -18,6 +18,8 @@ int* memory;
 int instruction_count = 0;
 const char* code_file_name;
 
+int add_ufs, mul_ufs, integer_ufs;
+
 typedef enum UF_type
 {
     add,
@@ -39,21 +41,30 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
-void print_str_int(char *string){
-  printf("String:");
-  for(int i=0; i<strlen(string)-1; i++){
-    printf("%d ", string[i]);
-  }
-  printf("%d", string[strlen(string)-1]);
-  printf(":Fim da string\n");
+void red () {
+  printf("\033[1;31m");
 }
-void print_str_char(char *string){
-  printf("String:");
+void yellow() {
+  printf("\033[1;33m");
+}
+void reset () {
+  printf("\033[0m");
+}
+void print_str_int(char *string, FILE *output){
+  fprintf(output, "String:");
   for(int i=0; i<strlen(string)-1; i++){
-    printf("%c", string[i]);
+    fprintf(output, "%d ", string[i]);
   }
-  printf("%c", string[strlen(string)-1]);
-  printf(":Fim da string\n");
+  fprintf(output, "%d", string[strlen(string)-1]);
+  fprintf(output, ":Fim da string\n");
+}
+void print_str_char(char *string, FILE *output){
+  fprintf(output, "String:");
+  for(int i=0; i<strlen(string)-1; i++){
+    fprintf(output, "%c", string[i]);
+  }
+  fprintf(output, "%c", string[strlen(string)-1]);
+  fprintf(output, ":Fim da string\n");
 }
 
 void fpeek(FILE* arq, char* peekBuffer, int peekSize){
@@ -156,26 +167,9 @@ void die(FILE* arq, char* error_msg){
   }
 }
 
-char *trim(char *str)
-{
-  char *end;
-
-  // Trim leading space
-  while(isspace((unsigned char)*str)) str++;
-
-  if(str == 0)  // All spaces?
-    return str;
-
-  // Trim trailing space
-  end = str + strlen(str) - 1;
-  while(end > str && isspace((unsigned char)*end)) end--;
-
-  // Write new null terminator character
-  end[1] = '\0';
-
-  return str;
-}
-
+// Retorna true se encontra a string "expexted_token", ignorando espaços
+// antes da string. Caso não encontre a string, retorna false e volta
+// o ponteiro *arq para a posição inicial
 bool read_next_token(FILE *arq, char *expected_token){
   char c = fgetc(arq);
   while (c != EOF && isspace(c)){
@@ -185,7 +179,10 @@ bool read_next_token(FILE *arq, char *expected_token){
 
   char token[strlen(expected_token)];
   fread(token, strlen(expected_token), 1, arq);
-  return strncmp(token, expected_token, strlen(expected_token)) == 0;
+  bool found = strncmp(token, expected_token, strlen(expected_token)) == 0;
+  if (!found) fseek(arq, -strlen(expected_token), SEEK_CUR);
+
+  return found;
 }
 
 // falta verificar se tem não digitos entre os dígitos
@@ -205,38 +202,48 @@ int read_number(FILE *arq){
 }
 
 // Falta ler em qualquer ordem
-bool read_uf(FILE *arq){
-  printf("Lendo Uf\n");
-  if (!read_next_token(arq, "add")){
-    printf("add nao encontrado\n");
-    return false;
-  }
-  if (!read_next_token(arq, ":")){
-    printf(": nao encontrado\n");
-    return false;
-  }
-  int add_ufs = read_number(arq);
-  printf("add ufs: %d\n", add_ufs);
+bool read_uf(FILE *input, FILE *output){
+  fprintf(output, "Lendo Uf\n");
 
+  char *expeted_tokens[] = { "add", "mul", "integer" };
+  int num_tokens = sizeof(expeted_tokens) / sizeof(expeted_tokens[0]);
+  int num_ufs[num_tokens];
+  memset(num_ufs, -1, sizeof(num_ufs));
+
+  for (int i=0; i<num_tokens; i++){
+    for (int j=0; j<num_tokens; j++){
+      if (
+        num_ufs[j] == -1
+        && read_next_token(input, expeted_tokens[j])
+        && read_next_token(input, ":"))
+      {
+        num_ufs[j] = read_number(input);
+      }
+    }
+  }
+  for (int i=0; i<num_tokens; i++)
+    if (num_ufs[i] == -1) return false;
+
+  add_ufs = num_ufs[0];
+  mul_ufs = num_ufs[1];
+  integer_ufs = num_ufs[2];
+  yellow();
+  fprintf(output, "ADD ufs: %d\n", add_ufs);
+  fprintf(output, "MUL ufs: %d\n", mul_ufs);
+  fprintf(output, "INTEGER ufs: %d\n", integer_ufs);
+  reset();
   return true;
 }
 
-bool read_inst(FILE *arq){
-  printf("Lendo inst\n");
+bool read_inst(FILE *arq, FILE *output){
+  fprintf(output, "Lendo inst\n");
   return true;
-}
-
-bool try_read_token(FILE *arq, char *expected_token){
-  bool output = read_next_token(arq, expected_token);
-
-  fseek(arq, -strlen(expected_token), SEEK_CUR);
-  return output;
 }
 
 // lê o arquivo de configurações, falta terminar
-bool read_config(FILE *arq)
+bool read_config(FILE *input, FILE *output)
 {
-  if (!read_next_token(arq, "/*")){
+  if (!read_next_token(input, "/*")){
     return false;
   }
 
@@ -245,18 +252,16 @@ bool read_config(FILE *arq)
   bool completed_inst = false;
 
   for(int i = 0; i < 2; i++){
-    if (try_read_token(arq, next_tokens[0])){
-      read_next_token(arq, next_tokens[0]);
+    if (read_next_token(input, next_tokens[0])){
 
-      if (!read_next_token(arq, ":")) return false;
-      if (!read_uf(arq)) return false;
+      if (!read_next_token(input, ":")) return false;
+      if (!read_uf(input, output)) return false;
       else completed_uf = true;
     }
-    else if(try_read_token(arq, next_tokens[1])){
-      read_next_token(arq, next_tokens[1]);
+    else if(read_next_token(input, next_tokens[1])){
 
-      if (!read_next_token(arq, ":")) return false;
-      if (!read_inst(arq)) return false;
+      if (!read_next_token(input, ":")) return false;
+      if (!read_inst(input, output)) return false;
       else completed_inst = true;
     }
   }
@@ -320,13 +325,13 @@ bool validate_number(char *c){
 // verifica se a partir de SEEK_CUR, existe uma instrução
 // por exemplo, "add rs,rs,rt" e retorna apenas seu opcode.
 // se não existe nenhum, retorna -1
-int read_instruction_name(FILE* arq){
+int read_instruction_name(FILE *input, FILE *output){
 
   char buffer[10];
   char c;
   int cnt=0;
 
-  while((c = fgetc(arq)) != EOF){
+  while((c = fgetc(input)) != EOF){
     if(c == ' '){
       break;
     }
@@ -335,9 +340,9 @@ int read_instruction_name(FILE* arq){
   buffer[cnt] = '\0';
 
   int opcode = get_opcode(buffer);
-  printf("%d\n", opcode);
+  fprintf(output, "%d\n", opcode);
 
-  skip(arq);
+  skip(input);
   return opcode;
 }
 
@@ -404,9 +409,6 @@ int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
 }
 
 int dec_to_bin(int num){
-
-
-
   for(int i = 0; i < 32; i++){
     printf("%d", (num&(1 << (31-i)))!=0);
   }
@@ -548,14 +550,14 @@ void read_data_section(FILE *arq){
   skip(arq);
 }
 
-void parse_assembly(FILE *arq){
+void parse_assembly(FILE *input, FILE *output){
   // skip(arq);
-  printf("Lendo configs\n");
-  if (!read_config(arq)){
-    printf("Erro ao ler as configuracoes\n");
+  fprintf(output, "Lendo configs\n");
+  if (!read_config(input, output)){
+    fprintf(output, "Erro ao ler as configuracoes\n");
     return;
   }
-  printf("Fim da leitura das configs\n");
+  fprintf(output, "Fim da leitura das configs\n");
 
 
   // char _;
@@ -565,7 +567,7 @@ void parse_assembly(FILE *arq){
   //   int opcode=-1, section=-1;
 
   //   if((opcode = read_instruction_name(arq)) != -1){
-  //     printf("READ INSTRUCTION %d\n", opcode);
+  //     fprintf("READ INSTRUCTION %d\n", opcode);
   //     int instruction = read_instruction(opcode, arq);
   //   }
 
@@ -615,11 +617,11 @@ int main(int argc, char *argv[])
   FILE* input_file;
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
-    printf("Lendo arquivo %s ...\n", input_file_name);
-    parse_assembly(input_file);
+    fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
+    parse_assembly(input_file, output_stream);
   }
   else{
-    printf("Falha na leitura do arquivo %s.\n", input_file_name);
+    fprintf(output_stream, "Falha na leitura do arquivo %s.\n", input_file_name);
   }
 
   fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
