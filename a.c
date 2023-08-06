@@ -11,14 +11,21 @@
 #define SUB "sub"
 #define JMP "jmp"
 #define MOV "sub"
+
+// Símbolos para leitura das configurações
 #define UF_SYMBOL "UF"
 #define INST_SYMBOL "INST"
+#define ADD_SYMBOL "add"
+#define MUL_SYMBOL "mul"
+#define INTEGER_SYMBOL "integer"
+#define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
 int* memory;
 int instruction_count = 0;
 const char* code_file_name;
 
 int add_ufs, mul_ufs, integer_ufs;
+int add_cycles, mul_cycles, integer_cycles;
 
 typedef enum UF_type
 {
@@ -185,7 +192,8 @@ bool read_next_token(FILE *arq, char *expected_token){
   return found;
 }
 
-// falta verificar se tem não digitos entre os dígitos
+// falta verificar se tem não digitos entre os dígitos também
+// precisar retornar true/false se conseguiu ler número
 int read_number(FILE *arq){
   char c = fgetc(arq);
   while (c != EOF && isspace(c)){
@@ -201,11 +209,10 @@ int read_number(FILE *arq){
   return atoi(buffer);
 }
 
-// Falta ler em qualquer ordem
 bool read_uf(FILE *input, FILE *output){
   fprintf(output, "Lendo Uf\n");
 
-  char *expeted_tokens[] = { "add", "mul", "integer" };
+  char *expeted_tokens[] = CONFIG_SYMBOLS;
   int num_tokens = sizeof(expeted_tokens) / sizeof(expeted_tokens[0]);
   int num_ufs[num_tokens];
   memset(num_ufs, -1, sizeof(num_ufs));
@@ -235,37 +242,72 @@ bool read_uf(FILE *input, FILE *output){
   return true;
 }
 
-bool read_inst(FILE *arq, FILE *output){
+bool read_inst(FILE *input, FILE *output){
   fprintf(output, "Lendo inst\n");
+
+  char *expeted_tokens[] = CONFIG_SYMBOLS;
+  int num_tokens = sizeof(expeted_tokens) / sizeof(expeted_tokens[0]);
+  int num_cycles[num_tokens];
+  memset(num_cycles, -1, sizeof(num_cycles));
+
+  for (int i=0; i<num_tokens; i++){
+    for (int j=0; j<num_tokens; j++){
+      if (
+        num_cycles[j] == -1
+        && read_next_token(input, expeted_tokens[j])
+        && read_next_token(input, ":"))
+      {
+        num_cycles[j] = read_number(input);
+      }
+    }
+  }
+  for (int i=0; i<num_tokens; i++)
+    if (num_cycles[i] == -1) return false;
+
+  add_cycles = num_cycles[0];
+  mul_cycles = num_cycles[1];
+  integer_cycles = num_cycles[2];
+  yellow();
+  fprintf(output, "ADD cycles: %d\n", add_cycles);
+  fprintf(output, "MUL cycles: %d\n", mul_cycles);
+  fprintf(output, "INTEGER cycles: %d\n", integer_cycles);
+  reset();
+  return true;
+
   return true;
 }
 
 // lê o arquivo de configurações, falta terminar
 bool read_config(FILE *input, FILE *output)
 {
-  if (!read_next_token(input, "/*")){
-    return false;
-  }
+  if (!read_next_token(input, "/*")) return false;
 
-  char *next_tokens[2] = { UF_SYMBOL, INST_SYMBOL };
-  bool completed_uf = false;
-  bool completed_inst = false;
+  char *next_tokens[] = { UF_SYMBOL, INST_SYMBOL };
+  int num_tokens = sizeof(next_tokens) / sizeof(next_tokens[0]);
+  bool completed[num_tokens];
+  memset(completed, false, sizeof(completed));
 
-  for(int i = 0; i < 2; i++){
-    if (read_next_token(input, next_tokens[0])){
+  for(int i=0; i<num_tokens; i++){
+    for (int j=0; j<num_tokens; j++){
+      if (read_next_token(input, next_tokens[j])){
+        if (!read_next_token(input, ":")) return false;
 
-      if (!read_next_token(input, ":")) return false;
-      if (!read_uf(input, output)) return false;
-      else completed_uf = true;
+        switch (j){
+          case 0:
+            if (!read_uf(input, output)) return false;
+            break;
+          case 1:
+            if (!read_inst(input, output)) return false;
+            break;
+        }
+        completed[j] = true;
+      }
     }
-    else if(read_next_token(input, next_tokens[1])){
-
-      if (!read_next_token(input, ":")) return false;
-      if (!read_inst(input, output)) return false;
-      else completed_inst = true;
-    }
   }
-  return completed_uf && completed_inst;
+  for (int i=0; i<num_tokens; i++)
+    if (completed[i] == false) return false;
+
+  return read_next_token(input, "*/");
 }
 
 void decapitalize(char *str){
