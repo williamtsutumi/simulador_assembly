@@ -20,13 +20,6 @@
 #define INTEGER_SYMBOL "integer"
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
-int* memory;
-int instruction_count = 0;
-const char* code_file_name;
-
-int add_ufs, mul_ufs, integer_ufs;
-int add_cycles, mul_cycles, integer_cycles;
-
 typedef enum UF_type
 {
     add,
@@ -47,6 +40,14 @@ typedef enum OPERAND_TYPE
     IMM,
     MEMORY,
 } OPERAND_TYPE;
+
+int* memory;
+int instruction_count = 0;
+const char* code_file_name;
+
+int add_ufs, mul_ufs, integer_ufs;
+int add_cycles, mul_cycles, integer_cycles;
+Functional_unit *functional_units;
 
 void red () {
   printf("\033[1;31m");
@@ -100,7 +101,6 @@ int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
 
     return op | s | t | d | e;
 }
-
 int read_instructionI(int opcode, int rs, int rt, int imm)
 {
     int op = opcode << 26;
@@ -109,7 +109,6 @@ int read_instructionI(int opcode, int rs, int rt, int imm)
 
     return op | s | r | imm;
 }
-
 int read_instructionJ(int opcode, int address)
 {
     int op = opcode << 26;
@@ -234,6 +233,29 @@ bool read_uf(FILE *input, FILE *output){
   add_ufs = num_ufs[0];
   mul_ufs = num_ufs[1];
   integer_ufs = num_ufs[2];
+  Functional_unit ufs[add_ufs + mul_ufs + integer_ufs];
+  
+
+  for (int i=0; i<add_ufs; i++){
+    ufs[i].type = add;
+    ufs[i].cycles = -1;
+  }
+  for (int i=add_ufs; i<add_ufs+mul_ufs; i++){
+    ufs[i].type = mul;
+    ufs[i].cycles = -1;
+  }
+  for (int i=add_ufs+mul_ufs; i<add_ufs+mul_ufs+integer_ufs; i++){
+    ufs[i].type = integer;
+    ufs[i].cycles = -1;
+  }
+  for(int i=0; i<add_ufs+mul_ufs+integer_ufs; i++){
+    printf("%d\n", ufs[i].type);
+  }
+  printf("-------------\n");
+  functional_units = ufs;
+  for(int i=0; i<add_ufs+mul_ufs+integer_ufs; i++){
+    printf("%d\n", functional_units[i].type);
+  }
   yellow();
   fprintf(output, "ADD ufs: %d\n", add_ufs);
   fprintf(output, "MUL ufs: %d\n", mul_ufs);
@@ -273,8 +295,6 @@ bool read_inst(FILE *input, FILE *output){
   fprintf(output, "INTEGER cycles: %d\n", integer_cycles);
   reset();
   return true;
-
-  return true;
 }
 
 // lê o arquivo de configurações, falta terminar
@@ -307,7 +327,7 @@ bool read_config(FILE *input, FILE *output)
   }
   for (int i=0; i<num_tokens; i++)
     if (completed[i] == false) return false;
-
+  
   return read_next_token(input, "*/");
 }
 
@@ -668,6 +688,11 @@ int main(int argc, char *argv[])
   }
 
   fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
+
+  printf("printando functional_units na main\n");
+  for (int i=0; i<add_ufs+mul_ufs+integer_ufs; i++){
+    printf("%d\n", functional_units[i].type);
+  }
 
   return 0;
 
