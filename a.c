@@ -48,19 +48,17 @@
 #define INTEGER_SYMBOL "integer"
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
-typedef enum UF_type
-{
-    add,
-    mul,
-    integer,
-} UF_type;
-
 typedef struct Functional_unit
 {
-    UF_type type;
-    int cycles;
-
+  int current_cycle;
 } Functional_unit;
+
+typedef struct CPU
+{
+  Functional_unit *add_ufs;
+  Functional_unit *mul_ufs;
+  Functional_unit *integer_ufs;
+} CPU;
 
 typedef enum OPERAND_TYPE
 {
@@ -69,13 +67,12 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
+CPU cpu;
 int* memory;
 int instruction_count = 0;
 const char* code_file_name;
 
-int add_ufs, mul_ufs, integer_ufs;
 int add_cycles, mul_cycles, integer_cycles;
-Functional_unit *functional_units;
 
 void red () {
   printf("\033[1;31m");
@@ -258,32 +255,23 @@ bool read_uf(FILE *input, FILE *output){
   for (int i=0; i<num_tokens; i++)
     if (num_ufs[i] == -1) return false;
 
-  add_ufs = num_ufs[0];
-  mul_ufs = num_ufs[1];
-  integer_ufs = num_ufs[2];
-  Functional_unit ufs[add_ufs + mul_ufs + integer_ufs];
-  
-
+  int add_ufs = num_ufs[0];
+  int mul_ufs = num_ufs[1];
+  int integer_ufs = num_ufs[2];
+  cpu.add_ufs = malloc(sizeof(Functional_unit) * add_ufs);
   for (int i=0; i<add_ufs; i++){
-    ufs[i].type = add;
-    ufs[i].cycles = -1;
+    cpu.add_ufs[i].current_cycle = 0;
   }
-  for (int i=add_ufs; i<add_ufs+mul_ufs; i++){
-    ufs[i].type = mul;
-    ufs[i].cycles = -1;
+  cpu.mul_ufs = malloc(sizeof(Functional_unit) * mul_ufs);
+  for (int i=0; i<mul_ufs; i++){
+    cpu.mul_ufs[i].current_cycle = 0;
   }
-  for (int i=add_ufs+mul_ufs; i<add_ufs+mul_ufs+integer_ufs; i++){
-    ufs[i].type = integer;
-    ufs[i].cycles = -1;
+  cpu.integer_ufs = malloc(sizeof(Functional_unit) * integer_ufs);
+  for (int i=0; i<integer_ufs; i++){
+    cpu.integer_ufs[i].current_cycle = 0;
   }
-  for(int i=0; i<add_ufs+mul_ufs+integer_ufs; i++){
-    printf("%d\n", ufs[i].type);
-  }
-  printf("-------------\n");
-  functional_units = ufs;
-  for(int i=0; i<add_ufs+mul_ufs+integer_ufs; i++){
-    printf("%d\n", functional_units[i].type);
-  }
+
+  
   yellow();
   fprintf(output, "ADD ufs: %d\n", add_ufs);
   fprintf(output, "MUL ufs: %d\n", mul_ufs);
@@ -643,33 +631,33 @@ void read_data_section(FILE *arq){
 
 void parse_assembly(FILE *input, FILE *output){
   // skip(arq);
-  // fprintf(output, "Lendo configs\n");
-  // if (!read_config(input, output)){
-  //   fprintf(output, "Erro ao ler as configuracoes\n");
-  //   return;
-  // }
-  // fprintf(output, "Fim da leitura das configs\n");
+  fprintf(output, "Lendo configs\n");
+  if (!read_config(input, output)){
+    fprintf(output, "Erro ao ler as configuracoes\n");
+    return;
+  }
+  fprintf(output, "Fim da leitura das configs\n");
 
 
   char _;
 
-  do{
-    // printf("A\n");
-    int opcode=-1, section=-1;
-    printf("ftell: %li\n", ftell(input));
-    if((opcode = read_instruction_name(input, output)) != -1){
-      fprintf(output, "READ INSTRUCTION %d\n", opcode);
-      int instruction = read_instruction(opcode, input);
-    }
-    else if((section = find_section(input)) != -1){
-      if(section == 0){
-        read_data_section(input);
-      }
-      else if(section == 1){
-        continue;
-      }
-    }
-  }while((_ = fgetc(input)) != EOF);
+  // do{
+  //   // printf("A\n");
+  //   int opcode=-1, section=-1;
+  //   printf("ftell: %li\n", ftell(input));
+  //   if((opcode = read_instruction_name(input, output)) != -1){
+  //     fprintf(output, "READ INSTRUCTION %d\n", opcode);
+  //     int instruction = read_instruction(opcode, input);
+  //   }
+  //   else if((section = find_section(input)) != -1){
+  //     if(section == 0){
+  //       read_data_section(input);
+  //     }
+  //     else if(section == 1){
+  //       continue;
+  //     }
+  //   }
+  // }while((_ = fgetc(input)) != EOF);
 
 }
 
@@ -694,6 +682,15 @@ bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name,
   return *input_file != NULL;
 }
 
+void free_memory(FILE *input, FILE*output){
+  free(cpu.add_ufs);
+  free(cpu.mul_ufs);
+  free(cpu.integer_ufs);
+
+  fclose(input);
+  fclose(output);
+}
+
 int main(int argc, char *argv[])
 {
   code_file_name = argv[0];
@@ -714,12 +711,17 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Falha na leitura do arquivo %s.\n", input_file_name);
   }
 
-  fprintf(output_stream, "se n tiver -o vai na saída padrão, senao vai no arquivo...\n");
-
-  printf("printando functional_units na main\n");
-  for (int i=0; i<add_ufs+mul_ufs+integer_ufs; i++){
-    printf("%d\n", functional_units[i].type);
-  }
+  // printf("printando functional_units na main\n");
+  // for (int i=0; i<add_ufs; i++){
+  //   printf("%d\n", cpu.add_ufs->current_cycle);
+  // }
+  // for (int i=0; i<mul_ufs; i++){
+  //   printf("%d\n", cpu.mul_ufs->current_cycle);
+  // }
+  // for (int i=0; i<integer_ufs; i++){
+  //   printf("%d\n", cpu.integer_ufs->current_cycle);
+  // }
+  free_memory(input_file, output_stream);
 
   return 0;
 
