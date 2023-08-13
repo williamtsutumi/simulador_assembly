@@ -5,12 +5,40 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define MUL "mul"
 #define ADD "add"
-#define DIV "div"
+#define ADD_OPCODE 0
+#define ADDI "addi"
+#define ADDI_OPCODE 1
 #define SUB "sub"
-#define JMP "jmp"
-#define MOV "sub"
+#define SUB_OPCODE 2
+#define SUBI "subi"
+#define SUBI_OPCODE 3
+#define MUL "mul"
+#define MUL_OPCODE 4
+#define DIV "div"
+#define DIV_OPCODE 5
+#define AND "and"
+#define AND_OPCODE 6
+#define OR "or"
+#define OR_OPCODE 7
+#define NOT "not"
+#define NOT_OPCODE 8
+#define BLT "blt"
+#define BLT_OPCODE 9
+#define BGT "bgt"
+#define BGT_OPCODE 10
+#define BEQ "beq"
+#define BEQ_OPCODE 11
+#define BNE "bne"
+#define BNE_OPCODE 12
+#define J "j"
+#define J_OPCODE 13
+#define LW "lw"
+#define LW_OPCODE 14
+#define SW "sw"
+#define SW_OPCODE 15
+#define EXIT "exit"
+#define EXIT_OPCODE 16
 
 // Símbolos para leitura das configurações
 #define UF_SYMBOL "UF"
@@ -340,41 +368,41 @@ void decapitalize(char *str){
 
 int get_opcode(char* str){
 
-  puts(str);
-  if(strncmp("addi", str, 4) == 0)
-    return 1;
-  if(strncmp("subi", str, 4) == 0)
-    return 3;
-  if(strncmp("exit", str, 4) == 0)
-    return 16;
-  if(strncmp("add", str, 3) == 0)
-    return 0;
-  if(strncmp("sub", str, 3) == 0)
-    return 2;
-  if(strncmp("mul", str, 3) == 0)
-    return 4;
-  if(strncmp("div", str, 3) == 0)
-    return 5;
-  if(strncmp("and", str, 3) == 0)
-    return 6;
-  if(strncmp("or", str, 2) == 0)
-    return 7;
-  if(strncmp("not", str, 3) == 0)
-    return 8;
-  if(strncmp("blt", str, 3) == 0)
-    return 9;
-  if(strncmp("bgt", str, 3) == 0)
-    return 10;
-  if(strncmp("beq", str, 3) == 0)
-    return 11;
-  if(strncmp("bne", str, 3) == 0)
-    return 12;
-  if(strncmp("j", str, 1) == 0)
-    return 13;
-  if(strncmp("lw", str, 2) == 0)
-    return 14;
-  if(strncmp("sw", str, 2) == 0)
-    return 15;
+  // puts(str);
+  if(strncmp(ADDI, str, strlen(ADDI)) == 0)
+    return ADDI_OPCODE;
+  if(strncmp(SUBI, str, strlen(SUBI)) == 0)
+    return SUBI_OPCODE;
+  if(strncmp(EXIT, str, strlen(EXIT)) == 0)
+    return EXIT_OPCODE;
+  if(strncmp(ADD, str, strlen(ADD)) == 0)
+    return ADD_OPCODE;
+  if(strncmp(SUB, str, strlen(SUB)) == 0)
+    return SUB_OPCODE;
+  if(strncmp(MUL, str, strlen(MUL)) == 0)
+    return MUL_OPCODE;
+  if(strncmp(DIV, str, strlen(DIV)) == 0)
+    return DIV_OPCODE;
+  if(strncmp(AND, str, strlen(AND)) == 0)
+    return AND_OPCODE;
+  if(strncmp(NOT, str, strlen(NOT)) == 0)
+    return NOT_OPCODE;
+  if(strncmp(BLT, str, strlen(BLT)) == 0)
+    return BLT_OPCODE;
+  if(strncmp(BGT, str, strlen(BGT)) == 0)
+    return BGT_OPCODE;
+  if(strncmp(BEQ, str, strlen(BEQ)) == 0)
+    return BEQ_OPCODE;
+  if(strncmp(BNE, str, strlen(BNE)) == 0)
+    return BNE_OPCODE;
+  if(strncmp(OR, str, strlen(OR)) == 0)
+    return OR_OPCODE;
+  if(strncmp(LW, str, strlen(LW)) == 0)
+    return LW_OPCODE;
+  if(strncmp(SW, str, strlen(SW)) == 0)
+    return SW_OPCODE;
+  if(strncmp(J, str, strlen(J)) == 0)
+    return J_OPCODE;
   else
     return -1;
   
@@ -389,7 +417,7 @@ bool validate_number(char *c){
 // por exemplo, "add rs,rs,rt" e retorna apenas seu opcode.
 // se não existe nenhum, retorna -1
 int read_instruction_name(FILE *input, FILE *output){
-
+  // printf("ftell: %li", ftell(input));
   char buffer[10];
   char c;
   int cnt=0;
@@ -403,7 +431,6 @@ int read_instruction_name(FILE *input, FILE *output){
   buffer[cnt] = '\0';
 
   int opcode = get_opcode(buffer);
-  fprintf(output, "%d\n", opcode);
 
   skip(input);
   return opcode;
@@ -472,6 +499,7 @@ int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
 }
 
 int dec_to_bin(int num){
+
   for(int i = 0; i < 32; i++){
     printf("%d", (num&(1 << (31-i)))!=0);
   }
@@ -615,34 +643,33 @@ void read_data_section(FILE *arq){
 
 void parse_assembly(FILE *input, FILE *output){
   // skip(arq);
-  fprintf(output, "Lendo configs\n");
-  if (!read_config(input, output)){
-    fprintf(output, "Erro ao ler as configuracoes\n");
-    return;
-  }
-  fprintf(output, "Fim da leitura das configs\n");
+  // fprintf(output, "Lendo configs\n");
+  // if (!read_config(input, output)){
+  //   fprintf(output, "Erro ao ler as configuracoes\n");
+  //   return;
+  // }
+  // fprintf(output, "Fim da leitura das configs\n");
 
 
-  // char _;
+  char _;
 
-  // do{
-
-  //   int opcode=-1, section=-1;
-
-  //   if((opcode = read_instruction_name(arq)) != -1){
-  //     fprintf("READ INSTRUCTION %d\n", opcode);
-  //     int instruction = read_instruction(opcode, arq);
-  //   }
-
-  //   else if((section = find_section(arq)) != -1){
-  //     if(section == 0){
-  //       read_data_section(arq);
-  //     }
-  //     else if(section == 1){
-  //       continue;
-  //     }
-  //   }
-  // }while((_ = fgetc(arq)) != EOF);
+  do{
+    // printf("A\n");
+    int opcode=-1, section=-1;
+    printf("ftell: %li\n", ftell(input));
+    if((opcode = read_instruction_name(input, output)) != -1){
+      fprintf(output, "READ INSTRUCTION %d\n", opcode);
+      int instruction = read_instruction(opcode, input);
+    }
+    else if((section = find_section(input)) != -1){
+      if(section == 0){
+        read_data_section(input);
+      }
+      else if(section == 1){
+        continue;
+      }
+    }
+  }while((_ = fgetc(input)) != EOF);
 
 }
 
