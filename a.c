@@ -5,40 +5,41 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define ADD "add"
+#define ADD "add "
 #define ADD_OPCODE 0
-#define ADDI "addi"
+#define ADDI "addi "
 #define ADDI_OPCODE 1
-#define SUB "sub"
+#define SUB "sub "
 #define SUB_OPCODE 2
-#define SUBI "subi"
+#define SUBI "subi "
 #define SUBI_OPCODE 3
-#define MUL "mul"
+#define MUL "mul "
 #define MUL_OPCODE 4
-#define DIV "div"
+#define DIV "div "
 #define DIV_OPCODE 5
-#define AND "and"
+#define AND "and "
 #define AND_OPCODE 6
-#define OR "or"
+#define OR "or "
 #define OR_OPCODE 7
-#define NOT "not"
+#define NOT "not "
 #define NOT_OPCODE 8
-#define BLT "blt"
+#define BLT "blt "
 #define BLT_OPCODE 9
-#define BGT "bgt"
+#define BGT "bgt "
 #define BGT_OPCODE 10
-#define BEQ "beq"
+#define BEQ "beq "
 #define BEQ_OPCODE 11
-#define BNE "bne"
+#define BNE "bne "
 #define BNE_OPCODE 12
-#define J "j"
+#define J "j "
 #define J_OPCODE 13
-#define LW "lw"
+#define LW "lw "
 #define LW_OPCODE 14
-#define SW "sw"
+#define SW "sw "
 #define SW_OPCODE 15
-#define EXIT "exit"
+#define EXIT "exit "
 #define EXIT_OPCODE 16
+
 
 // Símbolos para leitura das configurações
 #define UF_SYMBOL "UF"
@@ -47,6 +48,8 @@
 #define MUL_SYMBOL "mul"
 #define INTEGER_SYMBOL "integer"
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
+#define INSTRUCTION_NAMES { ADD, ADDI, SUB, SUBI, MUL, DIV, AND, OR, NOT, BLT, BGT, BEQ, BNE, J, LW, SW, EXIT }
+
 
 typedef struct Functional_unit
 {
@@ -230,14 +233,17 @@ int read_number(FILE *arq){
     c = fgetc(arq);
   }
   buffer[index] = '\0';
+
+  if(!isdigit(c)) fseek(arq, -1, SEEK_CUR);
+
   return atoi(buffer);
 }
 
 bool read_uf(FILE *input, FILE *output){
   fprintf(output, "Lendo Uf\n");
 
-  char *expeted_tokens[] = CONFIG_SYMBOLS;
-  int num_tokens = sizeof(expeted_tokens) / sizeof(expeted_tokens[0]);
+  char *expected_tokens[] = CONFIG_SYMBOLS;
+  int num_tokens = sizeof(expected_tokens) / sizeof(expected_tokens[0]);
   int num_ufs[num_tokens];
   memset(num_ufs, -1, sizeof(num_ufs));
 
@@ -245,7 +251,7 @@ bool read_uf(FILE *input, FILE *output){
     for (int j=0; j<num_tokens; j++){
       if (
         num_ufs[j] == -1
-        && read_next_token(input, expeted_tokens[j])
+        && read_next_token(input, expected_tokens[j])
         && read_next_token(input, ":"))
       {
         num_ufs[j] = read_number(input);
@@ -283,8 +289,8 @@ bool read_uf(FILE *input, FILE *output){
 bool read_inst(FILE *input, FILE *output){
   fprintf(output, "Lendo inst\n");
 
-  char *expeted_tokens[] = CONFIG_SYMBOLS;
-  int num_tokens = sizeof(expeted_tokens) / sizeof(expeted_tokens[0]);
+  char *expected_tokens[] = CONFIG_SYMBOLS;
+  int num_tokens = sizeof(expected_tokens) / sizeof(expected_tokens[0]);
   int num_cycles[num_tokens];
   memset(num_cycles, -1, sizeof(num_cycles));
 
@@ -292,7 +298,7 @@ bool read_inst(FILE *input, FILE *output){
     for (int j=0; j<num_tokens; j++){
       if (
         num_cycles[j] == -1
-        && read_next_token(input, expeted_tokens[j])
+        && read_next_token(input, expected_tokens[j])
         && read_next_token(input, ":"))
       {
         num_cycles[j] = read_number(input);
@@ -457,26 +463,31 @@ int read_register_id(FILE *arq){
 // a partir de SEEK_CUR, se não exister nenhum, retorna -1;
 int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
   
-  puts("here");
-
 
   if(type == REGISTER){
-    int register_id = read_register_id(arq);
-    skip(arq);
-    if(expect_comma){
-      char comma = fgetc(arq);
-      if(comma != ','){
-        die(arq, "Expected ','");
-      }
+    if(!read_next_token(arq, "r")) return -1;
+
+    int register_id = read_number(arq);
+    if(expect_comma && !read_next_token(arq, ",")){
+      die(arq, "Expected ','");
     }
-    skip(arq);
 
     return register_id;
   }
   else if(type == IMM){
-    return -1;
+    return read_number(arq);
   }
   else if(type == MEMORY){
+    int desvio = read_number(arq);
+    if(!read_next_token(arq, "("))
+      die(arq, "Expected '('");
+    if(!read_next_token(arq, "r"))
+      die(arq, "Expected 'r'");
+    int register_id = read_number(arq);
+
+    if(!read_next_token(arq, ")"))
+      die(arq, "Expected ')'");
+
     return -1;
   }
 
@@ -495,7 +506,7 @@ int dec_to_bin(int num){
 
 }
 
-int read_instruction(int opcode, FILE* arq){
+int read_instruction_given_opcode(int opcode, FILE* arq){
 
   int rd=0, rs=0, rt=0, imm=0, extra=0;
 
@@ -506,10 +517,6 @@ int read_instruction(int opcode, FILE* arq){
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-
-      printf("%d %d %d\n", rd, rs, rt);
-      printf("%d\n", read_instructionR(opcode, rd, rs, rt, 0));
-      die(arq, "Morri");
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 1:
@@ -534,12 +541,6 @@ int read_instruction(int opcode, FILE* arq){
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-
-      printf("%d %d %d\n", rd, rs, rt);
-      printf("%d\n", read_instructionR(opcode, rd, rs, rt, 0));
-
-      dec_to_bin(read_instructionR(opcode, rd, rs, rt, 0));
-      die(arq, "morri");
 
       return read_instructionR(opcode, rs, rs, rt, 0);
 
@@ -623,6 +624,28 @@ int find_section(FILE *arq){
   return -1;
 }
 
+
+int read_instruction(FILE *arq, FILE *output){
+
+  fprintf(output, "Lendo Instruções\n");
+
+
+  char *expected_tokens[] = INSTRUCTION_NAMES;
+  int num_tokens = sizeof(expected_tokens) / sizeof(expected_tokens[0]);
+
+  for (int opcode=0; opcode < num_tokens; opcode++){
+
+    printf("BUSCANDO %s\n", expected_tokens[opcode]);
+    if(read_next_token(arq, expected_tokens[opcode])){
+      printf("LEU %s\n", expected_tokens[opcode]);
+      return read_instruction_given_opcode(opcode, arq);
+    }
+  }
+
+  return -1;
+
+}
+
 // Lê as informações da seção .data, que está no SEEK_CUR
 void read_data_section(FILE *arq){
 
@@ -639,7 +662,17 @@ void parse_assembly(FILE *input, FILE *output){
   fprintf(output, "Fim da leitura das configs\n");
 
 
-  char _;
+
+
+  int instruction_code;
+  while((instruction_code = read_instruction(input, output)) != -1){
+    dec_to_bin(instruction_code);
+
+    char buff[50];
+    fpeek(input, buff, 40);
+    puts(buff);
+    // faz alguma coisa com instruction code
+  }
 
   // do{
   //   // printf("A\n");
@@ -700,7 +733,7 @@ int main(int argc, char *argv[])
 
   int memory_size = 32;
   FILE* output_stream = stdout;
-  char* input_file_name = "input.txt";
+  char* input_file_name = "input.sb";
   FILE* input_file;
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
