@@ -211,8 +211,9 @@ bool read_next_token(FILE *arq, char *expected_token){
   }
   fseek(arq, -1, SEEK_CUR);
 
-  char token[strlen(expected_token)];
+  char token[strlen(expected_token)+1];
   fread(token, strlen(expected_token), 1, arq);
+  token[strlen(expected_token)] = '\0';
   bool found = strncmp(token, expected_token, strlen(expected_token)) == 0;
   if (!found) fseek(arq, -strlen(expected_token), SEEK_CUR);
 
@@ -528,7 +529,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
     case 2:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
-      imm = read_operand(arq, IMM, false);
+      rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
     case 3:
@@ -627,7 +628,7 @@ int find_section(FILE *arq){
 
 int read_instruction(FILE *arq, FILE *output){
 
-  fprintf(output, "Lendo Instruções\n");
+  // fprintf(output, "Lendo Instruções\n");
 
 
   char *expected_tokens[] = INSTRUCTION_NAMES;
@@ -635,7 +636,7 @@ int read_instruction(FILE *arq, FILE *output){
 
   for (int opcode=0; opcode < num_tokens; opcode++){
 
-    printf("BUSCANDO %s\n", expected_tokens[opcode]);
+    // printf("BUSCANDO %s\n", expected_tokens[opcode]);
     if(read_next_token(arq, expected_tokens[opcode])){
       printf("LEU %s\n", expected_tokens[opcode]);
       return read_instruction_given_opcode(opcode, arq);
@@ -666,11 +667,8 @@ void parse_assembly(FILE *input, FILE *output){
 
   int instruction_code;
   while((instruction_code = read_instruction(input, output)) != -1){
-    dec_to_bin(instruction_code);
+    // dec_to_bin(instruction_code);
 
-    char buff[50];
-    fpeek(input, buff, 40);
-    puts(buff);
     // faz alguma coisa com instruction code
   }
 
