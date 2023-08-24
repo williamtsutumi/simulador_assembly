@@ -39,6 +39,7 @@
 #define SW_OPCODE 15
 #define EXIT "exit "
 #define EXIT_OPCODE 16
+#define INSTRUCTION_NAMES { ADD, ADDI, SUB, SUBI, MUL, DIV, AND, OR, NOT, BLT, BGT, BEQ, BNE, J, LW, SW, EXIT }
 
 
 // Símbolos para leitura das configurações
@@ -48,7 +49,8 @@
 #define MUL_SYMBOL "mul"
 #define INTEGER_SYMBOL "integer"
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
-#define INSTRUCTION_NAMES { ADD, ADDI, SUB, SUBI, MUL, DIV, AND, OR, NOT, BLT, BGT, BEQ, BNE, J, LW, SW, EXIT }
+
+#define NUM_MAX_INSTRUCTIONS 50
 
 
 typedef struct Functional_unit
@@ -74,6 +76,7 @@ CPU cpu;
 int* memory;
 int instruction_count = 0;
 const char* code_file_name;
+int *instructions;
 
 int add_cycles, mul_cycles, integer_cycles;
 
@@ -514,99 +517,99 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
   switch(opcode){
 
     // tratar erros
-    case 0:
+    case ADD_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 1:
+    case ADDI_OPCODE:
       rt = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 2:
+    case SUB_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 3:
+    case SUBI_OPCODE:
       rt = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 4:
+    case MUL_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
 
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 5:
+    case DIV_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 6:
+    case AND_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 7:
+    case OR_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 8:
+    case NOT_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, false);
       return read_instructionR(opcode, rs, rs, rt, 0);
 
-    case 9:
+    case BLT_OPCODE:
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 10:
+    case BGT_OPCODE:
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 11:
+    case BEQ_OPCODE:
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 12:
+    case BNE_OPCODE:
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 13:
+    case J_OPCODE:
       imm = read_operand(arq, IMM, false);
       return read_instructionJ(opcode, imm);
 
-    case 14:
+    case LW_OPCODE:
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, MEMORY, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 15:
+    case SW_OPCODE:
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, MEMORY, false);
       return read_instructionI(opcode, rs, rt, imm);
 
-    case 16:
+    case EXIT_OPCODE:
       return read_instructionJ(opcode, 1);
   }
 
@@ -662,34 +665,22 @@ void parse_assembly(FILE *input, FILE *output){
   }
   fprintf(output, "Fim da leitura das configs\n");
 
-
-
-
-  int instruction_code;
-  while((instruction_code = read_instruction(input, output)) != -1){
-    // dec_to_bin(instruction_code);
-
-    // faz alguma coisa com instruction code
+  if (!read_next_token(input, ".data")){
+    fprintf(output, ".data não encontrado\n");
+    return;
   }
 
-  // do{
-  //   // printf("A\n");
-  //   int opcode=-1, section=-1;
-  //   printf("ftell: %li\n", ftell(input));
-  //   if((opcode = read_instruction_name(input, output)) != -1){
-  //     fprintf(output, "READ INSTRUCTION %d\n", opcode);
-  //     int instruction = read_instruction(opcode, input);
-  //   }
-  //   else if((section = find_section(input)) != -1){
-  //     if(section == 0){
-  //       read_data_section(input);
-  //     }
-  //     else if(section == 1){
-  //       continue;
-  //     }
-  //   }
-  // }while((_ = fgetc(input)) != EOF);
+  if (!read_next_token(input, ".text")){
+    fprintf(output, ".text não encontrado\n");
+    return;
+  }
 
+  instructions = (int *)malloc(NUM_MAX_INSTRUCTIONS * sizeof(int));
+  memset(instructions, -1, sizeof(instructions));
+  int instruction_code;
+  for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i++){
+    instructions[i] = instruction_code;
+  }
 }
 
 bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
@@ -717,6 +708,7 @@ void free_memory(FILE *input, FILE*output){
   free(cpu.add_ufs);
   free(cpu.mul_ufs);
   free(cpu.integer_ufs);
+  free(instructions);
 
   fclose(input);
   fclose(output);
@@ -742,16 +734,6 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Falha na leitura do arquivo %s.\n", input_file_name);
   }
 
-  // printf("printando functional_units na main\n");
-  // for (int i=0; i<add_ufs; i++){
-  //   printf("%d\n", cpu.add_ufs->current_cycle);
-  // }
-  // for (int i=0; i<mul_ufs; i++){
-  //   printf("%d\n", cpu.mul_ufs->current_cycle);
-  // }
-  // for (int i=0; i<integer_ufs; i++){
-  //   printf("%d\n", cpu.integer_ufs->current_cycle);
-  // }
   free_memory(input_file, output_stream);
 
   return 0;

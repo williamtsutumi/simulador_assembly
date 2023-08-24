@@ -15,7 +15,9 @@ INST:
 
 */ 
 
+.data
 
+.text
 mul r3,      r7,  r15
 and r1,   r2, r5
 add      r0, r1, r2
