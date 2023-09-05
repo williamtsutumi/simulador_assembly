@@ -154,38 +154,57 @@ void free_memory(FILE *input, FILE*output){
   fclose(output);
 }
 
+void write_result(){
+
+}
+
+void print_ufs_current_cycle(){
+  fprintf(output, "add ufs: \n");
+  for(int i=0; i<cpu.size_add_ufs; i++)
+    fprintf(output, "%d\n", cpu.add_ufs[0].current_cycle);
+
+  fprintf(output, "mul ufs: \n");    
+  for(int i=0; i<cpu.size_mul_ufs; i++)
+    fprintf(output, "%d\n", cpu.mul_ufs[0].current_cycle);
+
+  fprintf(output, "integer ufs: \n");
+  for(int i=0; i<cpu.size_integer_ufs; i++)
+    fprintf(output, "%d\n", cpu.integer_ufs[0].current_cycle);
+}
+
 void increment_all_uf_current_cycle(FILE *output){
-  int add_ufs = sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]);
-  fprintf(output, "add_ufs: %d\n", add_ufs);
-  for (int i=0; i<add_ufs; i++){
+  for (int i=0; i<cpu.size_add_ufs; i++){
+    if (cpu.add_ufs[i].current_cycle == add_cycles){
+      cpu.add_ufs[i].current_cycle = 1;
+      write_result();
+      continue;
+    }
     // if is executing instruction
     cpu.add_ufs[i].current_cycle++;
-    fprintf(output, "%d\n", cpu.add_ufs[0].current_cycle);
   }
-
-  printf("*******************\n");
-  int mul_ufs = sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]);
-  fprintf(output, "mul_ufs: %d\n", mul_ufs);
-  for (int i=0; i<mul_ufs; i++){
+  for (int i=0; i<cpu.size_mul_ufs; i++){
+    if (cpu.mul_ufs[i].current_cycle == mul_cycles){
+      cpu.mul_ufs[i].current_cycle = 1;
+      write_result();
+      continue;
+    }
     // if is executing instruction
     cpu.mul_ufs[i].current_cycle++;
-    fprintf(output, "%d\n", cpu.mul_ufs[0].current_cycle);
   }
-  
-  printf("*******************\n");
-  int integer_ufs = sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]);
-  fprintf(output, "integer_ufs: %d\n", integer_ufs);
-  for (int i=0; i<integer_ufs; i++){
+  for (int i=0; i<cpu.size_integer_ufs; i++){
+    if (cpu.integer_ufs[i].current_cycle == integer_cycles){
+      cpu.integer_ufs[i].current_cycle = 1;
+      write_result();
+      continue;
+    }
     // if is executing instruction
     cpu.integer_ufs[i].current_cycle++;
-    fprintf(output, "%d\n", cpu.integer_ufs[0].current_cycle);
   }
-  printf("*******************\n");
+  print_ufs_current_cycle();
 }
 
 void run_one_cycle(FILE *output){
   fprintf(output, "Faz alguma coisa hamada\n");
-
   increment_all_uf_current_cycle(output);
 }
 
