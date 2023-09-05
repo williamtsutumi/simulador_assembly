@@ -51,18 +51,94 @@
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
 #define NUM_MAX_INSTRUCTIONS 50
+#define MAX_NUM_ROWS_TABLE 100
 
+typedef enum {
+    FUNCTIONAL_UNIT,
+    INSTRUCTION,
+    REGISTER_INFO
+} TableElementType;
 
-typedef struct Functional_unit
+typedef struct FunctionalUnit
 {
-  int current_cycle;
-} Functional_unit;
+    int current_cycle;
+    char* name;
+    bool busy;
+    char* op, fi, fj, fk, qj, qk, rj, rk;
+} FunctionalUnit;
+
+typedef struct Instruction
+{
+    char* instruction_info;
+    int issue_time;
+    int read_operand_time;
+    int exec_complete_time;
+    int write_result_time;
+} Instruction;
+
+typedef struct RegisterInfo
+{
+    char* instruction_type;
+} RegisterInfo;
+
+typedef struct {
+    TableElementType type;
+    union {
+        struct FunctionalUnit* functional_unit;
+        struct Instruction* instruction;
+        struct RegisterInfo* register_info;
+    } data;
+} Table_entry;
+
+typedef struct {
+    TableElementType type;
+    int num_rows;
+    Table_entry* table;
+} Table;
+
+void init_table(Table* table, TableElementType type) {
+    table->type = type;
+    table->num_rows = 0;
+    table->table = (Table_entry*)malloc(MAX_NUM_ROWS_TABLE * sizeof(Table_entry));
+}
+
+void insert_in_table(Table* table, void* item_ptr) {
+    TableElementType type = table->type;
+
+    if (table->num_rows < MAX_NUM_ROWS_TABLE) {
+        Table_entry *table_entry = &table->table[table->num_rows++];
+
+        switch (type) {
+            case FUNCTIONAL_UNIT:
+                table_entry->data.functional_unit = (struct FunctionalUnit*)item_ptr;
+                break;
+            case INSTRUCTION:
+                table_entry->data.instruction = (struct Instruction*)item_ptr;
+                break;
+            case REGISTER_INFO:
+                table_entry->data.register_info = (struct RegisterInfo*)item_ptr;
+                break;
+            default:
+                break;
+        }
+    } else {
+        // Handle table full error
+    }
+}
+
+void print_table(Table* table){
+  for(int i = 0; i < table->num_rows; i++){
+    printf("%d\n", table->table->data.functional_unit->current_cycle);
+  }
+}
+
+
 
 typedef struct CPU
 {
-  Functional_unit *add_ufs;
-  Functional_unit *mul_ufs;
-  Functional_unit *integer_ufs;
+  FunctionalUnit *add_ufs;
+  FunctionalUnit *mul_ufs;
+  FunctionalUnit *integer_ufs;
 } CPU;
 
 typedef enum OPERAND_TYPE
@@ -273,18 +349,18 @@ bool read_uf(FILE *input, FILE *output){
   fprintf(output, "MUL ufs: %d\n", mul_ufs);
   fprintf(output, "INTEGER ufs: %d\n", integer_ufs);
   reset();
-  cpu.add_ufs = malloc(sizeof(Functional_unit) * add_ufs);
+  cpu.add_ufs = malloc(sizeof(FunctionalUnit) * add_ufs);
   printf("çalksdjfakj\n");
   printf("%li\n", sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]));
   for (int i=0; i<add_ufs; i++){
     cpu.add_ufs[i].current_cycle = 0;
   }
-  cpu.mul_ufs = malloc(sizeof(Functional_unit) * mul_ufs);
+  cpu.mul_ufs = malloc(sizeof(FunctionalUnit) * mul_ufs);
   printf("%li\n", sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]));
   for (int i=0; i<mul_ufs; i++){
     cpu.mul_ufs[i].current_cycle = 0;
   }
-  cpu.integer_ufs = malloc(sizeof(Functional_unit) * integer_ufs);
+  cpu.integer_ufs = malloc(sizeof(FunctionalUnit) * integer_ufs);
   printf("%li\n", sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]));
   for (int i=0; i<integer_ufs; i++){
     cpu.integer_ufs[i].current_cycle = 0;
@@ -762,12 +838,30 @@ void run_simulation(FILE *output){
   }
 }
 
+void __table_tests(){
+  Table tabela;
+  init_table(&tabela, FUNCTIONAL_UNIT);
+
+  FunctionalUnit tb;
+  tb.current_cycle = 1;
+
+  insert_in_table(&tabela, &tb);
+
+  print_table(&tabela);
+  tb.current_cycle = 3;
+
+  print_table(&tabela);
+
+}
+
 int main(int argc, char *argv[])
 {
   code_file_name = argv[0];
-  // Functional_unit add;
-  // Functional_unit mul;
-  // Functional_unit integer;
+  // FunctionalUnit add;
+  // FunctionalUnit mul;
+  // FunctionalUnit integer;
+
+  __table_tests();
 
   int memory_size = 32;
   FILE* output_stream = stdout;
