@@ -268,25 +268,29 @@ bool read_uf(FILE *input, FILE *output){
   int add_ufs = num_ufs[0];
   int mul_ufs = num_ufs[1];
   int integer_ufs = num_ufs[2];
-  cpu.add_ufs = malloc(sizeof(Functional_unit) * add_ufs);
-  for (int i=0; i<add_ufs; i++){
-    cpu.add_ufs[i].current_cycle = 0;
-  }
-  cpu.mul_ufs = malloc(sizeof(Functional_unit) * mul_ufs);
-  for (int i=0; i<mul_ufs; i++){
-    cpu.mul_ufs[i].current_cycle = 0;
-  }
-  cpu.integer_ufs = malloc(sizeof(Functional_unit) * integer_ufs);
-  for (int i=0; i<integer_ufs; i++){
-    cpu.integer_ufs[i].current_cycle = 0;
-  }
-
-  
   yellow();
   fprintf(output, "ADD ufs: %d\n", add_ufs);
   fprintf(output, "MUL ufs: %d\n", mul_ufs);
   fprintf(output, "INTEGER ufs: %d\n", integer_ufs);
   reset();
+  cpu.add_ufs = malloc(sizeof(Functional_unit) * add_ufs);
+  printf("çalksdjfakj\n");
+  printf("%li\n", sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]));
+  for (int i=0; i<add_ufs; i++){
+    cpu.add_ufs[i].current_cycle = 0;
+  }
+  cpu.mul_ufs = malloc(sizeof(Functional_unit) * mul_ufs);
+  printf("%li\n", sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]));
+  for (int i=0; i<mul_ufs; i++){
+    cpu.mul_ufs[i].current_cycle = 0;
+  }
+  cpu.integer_ufs = malloc(sizeof(Functional_unit) * integer_ufs);
+  printf("%li\n", sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]));
+  for (int i=0; i<integer_ufs; i++){
+    cpu.integer_ufs[i].current_cycle = 0;
+  }
+
+  
   return true;
 }
 
@@ -656,23 +660,23 @@ void read_data_section(FILE *arq){
   skip(arq);
 }
 
-void parse_assembly(FILE *input, FILE *output){
+bool parse_assembly(FILE *input, FILE *output){
   // skip(arq);
   fprintf(output, "Lendo configs\n");
   if (!read_config(input, output)){
     fprintf(output, "Erro ao ler as configuracoes\n");
-    return;
+    return false;
   }
   fprintf(output, "Fim da leitura das configs\n");
 
   if (!read_next_token(input, ".data")){
     fprintf(output, ".data não encontrado\n");
-    return;
+    return false;
   }
 
   if (!read_next_token(input, ".text")){
     fprintf(output, ".text não encontrado\n");
-    return;
+    return false;
   }
 
   instructions = (int *)malloc(NUM_MAX_INSTRUCTIONS * sizeof(int));
@@ -681,6 +685,7 @@ void parse_assembly(FILE *input, FILE *output){
   for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i++){
     instructions[i] = instruction_code;
   }
+  return true;
 }
 
 bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
@@ -714,6 +719,49 @@ void free_memory(FILE *input, FILE*output){
   fclose(output);
 }
 
+void increment_all_uf_current_cycle(FILE *output){
+  int add_ufs = sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]);
+  fprintf(output, "add_ufs: %d\n", add_ufs);
+  for (int i=0; i<add_ufs; i++){
+    // if is executing instruction
+    cpu.add_ufs[i].current_cycle++;
+    fprintf(output, "%d\n", cpu.add_ufs[0].current_cycle);
+  }
+
+  printf("*******************\n");
+  int mul_ufs = sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]);
+  fprintf(output, "mul_ufs: %d\n", mul_ufs);
+  for (int i=0; i<mul_ufs; i++){
+    // if is executing instruction
+    cpu.mul_ufs[i].current_cycle++;
+    fprintf(output, "%d\n", cpu.mul_ufs[0].current_cycle);
+  }
+  
+  printf("*******************\n");
+  int integer_ufs = sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]);
+  fprintf(output, "integer_ufs: %d\n", integer_ufs);
+  for (int i=0; i<integer_ufs; i++){
+    // if is executing instruction
+    cpu.integer_ufs[i].current_cycle++;
+    fprintf(output, "%d\n", cpu.integer_ufs[0].current_cycle);
+  }
+  printf("*******************\n");
+}
+
+void run_one_cycle(FILE *output){
+  fprintf(output, "Faz alguma coisa hamada\n");
+
+  increment_all_uf_current_cycle(output);
+}
+
+void run_simulation(FILE *output){
+  bool has_active_instruction = true;
+  while (has_active_instruction){
+    getchar();
+    run_one_cycle(output);
+  }
+}
+
 int main(int argc, char *argv[])
 {
   code_file_name = argv[0];
@@ -728,7 +776,14 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    parse_assembly(input_file, output_stream);
+    if (parse_assembly(input_file, output_stream)){
+      printf("AAA\n");
+      printf("%li\n", sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]));
+      printf("%li\n", sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]));
+      printf("%li\n", sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]));
+      printf("AAA\n");
+      run_simulation(output_stream);
+    }
   }
   else{
     fprintf(output_stream, "Falha na leitura do arquivo %s.\n", input_file_name);
