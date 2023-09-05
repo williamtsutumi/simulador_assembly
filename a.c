@@ -7,46 +7,9 @@
 
 #include "assembly_parse.h"
 
-
-
-
 #define MAX_NUM_ROWS_TABLE 100
 
-typedef enum {
-    FUNCTIONAL_UNIT,
-    INSTRUCTION,
-    REGISTER_INFO
-} TableElementType;
-
-
-typedef struct Instruction
-{
-    char* instruction_info;
-    int issue_time;
-    int read_operand_time;
-    int exec_complete_time;
-    int write_result_time;
-} Instruction;
-
-typedef struct RegisterInfo
-{
-    char* instruction_type;
-} RegisterInfo;
-
-typedef struct {
-    TableElementType type;
-    union {
-        struct FunctionalUnit* functional_unit;
-        struct Instruction* instruction;
-        struct RegisterInfo* register_info;
-    } data;
-} Table_entry;
-
-typedef struct {
-    TableElementType type;
-    int num_rows;
-    Table_entry* table;
-} Table;
+#include "types.h"
 
 void init_table(Table* table, TableElementType type) {
     table->type = type;
@@ -86,14 +49,6 @@ void print_table(Table* table){
 
 
 
-typedef struct CPU
-{
-  FunctionalUnit *add_ufs;
-  FunctionalUnit *mul_ufs;
-  FunctionalUnit *integer_ufs;
-} CPU;
-
-
 CPU cpu;
 int* memory;
 int instruction_count = 0;
@@ -101,7 +56,6 @@ const char* code_file_name;
 int *instructions;
 
 int add_cycles, mul_cycles, integer_cycles;
-
 
 int dec_to_bin(int num){
 
@@ -121,7 +75,6 @@ int find_section(FILE *arq){
   skip(arq);
   return -1;
 }
-
 
 bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
   for(int i = 1; i < argc; i+=2){
@@ -158,7 +111,7 @@ void write_result(){
 
 }
 
-void print_ufs_current_cycle(){
+void print_ufs_current_cycle(FILE *output){
   fprintf(output, "add ufs: \n");
   for(int i=0; i<cpu.size_add_ufs; i++)
     fprintf(output, "%d\n", cpu.add_ufs[0].current_cycle);
@@ -200,7 +153,7 @@ void increment_all_uf_current_cycle(FILE *output){
     // if is executing instruction
     cpu.integer_ufs[i].current_cycle++;
   }
-  print_ufs_current_cycle();
+  print_ufs_current_cycle(output);
 }
 
 void run_one_cycle(FILE *output){
@@ -248,7 +201,7 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream)){
+    if (parse_assembly(input_file, output_stream, &cpu)){
       printf("AAA\n");
       printf("%li\n", sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]));
       printf("%li\n", sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]));

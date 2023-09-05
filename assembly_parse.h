@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include "types.h"
+
 #define ADD "add "
 #define ADD_OPCODE 0
 #define ADDI "addi "
@@ -44,7 +46,6 @@
 #define EXIT_OPCODE 16
 #define INSTRUCTION_NAMES { ADD, ADDI, SUB, SUBI, MUL, DIV, AND, OR, NOT, BLT, BGT, BEQ, BNE, J, LW, SW, EXIT }
 
-
 // Símbolos para leitura das configurações
 #define UF_SYMBOL "UF"
 #define INST_SYMBOL "INST"
@@ -53,30 +54,38 @@
 #define INTEGER_SYMBOL "integer"
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
-#define NUM_MAX_INSTRUCTIONS 50
+#define MAX_NUM_INSTRUCTIONS 50
 
-typedef enum OPERAND_TYPE
-{
-    REGISTER,
-    IMM,
-    MEMORY,
-} OPERAND_TYPE;
+//****************Declarações das funções**************//
 
-typedef struct FunctionalUnit
-{
-    int current_cycle;
-    char* name;
-    bool busy;
-    char* op, fi, fj, fk, qj, qk, rj, rk;
-} FunctionalUnit;
+void red();
+void yellow();
+void reset();
+void print_str_int(char *, FILE *);
+void print_str_char(char *, FILE *);
+int read_instructionR(int, int, int, int, int);
+int read_instructionI(int, int, int, int);
+int read_instructionJ(int, int);
+void fpeek(FILE *, char *, int);
+void decapitalize(char *);
+int get_opcode(char *);
+int read_instruction_given_opcode(int, FILE *);
+void read_data_section(FILE *);
+int read_instruction(FILE *, FILE *);
+int read_operand(FILE *, OPERAND_TYPE, bool);
+int read_instruction_name(FILE *, FILE *);
+int read_register_id(FILE *);
+bool validate_number(char *);
+void skip(FILE *);
+void die(FILE *, char *);
+bool read_next_token(FILE *, char *);
+int read_number(FILE *);
+bool read_uf(FILE *, FILE *, CPU *);
+bool read_inst(FILE *, FILE *, CPU *);
+bool read_config(FILE *, FILE *, CPU *);
+bool parse_assembly(FILE *, FILE *, CPU *);
 
-
-int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma);
-int read_number(FILE *arq);
-bool validate_number(char *c);
-bool read_next_token(FILE *arq, char *expected_token);
-void skip(FILE *arq);
-void die(FILE* arq, char* error_msg);
+//*****************************************************//
 
 int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
 {
@@ -103,14 +112,13 @@ int read_instructionJ(int opcode, int address)
     return op | address;
 }
 
-
-void red () {
+void red() {
   printf("\033[1;31m");
 }
 void yellow() {
   printf("\033[1;33m");
 }
-void reset () {
+void reset() {
   printf("\033[0m");
 }
 void print_str_int(char *string, FILE *output){
@@ -129,7 +137,6 @@ void print_str_char(char *string, FILE *output){
   fprintf(output, "%c", string[strlen(string)-1]);
   fprintf(output, ":Fim da string\n");
 }
-
 
 void fpeek(FILE* arq, char* peekBuffer, int peekSize){
   char character;
@@ -310,8 +317,6 @@ void read_data_section(FILE *arq){
   skip(arq);
 }
 
-
-
 int read_instruction(FILE *arq, FILE *output){
 
   // fprintf(output, "Lendo Instruções\n");
@@ -427,7 +432,6 @@ bool validate_number(char *c){
   return true;
 }
 
-
 // le espaços brancos, tabs, comentários, etc até que encontre alguma 
 // coisa interessante;
 void skip(FILE *arq){
@@ -524,7 +528,7 @@ int read_number(FILE *arq){
   return atoi(buffer);
 }
 
-bool read_uf(FILE *input, FILE *output){
+bool read_uf(FILE *input, FILE *output, CPU *cpu){
   fprintf(output, "Lendo Uf\n");
 
   char *expected_tokens[] = CONFIG_SYMBOLS;
@@ -546,36 +550,29 @@ bool read_uf(FILE *input, FILE *output){
   for (int i=0; i<num_tokens; i++)
     if (num_ufs[i] == -1) return false;
 
-  int add_ufs = num_ufs[0];
-  int mul_ufs = num_ufs[1];
-  int integer_ufs = num_ufs[2];
+  cpu->size_add_ufs = num_ufs[0];
+  cpu->size_mul_ufs = num_ufs[1];
+  cpu->size_integer_ufs = num_ufs[2];
   yellow();
-  fprintf(output, "ADD ufs: %d\n", add_ufs);
-  fprintf(output, "MUL ufs: %d\n", mul_ufs);
-  fprintf(output, "INTEGER ufs: %d\n", integer_ufs);
+  fprintf(output, "ADD ufs: %d\n", cpu->size_add_ufs);
+  fprintf(output, "MUL ufs: %d\n", cpu->size_mul_ufs);
+  fprintf(output, "INTEGER ufs: %d\n", cpu->size_integer_ufs);
   reset();
-//   cpu.add_ufs = malloc(sizeof(FunctionalUnit) * add_ufs);
-//   printf("çalksdjfakj\n");
-//   printf("%li\n", sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]));
-  for (int i=0; i<add_ufs; i++){
-    // cpu.add_ufs[i].current_cycle = 0;
-  }
-//   cpu.mul_ufs = malloc(sizeof(FunctionalUnit) * mul_ufs);
-//   printf("%li\n", sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]));
-  for (int i=0; i<mul_ufs; i++){
-    // cpu.mul_ufs[i].current_cycle = 0;
-  }
-//   cpu.integer_ufs = malloc(sizeof(FunctionalUnit) * integer_ufs);
-//   printf("%li\n", sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]));
-  for (int i=0; i<integer_ufs; i++){
-    // cpu.integer_ufs[i].current_cycle = 0;
-  }
+  cpu->add_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_add_ufs);
+  printf("çalksdjfakasidufh anoiuwehfoiuah oidus fhgoaiuhj\n");
+  for (int i=0; i<cpu->size_add_ufs; i++) cpu->add_ufs[i].current_cycle = 0;
+  cpu->mul_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_mul_ufs);
+
+  for (int i=0; i<cpu->size_mul_ufs; i++) cpu->mul_ufs[i].current_cycle = 0;
+  cpu->integer_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_integer_ufs);
+
+  for (int i=0; i<cpu->size_integer_ufs; i++) cpu->integer_ufs[i].current_cycle = 0;
 
   
   return true;
 }
 
-bool read_inst(FILE *input, FILE *output){
+bool read_inst(FILE *input, FILE *output, CPU *cpu){
   fprintf(output, "Lendo inst\n");
 
   char *expected_tokens[] = CONFIG_SYMBOLS;
@@ -609,7 +606,7 @@ bool read_inst(FILE *input, FILE *output){
 }
 
 // lê o arquivo de configurações, falta terminar
-bool read_config(FILE *input, FILE *output)
+bool read_config(FILE *input, FILE *output, CPU *cpu)
 {
   if (!read_next_token(input, "/*")) return false;
 
@@ -626,10 +623,10 @@ bool read_config(FILE *input, FILE *output)
 
         switch (j){
           case 0:
-            if (!read_uf(input, output)) return false;
+            if (!read_uf(input, output, cpu)) return false;
             break;
           case 1:
-            if (!read_inst(input, output)) return false;
+            if (!read_inst(input, output, cpu)) return false;
             break;
         }
         completed[j] = true;
@@ -642,10 +639,10 @@ bool read_config(FILE *input, FILE *output)
   return read_next_token(input, "*/");
 }
 
-bool parse_assembly(FILE *input, FILE *output){
+bool parse_assembly(FILE *input, FILE *output, CPU *cpu){
   // skip(arq);
   fprintf(output, "Lendo configs\n");
-  if (!read_config(input, output)){
+  if (!read_config(input, output, cpu)){
     fprintf(output, "Erro ao ler as configuracoes\n");
     return false;
   }
