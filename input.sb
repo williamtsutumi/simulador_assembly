@@ -34,3 +34,4 @@ bgt r1, r20   , 55
 beq r1, r20   , 555
 bne r1, r20, 555
 j 10
+exit
