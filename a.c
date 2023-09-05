@@ -26,6 +26,7 @@
 #define BLT "blt "
 #define BLT_OPCODE 9
 #define BGT "bgt "
+
 #define BGT_OPCODE 10
 #define BEQ "beq "
 #define BEQ_OPCODE 11
