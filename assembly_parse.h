@@ -558,17 +558,16 @@ bool read_uf(FILE *input, FILE *output, CPU *cpu){
   fprintf(output, "MUL ufs: %d\n", cpu->size_mul_ufs);
   fprintf(output, "INTEGER ufs: %d\n", cpu->size_integer_ufs);
   reset();
+
   cpu->add_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_add_ufs);
-  printf("çalksdjfakasidufh anoiuwehfoiuah oidus fhgoaiuhj\n");
   for (int i=0; i<cpu->size_add_ufs; i++) cpu->add_ufs[i].current_cycle = 0;
+
   cpu->mul_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_mul_ufs);
-
   for (int i=0; i<cpu->size_mul_ufs; i++) cpu->mul_ufs[i].current_cycle = 0;
-  cpu->integer_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_integer_ufs);
 
+  cpu->integer_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_integer_ufs);
   for (int i=0; i<cpu->size_integer_ufs; i++) cpu->integer_ufs[i].current_cycle = 0;
 
-  
   return true;
 }
 
@@ -594,13 +593,13 @@ bool read_inst(FILE *input, FILE *output, CPU *cpu){
   for (int i=0; i<num_tokens; i++)
     if (num_cycles[i] == -1) return false;
 
-//   add_cycles = num_cycles[0];
-//   mul_cycles = num_cycles[1];
-//   integer_cycles = num_cycles[2];
+  cpu->cycles_to_complete_add = num_cycles[0];
+  cpu->cycles_to_complete_mul = num_cycles[1];
+  cpu->cycles_to_complete_integer = num_cycles[2];
   yellow();
-//   fprintf(output, "ADD cycles: %d\n", add_cycles);
-//   fprintf(output, "MUL cycles: %d\n", mul_cycles);
-//   fprintf(output, "INTEGER cycles: %d\n", integer_cycles);
+  fprintf(output, "ADD cycles: %d\n", cpu->cycles_to_complete_add);
+  fprintf(output, "MUL cycles: %d\n", cpu->cycles_to_complete_mul);
+  fprintf(output, "INTEGER cycles: %d\n", cpu->cycles_to_complete_integer);
   reset();
   return true;
 }

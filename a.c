@@ -11,6 +11,12 @@
 
 #include "types.h"
 
+CPU cpu;
+int* memory;
+int instruction_count = 0;
+const char* code_file_name;
+int *instructions;
+
 void init_table(Table* table, TableElementType type) {
     table->type = type;
     table->num_rows = 0;
@@ -46,16 +52,6 @@ void print_table(Table* table){
     printf("%d\n", table->table->data.functional_unit->current_cycle);
   }
 }
-
-
-
-CPU cpu;
-int* memory;
-int instruction_count = 0;
-const char* code_file_name;
-int *instructions;
-
-int add_cycles, mul_cycles, integer_cycles;
 
 int dec_to_bin(int num){
 
@@ -127,7 +123,7 @@ void print_ufs_current_cycle(FILE *output){
 
 void increment_all_uf_current_cycle(FILE *output){
   for (int i=0; i<cpu.size_add_ufs; i++){
-    if (cpu.add_ufs[i].current_cycle == add_cycles){
+    if (cpu.add_ufs[i].current_cycle == cpu.cycles_to_complete_add){
       cpu.add_ufs[i].current_cycle = 1;
       write_result();
       continue;
@@ -136,7 +132,7 @@ void increment_all_uf_current_cycle(FILE *output){
     cpu.add_ufs[i].current_cycle++;
   }
   for (int i=0; i<cpu.size_mul_ufs; i++){
-    if (cpu.mul_ufs[i].current_cycle == mul_cycles){
+    if (cpu.mul_ufs[i].current_cycle == cpu.cycles_to_complete_mul){
       cpu.mul_ufs[i].current_cycle = 1;
       write_result();
       continue;
@@ -145,7 +141,7 @@ void increment_all_uf_current_cycle(FILE *output){
     cpu.mul_ufs[i].current_cycle++;
   }
   for (int i=0; i<cpu.size_integer_ufs; i++){
-    if (cpu.integer_ufs[i].current_cycle == integer_cycles){
+    if (cpu.integer_ufs[i].current_cycle == cpu.cycles_to_complete_integer){
       cpu.integer_ufs[i].current_cycle = 1;
       write_result();
       continue;
