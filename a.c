@@ -19,6 +19,9 @@ const char *code_file_name;
 int *instructions;
 int instruction_count = 0;
 
+int global_current_cycle = 0;
+int program_counter;
+
 void init_table(Table* table, TableElementType type) {
     table->type = type;
     table->num_rows = 0;
@@ -108,34 +111,42 @@ void write_result(){
 }
 
 void print_ufs_current_cycle(FILE *output){
-  fprintf(output, "add ufs: \n");
-  for(int i=0; i<cpu_configs.size_add_ufs; i++)
-    fprintf(output, "%d\n", functional_units[i].current_cycle);
+  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
+  for (int i=0; i<total_ufs; i++){
+    if (i == 0) printf("ADD UFS:\n");
+    else if (i == cpu_configs.size_add_ufs) printf("MUL UFS:\n");
+    else if (i == cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs) printf("INTEGER UFS:\n");
+    printf("functional unit [%d].cycle: %d\n", i, functional_units[i].current_cycle);
+  }
+}
 
-  fprintf(output, "mul ufs: \n");    
-  for(int i=0; i<cpu_configs.size_mul_ufs; i++)
-    fprintf(output, "%d\n", functional_units[i].current_cycle);
-
-  fprintf(output, "integer ufs: \n");
-  for(int i=0; i<cpu_configs.size_integer_ufs; i++)
-    fprintf(output, "%d\n", functional_units[i].current_cycle);
+bool uf_is_ready(FunctionalUnit uf){
+  if (uf.type == ADD_UF)
+    return uf.current_cycle == cpu_configs.cycles_to_complete_add;
+  else if (uf.type == MUL_UF)
+    return uf.current_cycle == cpu_configs.cycles_to_complete_mul;
+  else if (uf.type == INTEGER_UF)
+    return uf.current_cycle == cpu_configs.cycles_to_complete_integer;
+  return false;
 }
 
 void increment_all_uf_current_cycle(FILE *output){
-  // for (int i=0; i<cpu.size_add_ufs; i++){
-    // if (cpu.add_ufs[i].current_cycle == cpu.cycles_to_complete_add){
-    //   cpu.add_ufs[i].current_cycle = 1;
-    //   write_result();
-    //   continue;
-    // }
-    // if is executing instruction
-    // cpu.add_ufs[i].current_cycle++;
-  // }
+  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
+  for (int i=0; i<total_ufs; i++){
+    if (uf_is_ready(functional_units[i])){
+      functional_units[i].current_cycle = 1;
+      // write_result(functional_units[i]);
+      continue;
+    }
+    // if is busy
+    functional_units[i].current_cycle++;
+  }
   print_ufs_current_cycle(output);
 }
 
 void run_one_cycle(FILE *output){
   fprintf(output, "Faz alguma coisa hamada\n");
+  global_current_cycle++;
   increment_all_uf_current_cycle(output);
 }
 
@@ -166,14 +177,13 @@ void __table_tests(){
 void malloc_cpu(){
   int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
   functional_units = (FunctionalUnit*)malloc(total_ufs * sizeof(FunctionalUnit));
-  for (int i=0; i<cpu_configs.size_add_ufs; i++){
-    functional_units[i].type = ADD_UF;
-  }
-  for (int i=0; i<cpu_configs.size_mul_ufs; i++){
-    functional_units[i].type = MUL_UF;
-  }
-  for (int i=0; i<cpu_configs.size_integer_ufs; i++){
-    functional_units[i].type = INTEGER_UF;
+  for (int i=0; i<total_ufs; i++){
+    if (i < cpu_configs.size_add_ufs)
+      functional_units[i].type = ADD_UF;
+    else if (i < cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs)
+      functional_units[i].type = MUL_UF;
+    else
+      functional_units[i].type = INTEGER_UF;
   }
 }
 
