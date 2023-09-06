@@ -184,9 +184,6 @@ void __table_tests(){
 int main(int argc, char *argv[])
 {
   code_file_name = argv[0];
-  // FunctionalUnit add;
-  // FunctionalUnit mul;
-  // FunctionalUnit integer;
 
   __table_tests();
 

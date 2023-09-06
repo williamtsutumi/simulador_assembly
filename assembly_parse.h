@@ -42,7 +42,7 @@
 #define LW_OPCODE 14
 #define SW "sw "
 #define SW_OPCODE 15
-#define EXIT "exit "
+#define EXIT "exit"
 #define EXIT_OPCODE 16
 #define INSTRUCTION_NAMES { ADD, ADDI, SUB, SUBI, MUL, DIV, AND, OR, NOT, BLT, BGT, BEQ, BNE, J, LW, SW, EXIT }
 
@@ -325,16 +325,10 @@ void read_data_section(FILE *arq){
 }
 
 int read_instruction(FILE *arq, FILE *output){
-
-  // fprintf(output, "Lendo Instruções\n");
-
-
   char *expected_tokens[] = INSTRUCTION_NAMES;
   int num_tokens = sizeof(expected_tokens) / sizeof(expected_tokens[0]);
 
   for (int opcode=0; opcode < num_tokens; opcode++){
-
-    // printf("BUSCANDO %s\n", expected_tokens[opcode]);
     if(read_next_token(arq, expected_tokens[opcode], true)){
       printf("LEU %s\n", expected_tokens[opcode]);
       return read_instruction_given_opcode(opcode, arq);
@@ -674,9 +668,13 @@ bool parse_assembly(FILE *input, FILE *output, CPU *cpu, int **instructions){
   *instructions = (int *)malloc(MAX_NUM_INSTRUCTIONS * sizeof(int));
   printf("%li\n", sizeof(*instructions) / sizeof(*instructions[0]));
   memset(*instructions, -1, sizeof(*instructions));
-  
+
   int instruction_code;
+  int last_ftell = ftell(input);
   for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i++){
+    if (last_ftell == ftell(input)) break;
+    last_ftell = ftell(input);
+    
     (*instructions)[i] = instruction_code;
   }
   return true;
