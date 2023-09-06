@@ -5,15 +5,17 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include "assembly_parse.h"
-
 #define MAX_NUM_ROWS_TABLE 100
 
+#include "assembly_parser.h"
 #include "types.h"
 
-CPU cpu;
-int* memory;
-const char* code_file_name;
+CPU_Configurations cpu_configs;
+FunctionalUnit *functional_units;
+
+int *memory;
+int *registrers;
+const char *code_file_name;
 int *instructions;
 int instruction_count = 0;
 
@@ -94,9 +96,7 @@ bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name,
 }
 
 void free_memory(FILE *input, FILE*output){
-  free(cpu.add_ufs);
-  free(cpu.mul_ufs);
-  free(cpu.integer_ufs);
+  free(functional_units);
   free(instructions);
 
   fclose(input);
@@ -109,46 +109,28 @@ void write_result(){
 
 void print_ufs_current_cycle(FILE *output){
   fprintf(output, "add ufs: \n");
-  for(int i=0; i<cpu.size_add_ufs; i++)
-    fprintf(output, "%d\n", cpu.add_ufs[0].current_cycle);
+  for(int i=0; i<cpu_configs.size_add_ufs; i++)
+    fprintf(output, "%d\n", functional_units[i].current_cycle);
 
   fprintf(output, "mul ufs: \n");    
-  for(int i=0; i<cpu.size_mul_ufs; i++)
-    fprintf(output, "%d\n", cpu.mul_ufs[0].current_cycle);
+  for(int i=0; i<cpu_configs.size_mul_ufs; i++)
+    fprintf(output, "%d\n", functional_units[i].current_cycle);
 
   fprintf(output, "integer ufs: \n");
-  for(int i=0; i<cpu.size_integer_ufs; i++)
-    fprintf(output, "%d\n", cpu.integer_ufs[0].current_cycle);
+  for(int i=0; i<cpu_configs.size_integer_ufs; i++)
+    fprintf(output, "%d\n", functional_units[i].current_cycle);
 }
 
 void increment_all_uf_current_cycle(FILE *output){
-  for (int i=0; i<cpu.size_add_ufs; i++){
-    if (cpu.add_ufs[i].current_cycle == cpu.cycles_to_complete_add){
-      cpu.add_ufs[i].current_cycle = 1;
-      write_result();
-      continue;
-    }
+  // for (int i=0; i<cpu.size_add_ufs; i++){
+    // if (cpu.add_ufs[i].current_cycle == cpu.cycles_to_complete_add){
+    //   cpu.add_ufs[i].current_cycle = 1;
+    //   write_result();
+    //   continue;
+    // }
     // if is executing instruction
-    cpu.add_ufs[i].current_cycle++;
-  }
-  for (int i=0; i<cpu.size_mul_ufs; i++){
-    if (cpu.mul_ufs[i].current_cycle == cpu.cycles_to_complete_mul){
-      cpu.mul_ufs[i].current_cycle = 1;
-      write_result();
-      continue;
-    }
-    // if is executing instruction
-    cpu.mul_ufs[i].current_cycle++;
-  }
-  for (int i=0; i<cpu.size_integer_ufs; i++){
-    if (cpu.integer_ufs[i].current_cycle == cpu.cycles_to_complete_integer){
-      cpu.integer_ufs[i].current_cycle = 1;
-      write_result();
-      continue;
-    }
-    // if is executing instruction
-    cpu.integer_ufs[i].current_cycle++;
-  }
+    // cpu.add_ufs[i].current_cycle++;
+  // }
   print_ufs_current_cycle(output);
 }
 
@@ -181,6 +163,20 @@ void __table_tests(){
 
 }
 
+void malloc_cpu(){
+  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
+  functional_units = (FunctionalUnit*)malloc(total_ufs * sizeof(FunctionalUnit));
+  for (int i=0; i<cpu_configs.size_add_ufs; i++){
+    functional_units[i].type = ADD_UF;
+  }
+  for (int i=0; i<cpu_configs.size_mul_ufs; i++){
+    functional_units[i].type = MUL_UF;
+  }
+  for (int i=0; i<cpu_configs.size_integer_ufs; i++){
+    functional_units[i].type = INTEGER_UF;
+  }
+}
+
 int main(int argc, char *argv[])
 {
   code_file_name = argv[0];
@@ -194,7 +190,8 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream, &cpu, &instructions)){
+    if (parse_assembly(input_file, output_stream, &cpu_configs, &instructions)){
+      malloc_cpu();
       run_simulation(output_stream);
     }
   }

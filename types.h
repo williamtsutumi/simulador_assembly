@@ -8,13 +8,30 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
+typedef enum {
+    INTEGER_UF,
+    MUL_UF,
+    ADD_UF
+} UF_TYPE;
+
 typedef struct FunctionalUnit
 {
+    UF_TYPE type;
     int current_cycle;
     char* name;
     bool busy;
-    char* op, fi, fj, fk, qj, qk, rj, rk;
 } FunctionalUnit;
+
+typedef struct DataBus
+{
+    int nao_sei_oq_botar;
+} DataBus;
+
+typedef struct ScoreBoard
+{
+    UF_TYPE type;
+    char* op, fi, fj, fk, qj, qk, rj, rk;
+} ScoreBoard;
 
 typedef enum {
     FUNCTIONAL_UNIT,
@@ -51,17 +68,14 @@ typedef struct {
     Table_entry* table;
 } Table;
 
-typedef struct CPU
+typedef struct CPU_Configurations
 {
-  FunctionalUnit *add_ufs;
-  FunctionalUnit *mul_ufs;
-  FunctionalUnit *integer_ufs;
   int size_add_ufs;
   int size_mul_ufs;
   int size_integer_ufs;
   int cycles_to_complete_add;
   int cycles_to_complete_mul;
   int cycles_to_complete_integer;
-} CPU;
+} CPU_Configurations;
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef ASSEMBLY_PARSE
-#define ASSEMBLY_PARSE
+#ifndef ASSEMBLY_PARSER
+#define ASSEMBLY_PARSER
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,13 +83,13 @@ int read_register_id(FILE *);
 int read_instruction_name(FILE *, FILE *);
 int read_instruction(FILE *, FILE *);
 
-bool read_uf(FILE *, FILE *, CPU *);
-bool read_inst(FILE *, FILE *, CPU *);
-bool read_config(FILE *, FILE *, CPU *);
+bool read_uf(FILE *, FILE *, CPU_Configurations *);
+bool read_inst(FILE *, FILE *, CPU_Configurations *);
+bool read_config(FILE *, FILE *, CPU_Configurations *);
 
 void read_data_section(FILE *);
 
-bool parse_assembly(FILE *, FILE *, CPU *, int **);
+bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int **);
 
 //*****************************************************//
 
@@ -537,7 +537,7 @@ int read_number(FILE *arq){
   return atoi(buffer);
 }
 
-bool read_uf(FILE *input, FILE *output, CPU *cpu){
+bool read_uf(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
   fprintf(output, "Lendo Uf\n");
 
   char *expected_tokens[] = CONFIG_SYMBOLS;
@@ -559,28 +559,28 @@ bool read_uf(FILE *input, FILE *output, CPU *cpu){
   for (int i=0; i<num_tokens; i++)
     if (num_ufs[i] == -1) return false;
 
-  cpu->size_add_ufs = num_ufs[0];
-  cpu->size_mul_ufs = num_ufs[1];
-  cpu->size_integer_ufs = num_ufs[2];
+  cpu_configs->size_add_ufs = num_ufs[0];
+  cpu_configs->size_mul_ufs = num_ufs[1];
+  cpu_configs->size_integer_ufs = num_ufs[2];
   yellow();
-  fprintf(output, "ADD ufs: %d\n", cpu->size_add_ufs);
-  fprintf(output, "MUL ufs: %d\n", cpu->size_mul_ufs);
-  fprintf(output, "INTEGER ufs: %d\n", cpu->size_integer_ufs);
+  fprintf(output, "ADD ufs: %d\n", cpu_configs->size_add_ufs);
+  fprintf(output, "MUL ufs: %d\n", cpu_configs->size_mul_ufs);
+  fprintf(output, "INTEGER ufs: %d\n", cpu_configs->size_integer_ufs);
   reset();
+  // todo ->
+  // cpu->add_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_add_ufs);
+  // for (int i=0; i<cpu->size_add_ufs; i++) cpu->add_ufs[i].current_cycle = 0;
 
-  cpu->add_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_add_ufs);
-  for (int i=0; i<cpu->size_add_ufs; i++) cpu->add_ufs[i].current_cycle = 0;
+  // cpu->mul_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_mul_ufs);
+  // for (int i=0; i<cpu->size_mul_ufs; i++) cpu->mul_ufs[i].current_cycle = 0;
 
-  cpu->mul_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_mul_ufs);
-  for (int i=0; i<cpu->size_mul_ufs; i++) cpu->mul_ufs[i].current_cycle = 0;
-
-  cpu->integer_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_integer_ufs);
-  for (int i=0; i<cpu->size_integer_ufs; i++) cpu->integer_ufs[i].current_cycle = 0;
+  // cpu->integer_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_integer_ufs);
+  // for (int i=0; i<cpu->size_integer_ufs; i++) cpu->integer_ufs[i].current_cycle = 0;
 
   return true;
 }
 
-bool read_inst(FILE *input, FILE *output, CPU *cpu){
+bool read_inst(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
   fprintf(output, "Lendo inst\n");
 
   char *expected_tokens[] = CONFIG_SYMBOLS;
@@ -602,19 +602,19 @@ bool read_inst(FILE *input, FILE *output, CPU *cpu){
   for (int i=0; i<num_tokens; i++)
     if (num_cycles[i] == -1) return false;
 
-  cpu->cycles_to_complete_add = num_cycles[0];
-  cpu->cycles_to_complete_mul = num_cycles[1];
-  cpu->cycles_to_complete_integer = num_cycles[2];
+  cpu_configs->cycles_to_complete_add = num_cycles[0];
+  cpu_configs->cycles_to_complete_mul = num_cycles[1];
+  cpu_configs->cycles_to_complete_integer = num_cycles[2];
   yellow();
-  fprintf(output, "ADD cycles: %d\n", cpu->cycles_to_complete_add);
-  fprintf(output, "MUL cycles: %d\n", cpu->cycles_to_complete_mul);
-  fprintf(output, "INTEGER cycles: %d\n", cpu->cycles_to_complete_integer);
+  fprintf(output, "ADD cycles: %d\n", cpu_configs->cycles_to_complete_add);
+  fprintf(output, "MUL cycles: %d\n", cpu_configs->cycles_to_complete_mul);
+  fprintf(output, "INTEGER cycles: %d\n", cpu_configs->cycles_to_complete_integer);
   reset();
   return true;
 }
 
 // lê o arquivo de configurações, falta terminar
-bool read_config(FILE *input, FILE *output, CPU *cpu)
+bool read_config(FILE *input, FILE *output, CPU_Configurations *cpu_configs)
 {
   if (!read_next_token(input, "/*", true)) return false;
 
@@ -631,10 +631,10 @@ bool read_config(FILE *input, FILE *output, CPU *cpu)
 
         switch (j){
           case 0:
-            if (!read_uf(input, output, cpu)) return false;
+            if (!read_uf(input, output, cpu_configs)) return false;
             break;
           case 1:
-            if (!read_inst(input, output, cpu)) return false;
+            if (!read_inst(input, output, cpu_configs)) return false;
             break;
         }
         completed[j] = true;
@@ -647,9 +647,9 @@ bool read_config(FILE *input, FILE *output, CPU *cpu)
   return read_next_token(input, "*/", false);
 }
 
-bool parse_assembly(FILE *input, FILE *output, CPU *cpu, int **instructions){
+bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int **instructions){
   fprintf(output, "Lendo configs\n");
-  if (!read_config(input, output, cpu)){
+  if (!read_config(input, output, cpu_configs)){
     fprintf(output, "Erro ao ler as configuracoes\n");
     return false;
   }
