@@ -197,12 +197,7 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream, &cpu)){
-      printf("AAA\n");
-      printf("%li\n", sizeof(cpu.add_ufs) / sizeof(cpu.add_ufs[0]));
-      printf("%li\n", sizeof(cpu.mul_ufs) / sizeof(cpu.mul_ufs[0]));
-      printf("%li\n", sizeof(cpu.integer_ufs) / sizeof(cpu.integer_ufs[0]));
-      printf("AAA\n");
+    if (parse_assembly(input_file, output_stream, &cpu, &instructions)){
       run_simulation(output_stream);
     }
   }

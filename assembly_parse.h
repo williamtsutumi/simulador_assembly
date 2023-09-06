@@ -89,7 +89,7 @@ bool read_config(FILE *, FILE *, CPU *);
 
 void read_data_section(FILE *);
 
-bool parse_assembly(FILE *, FILE *, CPU *);
+bool parse_assembly(FILE *, FILE *, CPU *, int **);
 
 //*****************************************************//
 
@@ -317,6 +317,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
   return -1;
 
 }
+
 // Lê as informações da seção .data, que está no SEEK_CUR
 void read_data_section(FILE *arq){
 
@@ -348,7 +349,6 @@ int read_instruction(FILE *arq, FILE *output){
 // a partir de SEEK_CUR, se não exister nenhum, retorna -1;
 int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
   
-
   if(type == REGISTER){
     if(!read_next_token(arq, "r", false)) return -1;
 
@@ -525,8 +525,6 @@ bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
   return found;
 }
 
-
-// precisar retornar true/false se conseguiu ler número
 int read_number(FILE *arq){
   char c = fgetc(arq);
   while (c != EOF && isspace(c)){
@@ -625,7 +623,7 @@ bool read_inst(FILE *input, FILE *output, CPU *cpu){
 bool read_config(FILE *input, FILE *output, CPU *cpu)
 {
   if (!read_next_token(input, "/*", true)) return false;
-  printf("oi\n");
+
   char *next_tokens[] = { UF_SYMBOL, INST_SYMBOL };
   int num_tokens = sizeof(next_tokens) / sizeof(next_tokens[0]);
   bool completed[num_tokens];
@@ -655,8 +653,7 @@ bool read_config(FILE *input, FILE *output, CPU *cpu)
   return read_next_token(input, "*/", false);
 }
 
-bool parse_assembly(FILE *input, FILE *output, CPU *cpu){
-  // skip(arq);
+bool parse_assembly(FILE *input, FILE *output, CPU *cpu, int **instructions){
   fprintf(output, "Lendo configs\n");
   if (!read_config(input, output, cpu)){
     fprintf(output, "Erro ao ler as configuracoes\n");
@@ -674,11 +671,13 @@ bool parse_assembly(FILE *input, FILE *output, CPU *cpu){
     return false;
   }
 
-//   instructions = (int *)malloc(NUM_MAX_INSTRUCTIONS * sizeof(int));
-//   memset(instructions, -1, sizeof(instructions));
+  *instructions = (int *)malloc(MAX_NUM_INSTRUCTIONS * sizeof(int));
+  printf("%li\n", sizeof(*instructions) / sizeof(*instructions[0]));
+  memset(*instructions, -1, sizeof(*instructions));
+  
   int instruction_code;
   for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i++){
-    // instructions[i] = instruction_code;
+    (*instructions)[i] = instruction_code;
   }
   return true;
 }
