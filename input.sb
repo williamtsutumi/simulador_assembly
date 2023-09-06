@@ -1,5 +1,5 @@
 
-
+# algum comentario qualquer
  /*
       UF   :
     integer: 5
@@ -15,13 +15,20 @@ INST:
 
 */ 
 
+# mais um comentario
+
 .data
+
+# olha outro aqui
 
 .text
 mul r3,      r7,  r15
 and r1,   r2, r5
 add      r0, r1, r2
 add r3,      r7,  r15
+
+# Tem mais um aqui
+
 sub r15, r15 ,  r2
 addi r0,      r1, 5
 subi r2, r12,       1000

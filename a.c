@@ -13,9 +13,9 @@
 
 CPU cpu;
 int* memory;
-int instruction_count = 0;
 const char* code_file_name;
 int *instructions;
+int instruction_count = 0;
 
 void init_table(Table* table, TableElementType type) {
     table->type = type;

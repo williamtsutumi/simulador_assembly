@@ -63,26 +63,32 @@ void yellow();
 void reset();
 void print_str_int(char *, FILE *);
 void print_str_char(char *, FILE *);
+
+int read_number(FILE *);
+bool validate_number(char *);
+void decapitalize(char *);
+void skip(FILE *);
+void die(FILE *, char *);
+void fpeek(FILE *, char *, int);
+bool read_next_token(FILE *, char *, bool);
+
 int read_instructionR(int, int, int, int, int);
 int read_instructionI(int, int, int, int);
 int read_instructionJ(int, int);
-void fpeek(FILE *, char *, int);
-void decapitalize(char *);
+
 int get_opcode(char *);
 int read_instruction_given_opcode(int, FILE *);
-void read_data_section(FILE *);
-int read_instruction(FILE *, FILE *);
 int read_operand(FILE *, OPERAND_TYPE, bool);
-int read_instruction_name(FILE *, FILE *);
 int read_register_id(FILE *);
-bool validate_number(char *);
-void skip(FILE *);
-void die(FILE *, char *);
-bool read_next_token(FILE *, char *);
-int read_number(FILE *);
+int read_instruction_name(FILE *, FILE *);
+int read_instruction(FILE *, FILE *);
+
 bool read_uf(FILE *, FILE *, CPU *);
 bool read_inst(FILE *, FILE *, CPU *);
 bool read_config(FILE *, FILE *, CPU *);
+
+void read_data_section(FILE *);
+
 bool parse_assembly(FILE *, FILE *, CPU *);
 
 //*****************************************************//
@@ -328,7 +334,7 @@ int read_instruction(FILE *arq, FILE *output){
   for (int opcode=0; opcode < num_tokens; opcode++){
 
     // printf("BUSCANDO %s\n", expected_tokens[opcode]);
-    if(read_next_token(arq, expected_tokens[opcode])){
+    if(read_next_token(arq, expected_tokens[opcode], true)){
       printf("LEU %s\n", expected_tokens[opcode]);
       return read_instruction_given_opcode(opcode, arq);
     }
@@ -344,10 +350,10 @@ int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
   
 
   if(type == REGISTER){
-    if(!read_next_token(arq, "r")) return -1;
+    if(!read_next_token(arq, "r", false)) return -1;
 
     int register_id = read_number(arq);
-    if(expect_comma && !read_next_token(arq, ",")){
+    if(expect_comma && !read_next_token(arq, ",", false)){
       die(arq, "Expected ','");
     }
 
@@ -358,13 +364,13 @@ int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
   }
   else if(type == MEMORY){
     int desvio = read_number(arq);
-    if(!read_next_token(arq, "("))
+    if(!read_next_token(arq, "(", false))
       die(arq, "Expected '('");
-    if(!read_next_token(arq, "r"))
+    if(!read_next_token(arq, "r", false))
       die(arq, "Expected 'r'");
     int register_id = read_number(arq);
 
-    if(!read_next_token(arq, ")"))
+    if(!read_next_token(arq, ")", false))
       die(arq, "Expected ')'");
 
     return -1;
@@ -489,15 +495,26 @@ void die(FILE* arq, char* error_msg){
   }
 }
 
+void skip_spaces(FILE *arq){
+  char c = fgetc(arq);
+  while (c != EOF && isspace(c)) c = fgetc(arq);
+
+  fseek(arq, -1, SEEK_CUR);
+}
+
 // Retorna true se encontra a string "expexted_token", ignorando espaços
 // antes da string. Caso não encontre a string, retorna false e volta
 // o ponteiro *arq para a posição inicial
-bool read_next_token(FILE *arq, char *expected_token){
+bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
+  skip_spaces(arq);
+
   char c = fgetc(arq);
-  while (c != EOF && isspace(c)){
-    c = fgetc(arq);
-  }
+  if (expect_comment && c == '#')
+    while (c != EOF && c != '\n') c = fgetc(arq);
+
   fseek(arq, -1, SEEK_CUR);
+
+  skip_spaces(arq);
 
   char token[strlen(expected_token)+1];
   fread(token, strlen(expected_token), 1, arq);
@@ -508,7 +525,7 @@ bool read_next_token(FILE *arq, char *expected_token){
   return found;
 }
 
-// falta verificar se tem não digitos entre os dígitos também
+
 // precisar retornar true/false se conseguiu ler número
 int read_number(FILE *arq){
   char c = fgetc(arq);
@@ -540,8 +557,8 @@ bool read_uf(FILE *input, FILE *output, CPU *cpu){
     for (int j=0; j<num_tokens; j++){
       if (
         num_ufs[j] == -1
-        && read_next_token(input, expected_tokens[j])
-        && read_next_token(input, ":"))
+        && read_next_token(input, expected_tokens[j], false)
+        && read_next_token(input, ":", false))
       {
         num_ufs[j] = read_number(input);
       }
@@ -583,8 +600,8 @@ bool read_inst(FILE *input, FILE *output, CPU *cpu){
     for (int j=0; j<num_tokens; j++){
       if (
         num_cycles[j] == -1
-        && read_next_token(input, expected_tokens[j])
-        && read_next_token(input, ":"))
+        && read_next_token(input, expected_tokens[j], false)
+        && read_next_token(input, ":", false))
       {
         num_cycles[j] = read_number(input);
       }
@@ -607,8 +624,8 @@ bool read_inst(FILE *input, FILE *output, CPU *cpu){
 // lê o arquivo de configurações, falta terminar
 bool read_config(FILE *input, FILE *output, CPU *cpu)
 {
-  if (!read_next_token(input, "/*")) return false;
-
+  if (!read_next_token(input, "/*", true)) return false;
+  printf("oi\n");
   char *next_tokens[] = { UF_SYMBOL, INST_SYMBOL };
   int num_tokens = sizeof(next_tokens) / sizeof(next_tokens[0]);
   bool completed[num_tokens];
@@ -616,8 +633,8 @@ bool read_config(FILE *input, FILE *output, CPU *cpu)
 
   for(int i=0; i<num_tokens; i++){
     for (int j=0; j<num_tokens; j++){
-      if (read_next_token(input, next_tokens[j])){
-        if (!read_next_token(input, ":")) return false;
+      if (read_next_token(input, next_tokens[j], false)){
+        if (!read_next_token(input, ":", false)) return false;
         if (completed[j]) return false; // config duplicada
 
         switch (j){
@@ -635,7 +652,7 @@ bool read_config(FILE *input, FILE *output, CPU *cpu)
   for (int i=0; i<num_tokens; i++)
     if (completed[i] == false) return false;
   
-  return read_next_token(input, "*/");
+  return read_next_token(input, "*/", false);
 }
 
 bool parse_assembly(FILE *input, FILE *output, CPU *cpu){
@@ -647,12 +664,12 @@ bool parse_assembly(FILE *input, FILE *output, CPU *cpu){
   }
   fprintf(output, "Fim da leitura das configs\n");
 
-  if (!read_next_token(input, ".data")){
+  if (!read_next_token(input, ".data", true)){
     fprintf(output, ".data não encontrado\n");
     return false;
   }
 
-  if (!read_next_token(input, ".text")){
+  if (!read_next_token(input, ".text", true)){
     fprintf(output, ".text não encontrado\n");
     return false;
   }
