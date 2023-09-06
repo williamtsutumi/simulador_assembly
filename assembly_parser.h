@@ -54,8 +54,6 @@
 #define INTEGER_SYMBOL "integer"
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
-#define MAX_NUM_INSTRUCTIONS 50
-
 //****************Declarações das funções**************//
 
 void red();

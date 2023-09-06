@@ -5,8 +5,6 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define MAX_NUM_ROWS_TABLE 100
-
 #include "assembly_parser.h"
 #include "types.h"
 

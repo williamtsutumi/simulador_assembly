@@ -1,6 +1,9 @@
 #ifndef TYPES
 #define TYPES
 
+#define MAX_NUM_INSTRUCTIONS 50
+#define MAX_NUM_ROWS_TABLE 100
+
 typedef enum OPERAND_TYPE
 {
     REGISTER,
