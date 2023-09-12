@@ -108,10 +108,6 @@ void free_memory(FILE *input, FILE*output){
   fclose(output);
 }
 
-void write_result(){
-
-}
-
 void print_ufs_current_cycle(FILE *output){
   int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
   for (int i=0; i<total_ufs; i++){
@@ -155,6 +151,18 @@ void fetch_next_instruction(){
   }
 }
 
+bool has_idle_uf(){
+
+}
+
+FunctionalUnitState *find_uf_with_type(UF_TYPE type){
+
+}
+
+FunctionalUnitState get_instruction_information(int instruction_binary){
+
+}
+
 void issue_instruction(){
   FunctionalUnitState instruction_info = get_instruction_information(g_instruction_register);
 
@@ -164,6 +172,18 @@ void issue_instruction(){
 
     bus.instruction_register = CONTINUE;
   }
+}
+
+void read_operands(){
+
+}
+
+void execute(){
+  
+}
+
+void write_result(){
+  
 }
 
 void run_one_cycle(FILE *output){
