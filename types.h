@@ -59,24 +59,28 @@ typedef enum InstructionState {
 
 /* TYPES do barramento */
 
+// Indica o que deve um componente deve fazer: continuar sua execução ou permanecer parado
+typedef enum ControlSignal {
+    CONTINUE,
+    STALL
+} ControlSignal;
+
+// Indica se a informação no barramento deve ser lido ou não
 typedef enum SignalFlag {
     IGNORE,
     WRITE_TO_DESTINATION
 } SignalFlag;
 
+    // Indica um dado se movendo de um componente a outro, representa uma parte do barramento
     typedef struct DataSignal {
         int data;
         SignalFlag flag;
     } DataSignal;
 
-    typedef enum ControlSignal {
-        CONTINUE,
-        STALL
-    } ControlSignal;
-
         typedef struct Bus {
-            DataSignal regs[32];
-            DataSignal uf;
+            DataSignal regs[32]; // Informação sendo enviada aos registradores
+            DataSignal uf; // Informação sendo enviada às unidades funcionais
+            ControlSignal instruction_register;
             ControlSignal uf_state1;
         } Bus;
 

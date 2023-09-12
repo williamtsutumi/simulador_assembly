@@ -11,14 +11,18 @@
 CPU_Configurations cpu_configs;
 FunctionalUnit *functional_units;
 
-int *memory;
-int *registrers;
-const char *code_file_name;
-int *instructions;
-int instruction_count = 0;
+int *g_memory;
+int *g_registrers;
+const char *g_code_file_name;
+int *g_instructions;
+int g_instruction_count = 0;
 
-int global_current_cycle = 0;
-int program_counter;
+int g_current_cycle = 0;
+int g_program_counter = 0; // PC
+int g_instruction_register; // IR
+
+ScoreBoard score_board;
+Bus bus;
 
 void init_table(Table* table, TableElementType type) {
     table->type = type;
@@ -85,7 +89,7 @@ bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name,
       // TODO
       // validar que argv[i+1] é uma inteiro
       *memory_size = atoi(argv[i+1]);
-      memory = (int*)(malloc(sizeof(int)*(*memory_size)));
+      g_memory = (int*)(malloc(sizeof(int)*(*memory_size)));
     }
     else if(strcmp(argv[i], "-o") == 0){
       *output_stream = fopen(argv[i+1], "w");
@@ -98,7 +102,7 @@ bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name,
 
 void free_memory(FILE *input, FILE*output){
   free(functional_units);
-  free(instructions);
+  free(g_instructions);
 
   fclose(input);
   fclose(output);
@@ -142,10 +146,34 @@ void increment_all_uf_current_cycle(FILE *output){
   print_ufs_current_cycle(output);
 }
 
+void fetch_next_instruction(){
+  if (bus.instruction_register == CONTINUE){
+    g_instruction_register = g_memory[g_program_counter];
+    g_program_counter++;
+
+    bus.instruction_register = STALL;
+  }
+}
+
+void issue_instruction(){
+  FunctionalUnitState instruction_info = get_instruction_information(g_instruction_register);
+
+  if (has_idle_uf(instruction_info)){
+    FunctionalUnitState *uf = find_uf_with_type(instruction_info.type);
+    *uf = instruction_info;
+
+    bus.instruction_register = CONTINUE;
+  }
+}
+
 void run_one_cycle(FILE *output){
-  fprintf(output, "Faz alguma coisa hamada\n");
-  global_current_cycle++;
-  increment_all_uf_current_cycle(output);
+  g_current_cycle++;
+
+  fetch_next_instruction();
+  issue_instruction();
+  read_operands();
+  execute();
+  write_result();
 }
 
 void run_simulation(FILE *output){
@@ -187,7 +215,7 @@ void malloc_cpu(){
 
 int main(int argc, char *argv[])
 {
-  code_file_name = argv[0];
+  g_code_file_name = argv[0];
 
   __table_tests();
 
@@ -198,7 +226,7 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream, &cpu_configs, &instructions)){
+    if (parse_assembly(input_file, output_stream, &cpu_configs, &g_instructions)){
       malloc_cpu();
       run_simulation(output_stream);
     }
