@@ -4,6 +4,8 @@
 #define MAX_NUM_INSTRUCTIONS 50
 #define MAX_NUM_ROWS_TABLE 100
 
+/* TYPES para leitura do input */
+
 typedef enum OPERAND_TYPE
 {
     REGISTER,
@@ -11,69 +13,75 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
+/* TYPES da representação das unidades funcionais */
+
 typedef enum {
     INTEGER_UF,
     MUL_UF,
     ADD_UF
 } UF_TYPE;
 
-typedef struct FunctionalUnit
-{
-    UF_TYPE type;
-    int current_cycle;
-    char* name;
-} FunctionalUnit;
+    typedef struct FunctionalUnit
+    {
+        UF_TYPE type;
+        int current_cycle;
+        char* name;
+    } FunctionalUnit;
 
-typedef struct DataBus
-{
-    int nao_sei_oq_botar;
-} DataBus;
+// if (bus. sinal de continuar) current_cycle++;
 
-// Existem três partes no scoreboard:
-// 1. Estado da instrução. Indica em qual das quatro etapas a instrução está.
-// 2. Estado da unidade funcional. Indica o estado da unidade funcional. Existem nove 
-// campos para cada unidade funcional:
-// j Busy. Indica se a unidade está ocupada ou não.
-// j Op. Operação a realizar na unidade (p. ex., adição ou subtração).
-// j Fi. Registrador destino.
-// j Fj, Fk. Números de registrador-fonte.
-// j Qj, Qk. Unidades funcionais produzindo registradores-fonte Fj, Fk.
-// j Rj, Rk. Flags indicando quando Fj, Fk estão prontos e ainda não lidos. Definido 
-// como Não após os operandos serem lidos.
-// 3. Estado de resultado de registrador. Indica qual unidade funcional escreverá em 
-// cada registrador, se uma instrução ativa tiver o registrador como seu destino. Esse 
-// campo é definido como um espaço em branco sempre que não houver instruções 
-// pendentes que escreverão nesse registrador.
-typedef struct InstructonState
-{
-
-} InstructonState;
-
-typedef struct FunctionalUnitState
-{
-    UF_TYPE type;
-    char* op, fi, fj, fk, qj, qk, rj, rk;
-    bool busy;
-} FunctionalUnitState;
-
-typedef struct ResultRegisterState
-{
-
-} ResultRegisterState;
+/* TYPES do scoreboarding */
 
 typedef enum InstructionState {
+    FETCH,
     ISSUE,
     READ_OPERANDS,
     EXECUTE,
     WRITE_RESULT
 } InstructionState;
 
-typedef struct ScoreBoard
-{
-    FunctionalUnitState *ufs_states;
-    InstructionState instructions_states[MAX_NUM_INSTRUCTIONS];
-    FunctionalUnit *result_register_state[/*numero de registradores*/];
-} ScoreBoard;
+    typedef struct FunctionalUnitState
+    {
+        UF_TYPE type;
+        char* op, fi, fj, fk, qj, qk, rj, rk;
+        bool busy;
+    } FunctionalUnitState;
+
+        typedef struct ScoreBoard
+        {
+            FunctionalUnitState *ufs_states;
+            InstructionState instructions_states[MAX_NUM_INSTRUCTIONS];
+            // Representa qual unidade funcional escreverá em qual registrador.
+            // Qualquer instrução deve dar stall caso o registrador de destino
+            // já esteja sendo sofrendo escrita por outra instrução.
+            FunctionalUnit *result_register_state[/*numero de registradores*/];
+        } ScoreBoard;
+
+/* TYPES do barramento */
+
+typedef enum SignalFlag {
+    IGNORE,
+    WRITE_TO_DESTINATION
+} SignalFlag;
+
+    typedef struct DataSignal {
+        int data;
+        SignalFlag flag;
+    } DataSignal;
+
+    typedef enum ControlSignal {
+        CONTINUE,
+        STALL
+    } ControlSignal;
+
+        typedef struct Bus {
+            DataSignal regs[32];
+            DataSignal uf;
+            ControlSignal uf_state1;
+        } Bus;
+
+
+/* NAO SEI OQ EH ISSO */
 
 typedef enum {
     FUNCTIONAL_UNIT,
@@ -109,6 +117,8 @@ typedef struct {
     int num_rows;
     Table_entry* table;
 } Table;
+
+/* GERAL */
 
 typedef struct CPU_Configurations
 {
