@@ -107,6 +107,9 @@ void free_memory(FILE *input, FILE*output){
   free(g_functional_units);
   free(g_instructions);
 
+  free(g_bus.ufs_data);
+  free(g_bus.ufs_state);
+
   fclose(input);
   fclose(output);
 }
@@ -124,6 +127,18 @@ void malloc_cpu(){
   }
 }
 
+void malloc_bus(){
+  int num_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+
+  g_bus.ufs_state = (ControlSignal*)malloc(sizeof(ControlSignal) * num_ufs);
+  g_bus.ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
+}
+
+void malloc_memory(){
+  malloc_cpu();
+  malloc_bus();
+}
+
 int main(int argc, char *argv[])
 {
   g_code_file_name = argv[0];
@@ -138,7 +153,7 @@ int main(int argc, char *argv[])
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions)){
-      malloc_cpu();
+      malloc_memory();
       run_simulation(output_stream);
     }
   }

@@ -79,9 +79,9 @@ typedef enum SignalFlag {
 
         typedef struct Bus {
             DataSignal regs[32]; // Informação sendo enviada aos registradores
-            DataSignal uf; // Informação sendo enviada às unidades funcionais
+            DataSignal *ufs_data; // Informação sendo enviada às unidades funcionais
             ControlSignal instruction_register;
-            ControlSignal uf_state1;
+            ControlSignal *ufs_state;
         } Bus;
 
 
