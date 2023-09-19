@@ -86,6 +86,10 @@ void write_result(){
 void run_one_cycle(FILE *output){
   g_current_cycle++;
 
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+
+  print_table(&g_score_board, g_instruction_count, total_ufs);
+
   write_result();
   execute();
   read_operands();
@@ -127,6 +131,38 @@ void malloc_cpu(){
   }
 }
 
+void malloc_ufs_states(){
+    int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+    g_score_board.ufs_states = (FunctionalUnitState*)malloc(total_ufs * sizeof(FunctionalUnitState));
+    for(int i = 0; i < total_ufs; i++){
+      g_score_board.ufs_states[i].type = g_functional_units[i].type;
+      g_score_board.ufs_states[i].fi =
+      g_score_board.ufs_states[i].fj =
+      g_score_board.ufs_states[i].fk =
+      g_score_board.ufs_states[i].qj =
+      g_score_board.ufs_states[i].qk =
+      g_score_board.ufs_states[i].op = -1;
+    }
+
+}
+
+void malloc_instruction_states(){
+    int num_instructions = g_instruction_count;
+
+    g_score_board.instructions_states = (InstructionState*)malloc(num_instructions * sizeof(InstructionState));
+    int num_allocated_inst = sizeof(g_score_board.instructions_states)/sizeof(InstructionState);
+
+    for(int i = 0; i < num_instructions; i++){
+      g_score_board.instructions_states[i].current_state = 
+      g_score_board.instructions_states[i].fetch = 
+      g_score_board.instructions_states[i].issue = 
+      g_score_board.instructions_states[i].read_operands = 
+      g_score_board.instructions_states[i].execute = 
+      g_score_board.instructions_states[i].write_result = -1; 
+
+    }
+}
+
 void malloc_bus(){
   int num_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
@@ -134,16 +170,22 @@ void malloc_bus(){
   g_bus.ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
 }
 
+void malloc_scoreboard(){
+  malloc_instruction_states();
+  malloc_ufs_states();
+}
+
 void malloc_memory(){
   malloc_cpu();
   malloc_bus();
+  malloc_scoreboard();
+
 }
 
 int main(int argc, char *argv[])
 {
   g_code_file_name = argv[0];
 
-  __table_tests();
 
   int memory_size = 32;
   FILE* output_stream = stdout;
@@ -152,7 +194,7 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions)){
+    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions, &g_instruction_count)){
       malloc_memory();
       run_simulation(output_stream);
     }

@@ -87,7 +87,7 @@ bool read_config(FILE *, FILE *, CPU_Configurations *);
 
 void read_data_section(FILE *);
 
-bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int **);
+bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int **, int *);
 
 //*****************************************************//
 
@@ -645,7 +645,7 @@ bool read_config(FILE *input, FILE *output, CPU_Configurations *cpu_configs)
   return read_next_token(input, "*/", false);
 }
 
-bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int **instructions){
+bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int **instructions, int *instruction_count){
   fprintf(output, "Lendo configs\n");
   if (!read_config(input, output, cpu_configs)){
     fprintf(output, "Erro ao ler as configuracoes\n");
@@ -674,7 +674,9 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
     last_ftell = ftell(input);
     
     (*instructions)[i] = instruction_code;
+    (*instruction_count)++;
   }
+
   return true;
 }
 

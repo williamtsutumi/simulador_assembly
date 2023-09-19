@@ -65,40 +65,108 @@ void increment_all_uf_current_cycle(FILE *output, CPU_Configurations cpu_configs
   print_ufs_current_cycle(output, cpu_configs, functional_units);
 }
 
-void init_table(Table* table, TableElementType type) {
-    table->type = type;
-    table->num_rows = 0;
-    table->table = (Table_entry*)malloc(MAX_NUM_ROWS_TABLE * sizeof(Table_entry));
+char* table_format_register(int number) {
+
+    static char result[20];
+    result[0] = '\0';
+    
+    if(number == -1) return result;
+
+    snprintf(result, sizeof(result), "R%d", number);
+    return result;
 }
+char* table_format_number(int number) {
+    static char result[20];
+    result[0] = '\0';
 
-void insert_in_table(Table* table, void* item_ptr) {
-    TableElementType type = table->type;
-
-    if (table->num_rows < MAX_NUM_ROWS_TABLE) {
-        Table_entry *table_entry = &table->table[table->num_rows++];
-
-        switch (type) {
-            case FUNCTIONAL_UNIT:
-                table_entry->data.functional_unit = (struct FunctionalUnit*)item_ptr;
-                break;
-            case INSTRUCTION:
-                table_entry->data.instruction = (struct Instruction*)item_ptr;
-                break;
-            case REGISTER_INFO:
-                table_entry->data.register_info = (struct RegisterInfo*)item_ptr;
-                break;
-            default:
-                break;
-        }
-    } else {
-        // Handle table full error
+    if(number == -1){
+      return result; 
     }
+
+    snprintf(result, sizeof(result), "%d", number);
+    return result;
 }
 
-void print_table(Table* table){
-  for(int i = 0; i < table->num_rows; i++){
-    printf("%d\n", table->table->data.functional_unit->current_cycle);
+void print_instruction_status(InstructionState* instruction_states, int num_instructions){
+  printf("Status das Instruções:\n");
+  char* labels[] = {"Instruction", "Fetch", "Issue", "Read opearands", "Exec Complete", "Write result"};
+  printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
+
+  for(int i = 0; i < num_instructions; i++){
+    printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
+    i,
+    table_format_number(instruction_states->fetch),
+    table_format_number(instruction_states->issue),
+    table_format_number(instruction_states->read_operands),
+    table_format_number(instruction_states->execute),
+    table_format_number(instruction_states->write_result));
   }
+}
+
+
+void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, int num_ufs){
+
+  printf("Status das Unidades Funcionais:\n");
+  
+  char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
+  char* yesno[] = {"No", "Yes"};
+
+  printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
+   labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
+
+  char* functional_unit_name[]= {"Integer", "Mul", "Add"};
+  for(int i = 0; i < num_ufs; i++){
+    printf("|%-15s|%-10s|%-10d|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
+      functional_unit_name[funcional_unit_states[i].type],
+      yesno[funcional_unit_states[i].busy],
+      funcional_unit_states[i].op,
+      table_format_register(funcional_unit_states[i].fi),
+      table_format_register(funcional_unit_states[i].fj),
+      table_format_register(funcional_unit_states[i].fk),
+      table_format_number(funcional_unit_states[i].qj),
+      table_format_number(funcional_unit_states[i].qk),
+      yesno[funcional_unit_states[i].rj],
+      yesno[funcional_unit_states[i].rk]);
+
+  }
+}
+
+
+void print_result_register_status(FunctionalUnit* result_register_state[]){
+  printf("Status dos Resultados dos Registradores:\n");
+  char* functional_unit_name[]= {"Integer", "Mul", "Add"};
+  
+  printf("|");
+  for(int i = 0; i < 16; i++){
+    printf("%-5s|", table_format_register(i));
+  }
+
+  printf("\n");
+
+  for(int i = 0; i < 16; i++){
+    if(result_register_state[i] != NULL){
+      printf("%-5s|", functional_unit_name[result_register_state[i]->type]);
+    }
+  }
+
+
+  printf("\n|");
+  for(int i = 16; i < 32; i++){
+    printf("%-5s|", table_format_register(i));   
+  }
+  printf("\n");
+
+  for(int i = 16; i < 32; i++){
+    if(result_register_state[i] != NULL){
+      printf("%-5s|", functional_unit_name[result_register_state[i]->type]);
+    }
+  }
+}
+
+void print_table(ScoreBoard* scoreboarding, int num_instructions, int num_ufs){
+  print_instruction_status(scoreboarding->instructions_states, num_instructions);
+  print_functional_unit_status(scoreboarding->ufs_states, num_ufs);
+  print_result_register_status(scoreboarding->result_register_state);
 }
 
 int dec_to_bin(int num){
@@ -107,22 +175,6 @@ int dec_to_bin(int num){
     printf("%d", (num&(1 << (31-i)))!=0);
   }
   putchar('\n');
-
-}
-
-void __table_tests(){
-  Table tabela;
-  init_table(&tabela, FUNCTIONAL_UNIT);
-
-  FunctionalUnit tb;
-  tb.current_cycle = 1;
-
-  insert_in_table(&tabela, &tb);
-
-  print_table(&tabela);
-  tb.current_cycle = 3;
-
-  print_table(&tabela);
 
 }
 

@@ -1,8 +1,18 @@
 #ifndef TYPES
 #define TYPES
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <assert.h>
+
+
 #define MAX_NUM_INSTRUCTIONS 50
 #define MAX_NUM_ROWS_TABLE 100
+#define NUM_REGISTERS 32
+#define MAX_QUEUE_SIZE 8
 
 /* TYPES para leitura do input */
 
@@ -15,6 +25,7 @@ typedef enum OPERAND_TYPE
 
 /* TYPES da representação das unidades funcionais */
 
+// NÃO MEXER
 typedef enum {
     INTEGER_UF,
     MUL_UF,
@@ -25,36 +36,45 @@ typedef enum {
     {
         UF_TYPE type;
         int current_cycle;
-        char* name;
     } FunctionalUnit;
 
 // if (bus. sinal de continuar) current_cycle++;
 
 /* TYPES do scoreboarding */
 
-typedef enum InstructionState {
+typedef enum InstructionStateType {
     FETCH,
     ISSUE,
     READ_OPERANDS,
     EXECUTE,
     WRITE_RESULT
+} InstructionStateType;
+
+typedef struct InstructionState {
+    int fetch,
+    issue,
+    read_operands,
+    execute,
+    write_result;
+
+    InstructionStateType current_state;
 } InstructionState;
 
     typedef struct FunctionalUnitState
     {
         UF_TYPE type;
-        char* op, fi, fj, fk, qj, qk, rj, rk;
-        bool busy;
+        int op, fi, fj, fk, qj, qk;
+        bool busy, rj, rk;
     } FunctionalUnitState;
 
         typedef struct ScoreBoard
         {
             FunctionalUnitState *ufs_states;
-            InstructionState instructions_states[MAX_NUM_INSTRUCTIONS];
+            InstructionState *instructions_states;
             // Representa qual unidade funcional escreverá em qual registrador.
             // Qualquer instrução deve dar stall caso o registrador de destino
             // já esteja sendo sofrendo escrita por outra instrução.
-            FunctionalUnit *result_register_state[/*numero de registradores*/];
+            FunctionalUnit* result_register_state[NUM_REGISTERS];
         } ScoreBoard;
 
 /* TYPES do barramento */
@@ -85,42 +105,6 @@ typedef enum SignalFlag {
         } Bus;
 
 
-/* NAO SEI OQ EH ISSO */
-
-typedef enum {
-    FUNCTIONAL_UNIT,
-    INSTRUCTION,
-    REGISTER_INFO
-} TableElementType;
-
-typedef struct Instruction
-{
-    char* instruction_info;
-    int issue_time;
-    int read_operand_time;
-    int exec_complete_time;
-    int write_result_time;
-} Instruction;
-
-typedef struct RegisterInfo
-{
-    char* instruction_type;
-} RegisterInfo;
-
-typedef struct {
-    TableElementType type;
-    union {
-        struct FunctionalUnit* functional_unit;
-        struct Instruction* instruction;
-        struct RegisterInfo* register_info;
-    } data;
-} Table_entry;
-
-typedef struct {
-    TableElementType type;
-    int num_rows;
-    Table_entry* table;
-} Table;
 
 /* GERAL */
 
