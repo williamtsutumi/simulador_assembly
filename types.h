@@ -38,8 +38,6 @@ typedef enum {
         int current_cycle;
     } FunctionalUnit;
 
-// if (bus. sinal de continuar) current_cycle++;
-
 /* TYPES do scoreboarding */
 
 typedef enum InstructionStateType {
@@ -51,31 +49,31 @@ typedef enum InstructionStateType {
 } InstructionStateType;
 
 typedef struct InstructionState {
-    int fetch,
-    issue,
-    read_operands,
-    execute,
-    write_result;
+    int fetch;
+    int issue;
+    int read_operands;
+    int execute;
+    int write_result;
 
     InstructionStateType current_state;
 } InstructionState;
 
-    typedef struct FunctionalUnitState
-    {
-        UF_TYPE type;
-        int op, fi, fj, fk, qj, qk;
-        bool busy, rj, rk;
-    } FunctionalUnitState;
+typedef struct FunctionalUnitState
+{
+    UF_TYPE type;
+    int op, fi, fj, fk, qj, qk;
+    bool busy, rj, rk;
+} FunctionalUnitState;
 
-        typedef struct ScoreBoard
-        {
-            FunctionalUnitState *ufs_states;
-            InstructionState *instructions_states;
-            // Representa qual unidade funcional escreverá em qual registrador.
-            // Qualquer instrução deve dar stall caso o registrador de destino
-            // já esteja sendo sofrendo escrita por outra instrução.
-            FunctionalUnit* result_register_state[NUM_REGISTERS];
-        } ScoreBoard;
+    typedef struct ScoreBoard
+    {
+        FunctionalUnitState *ufs_states;
+        InstructionState *instructions_states;
+        // Representa qual unidade funcional escreverá em qual registrador.
+        // Qualquer instrução deve dar stall caso o registrador de destino
+        // já esteja sendo sofrendo escrita por outra instrução.
+        FunctionalUnit* result_register_state[NUM_REGISTERS];
+    } ScoreBoard;
 
 /* TYPES do barramento */
 

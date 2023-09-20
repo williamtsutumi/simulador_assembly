@@ -22,11 +22,11 @@ void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, Funct
 /* issue_instruction helpers */
 
 bool has_idle_uf(){
-
+  return true;
 }
 
 FunctionalUnitState *find_uf_with_type(UF_TYPE type){
-
+  
 }
 
 FunctionalUnitState get_instruction_information(int instruction_binary){
@@ -76,18 +76,18 @@ char* table_format_register(int number) {
     return result;
 }
 char* table_format_number(int number) {
-    static char result[20];
-    result[0] = '\0';
+  static char result[20];
+  memset(result, '\0', sizeof(result));
 
-    if(number == -1){
-      return result; 
-    }
+  if(number == -1){
+    return result; 
+  }
 
-    snprintf(result, sizeof(result), "%d", number);
-    return result;
+  snprintf(result, sizeof(result), "%d", number);
+  return result;
 }
 
-void print_instruction_status(InstructionState* instruction_states, int num_instructions){
+void print_instruction_status(InstructionState** instruction_states, int num_instructions){
   printf("Status das Instruções:\n");
   char* labels[] = {"Instruction", "Fetch", "Issue", "Read opearands", "Exec Complete", "Write result"};
   printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
@@ -95,14 +95,13 @@ void print_instruction_status(InstructionState* instruction_states, int num_inst
   for(int i = 0; i < num_instructions; i++){
     printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
     i,
-    table_format_number(instruction_states->fetch),
-    table_format_number(instruction_states->issue),
-    table_format_number(instruction_states->read_operands),
-    table_format_number(instruction_states->execute),
-    table_format_number(instruction_states->write_result));
+    table_format_number((*instruction_states)[i].fetch),
+    table_format_number((*instruction_states)[i].issue),
+    table_format_number((*instruction_states)[i].read_operands),
+    table_format_number((*instruction_states)[i].execute),
+    table_format_number((*instruction_states)[i].write_result));
   }
 }
-
 
 void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, int num_ufs){
 
@@ -163,8 +162,10 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
   }
 }
 
-void print_table(ScoreBoard* scoreboarding, int num_instructions, int num_ufs){
-  print_instruction_status(scoreboarding->instructions_states, num_instructions);
+void print_table(ScoreBoard* scoreboarding, int curr_cycle, int num_instructions, int num_ufs){
+  printf("*******************************************************************************************\n");
+  printf("Ciclo atual: %d\n", curr_cycle);
+  print_instruction_status(&scoreboarding->instructions_states, num_instructions);
   print_functional_unit_status(scoreboarding->ufs_states, num_ufs);
   print_result_register_status(scoreboarding->result_register_state);
 }

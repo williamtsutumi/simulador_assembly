@@ -21,7 +21,7 @@ ScoreBoard g_score_board;
 Bus g_bus;
 
 int *g_memory;
-int *g_registrers;
+int *g_registers;
 const char *g_code_file_name;
 int *g_instructions;
 int g_instruction_count = 0;
@@ -53,6 +53,9 @@ bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name,
 
 void fetch_next_instruction(){
   if (g_bus.instruction_register == CONTINUE){
+    g_score_board.instructions_states[g_program_counter].current_state = FETCH;
+    g_score_board.instructions_states[g_program_counter].fetch = g_current_cycle;
+    
     g_instruction_register = g_instructions[g_program_counter];
     g_program_counter++;
 
@@ -64,8 +67,8 @@ void issue_instruction(){
   FunctionalUnitState instruction_info = get_instruction_information(g_instruction_register);
 
   if (has_idle_uf(instruction_info)){
-    FunctionalUnitState *uf = find_uf_with_type(instruction_info.type);
-    *uf = instruction_info;
+    // FunctionalUnitState *uf = find_uf_with_type(instruction_info.type);
+    // *uf = instruction_info;
 
     g_bus.instruction_register = CONTINUE;
   }
@@ -88,7 +91,7 @@ void run_one_cycle(FILE *output){
 
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
-  print_table(&g_score_board, g_instruction_count, total_ufs);
+  print_table(&g_score_board, g_current_cycle, g_instruction_count, total_ufs);
 
   write_result();
   execute();
@@ -113,6 +116,9 @@ void free_memory(FILE *input, FILE*output){
 
   free(g_bus.ufs_data);
   free(g_bus.ufs_state);
+
+  free(g_score_board.instructions_states);
+  free(g_score_board.ufs_states);
 
   fclose(input);
   fclose(output);
