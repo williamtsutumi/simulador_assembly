@@ -76,13 +76,14 @@ char* table_format_register(int number) {
     return result;
 }
 char* table_format_number(int number) {
-  static char result[20];
-  memset(result, '\0', sizeof(result));
-
+  static char empty[1];
+  empty[0] = '\0';
   if(number == -1){
-    return result; 
+    return empty;
   }
 
+  static char result[20];
+  // memset(result, '\0', sizeof(result));
   snprintf(result, sizeof(result), "%d", number);
   return result;
 }

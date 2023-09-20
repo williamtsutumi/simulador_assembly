@@ -664,7 +664,6 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
   }
 
   *instructions = (int *)malloc(MAX_NUM_INSTRUCTIONS * sizeof(int));
-  printf("%li\n", sizeof(*instructions) / sizeof(*instructions[0]));
   memset(*instructions, -1, sizeof(*instructions));
 
   int instruction_code;
