@@ -238,31 +238,28 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
   printf("Status dos Resultados dos Registradores:\n");
   char* functional_unit_name[]= {"Integer", "Mul", "Add"};
   
-  printf("|");
-  for(int i = 0; i < 16; i++){
-    printf("%-5s|", table_format_text("R", i));
-  }
-
-  printf("\n");
-
-  for(int i = 0; i < 16; i++){
-    if(result_register_state[i] != NULL){
-      printf("%-5s|", functional_unit_name[result_register_state[i]->type]);
+  for(int k = 0; k < 2; k++){
+    printf("|");
+    
+    for(int i = k*16; i < (k+1)*16; i++){
+      printf("%-7s|", table_format_text("R", i));
     }
-  }
+    printf("\n");
+    printf("|");
 
-
-  printf("\n|");
-  for(int i = 16; i < 32; i++){
-    printf("%-5s|", table_format_text("R", i));   
-  }
-  printf("\n");
-
-  for(int i = 16; i < 32; i++){
-    if(result_register_state[i] != NULL){
-      printf("%-5s|", functional_unit_name[result_register_state[i]->type]);
+    for(int i = k*16; i < (k+1)*16; i++){
+      if(result_register_state[i] != NULL){
+        printf("%-7s|", table_format_text(functional_unit_name[result_register_state[i]->type],
+        result_register_state[i]->type_index));
+      }
     }
+    printf("\n");
+
   }
+  
+
+
+
 }
 
 void print_table(ScoreBoard* scoreboarding, int curr_cycle, int num_instructions, int num_ufs){

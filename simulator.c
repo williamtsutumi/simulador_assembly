@@ -83,6 +83,8 @@ void issue_instruction(){
   g_score_board.ufs_states[idle_uf_index].fj = op1;
   g_score_board.ufs_states[idle_uf_index].fk = op2;
   g_score_board.ufs_states[idle_uf_index].op = get_binary_subnumber(g_instruction_register.binary, 26, 31);
+
+  g_score_board.result_register_state[rand()%32] = &g_functional_units[rand()%total_ufs];
   //g_score_board.ufs_states[idle_uf_index].qj = g_score_board.result_register_state[g_score_board.ufs_states[idle_uf_index].fj]->type;
   //g_score_board.ufs_states[idle_uf_index].qk = g_score_board.result_register_state[g_score_board.ufs_states[idle_uf_index].fk]->type;
 
