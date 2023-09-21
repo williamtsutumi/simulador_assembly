@@ -23,6 +23,8 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
+typedef char Byte;
+
 /* TYPES da representação das unidades funcionais */
 
 // NÃO MEXER

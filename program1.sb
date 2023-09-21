@@ -1,0 +1,35 @@
+
+# algum comentario qualquer
+ /*
+      UF   :
+    integer: 5
+    mul:3
+    add:   2 
+
+INST:
+
+    add: 2
+    integer                         :   4
+    mul         :15
+
+
+*/ 
+
+# mais um comentario
+
+.data
+
+# olha outro aqui
+
+.text
+
+# Tem mais um aqui
+
+lw r6, 34(r2)
+lw r2, 45(r3)
+mul r0, r2, r4
+sub r8, r6, r2
+div r10, r0, r6
+add r6, r8, r2
+
+exit

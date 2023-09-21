@@ -1,0 +1,1 @@
+imprimir o centeudo de todos os registrador ao encerrar a simulação

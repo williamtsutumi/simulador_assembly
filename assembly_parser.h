@@ -85,9 +85,9 @@ bool read_uf(FILE *, FILE *, CPU_Configurations *);
 bool read_inst(FILE *, FILE *, CPU_Configurations *);
 bool read_config(FILE *, FILE *, CPU_Configurations *);
 
-void read_data_section(FILE *);
+bool read_data_section(FILE *, Byte **, int);
 
-bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int **, int *);
+bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int **, int *, Byte **, int);
 
 //*****************************************************//
 
@@ -317,9 +317,27 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 }
 
 // Lê as informações da seção .data, que está no SEEK_CUR
-void read_data_section(FILE *arq){
+bool read_data_section(FILE *arq, Byte **memory, int memory_size){
+  if (!read_next_token(arq, ".data", true)){
+    return false;
+  }
+  for (int i = 0; i < memory_size; i += 4){
+    char c = getc(arq);
+    while (isspace(c)) c = fgetc(arq);
 
-  skip(arq);
+    fseek(arq, -1, SEEK_CUR);
+    printf("c: %c\n", c);
+    if (isdigit(c)){
+      int num = read_number(arq);
+      (*memory)[i + 3] = (num >> 24) & 0b11111111;
+      (*memory)[i + 2] = (num >> 16) & 0b11111111;
+      (*memory)[i + 1] = (num >> 8) & 0b11111111;
+      (*memory)[i] = (num >> 0) & 0b11111111;
+      printf("%d\n", (*memory)[i] | (*memory)[i + 1] << 8 | (*memory)[i + 2] << 16 | (*memory)[i + 3] << 24);
+    }
+  }
+  printf("SAIU\n");
+  return true;
 }
 
 int read_instruction(FILE *arq, FILE *output){
@@ -514,6 +532,7 @@ bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
   bool found = strncmp(token, expected_token, strlen(expected_token)) == 0;
   if (!found) fseek(arq, -strlen(expected_token), SEEK_CUR);
 
+  // puts(token);
   return found;
 }
 
@@ -645,7 +664,7 @@ bool read_config(FILE *input, FILE *output, CPU_Configurations *cpu_configs)
   return read_next_token(input, "*/", false);
 }
 
-bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int **instructions, int *instruction_count){
+bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int **instructions, int *instruction_count, Byte **memory, int memory_size){
   fprintf(output, "Lendo configs\n");
   if (!read_config(input, output, cpu_configs)){
     fprintf(output, "Erro ao ler as configuracoes\n");
@@ -653,7 +672,8 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
   }
   fprintf(output, "Fim da leitura das configs\n");
 
-  if (!read_next_token(input, ".data", true)){
+  if (!read_data_section(input, memory, memory_size)){
+
     fprintf(output, ".data não encontrado\n");
     return false;
   }
@@ -679,6 +699,8 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
     
     (*instructions)[i] = instruction_code;
     (*instruction_count)++;
+
+    (*memory)[400 + i*4] = instruction_code;
   }
 
   return true;

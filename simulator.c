@@ -20,33 +20,33 @@ FunctionalUnit *g_functional_units;
 ScoreBoard g_score_board;
 Bus g_bus;
 
-int *g_memory;
+Byte *g_memory;
+int g_memory_size = 32;
 int *g_registers;
 const char *g_code_file_name;
 int *g_instructions;
 int g_instruction_count = 0;
 
 int g_current_cycle = 0;
-int g_program_counter = 0; // PC
+int g_program_counter = 100; // PC
 InstructionRegister g_instruction_register; // IR
 
-bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
+bool read_args(int argc, char *argv[], int *g_memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
   for(int i = 1; i < argc; i+=2){
 
     if(strcmp(argv[i], "-p") == 0){
       *input_file_name = argv[i+1];
     }
     else if(strcmp(argv[i], "-m") == 0){
-      // TODO
       // validar que argv[i+1] é uma inteiro
-      *memory_size = atoi(argv[i+1]);
-      g_memory = (int*)(malloc(sizeof(int)*(*memory_size)));
+      *g_memory_size = atoi(argv[i+1]);
     }
     else if(strcmp(argv[i], "-o") == 0){
       *output_stream = fopen(argv[i+1], "w");
     }
   }
 
+  g_memory = (Byte*)(malloc(sizeof(Byte)*(*g_memory_size)));
   *input_file = fopen(*input_file_name, "r");
   return *input_file != NULL;
 }
@@ -57,7 +57,7 @@ void fetch_next_instruction(){
   
   g_instruction_register.binary = g_instructions[g_program_counter];
   g_instruction_register.program_counter = g_program_counter;
-  g_program_counter++;
+  g_program_counter += 4;
 }
 
 void issue_instruction(){
@@ -196,6 +196,10 @@ void malloc_ufs_states(){
       g_score_board.ufs_states[i].qj = -1;
       g_score_board.ufs_states[i].qk = -1;
       g_score_board.ufs_states[i].op = -1;
+      g_score_board.ufs_states[i].rj = 0;
+      g_score_board.ufs_states[i].rk = 0;
+
+      g_score_board.ufs_states[i].busy = false;
     }
 
 }
@@ -233,7 +237,6 @@ void malloc_memory(){
   malloc_cpu();
   malloc_bus();
   malloc_scoreboard();
-
 }
 
 void init_scoreboard(){
@@ -249,14 +252,14 @@ int main(int argc, char *argv[])
   g_code_file_name = argv[0];
 
 
-  int memory_size = 32;
+  
   FILE* output_stream = stdout;
   char* input_file_name = "input.sb";
   FILE* input_file;
   
-  if (read_args(argc, argv, &memory_size, &input_file_name, &input_file, &output_stream)){
+  if (read_args(argc, argv, &g_memory_size, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions, &g_instruction_count)){
+    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions, &g_instruction_count, &g_memory, g_memory_size)){
       malloc_memory();
       init_scoreboard();
       run_simulation(output_stream);
