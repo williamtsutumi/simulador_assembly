@@ -2,6 +2,7 @@
 #define HELPERS
 
 #include "types.h"
+char* empty = "";
 
 /* DEBUG helpers */
 
@@ -140,20 +141,20 @@ void increment_all_uf_current_cycle(FILE *output, CPU_Configurations cpu_configs
   print_ufs_current_cycle(output, cpu_configs, functional_units);
 }
 
-char* table_format_register(int number) {
+char* table_format_text(char* pfx, int number) {
 
-    char* result = (char*)malloc(sizeof(char) * 20);
+    char* result = (char*)malloc(sizeof(char) * 30);
     result[0] = '\0';
     
     if(number == -1) return result;
 
-    snprintf(result, sizeof(result), "R%d", number);
+    snprintf(result, sizeof(result), "%s%d", pfx, number);
     return result;
 }
 
 // NAO CONFIAVEL
 char* table_format_number(int number) {
-  char* result = (char*)malloc(sizeof(char) * 20);
+  char* result = (char*)malloc(sizeof(char) * 30);
   result[0] = '\0';
 
   if(number == -1){
@@ -212,15 +213,18 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
   printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
    labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
 
-  char* functional_unit_name[]= {"Integer", "Mul", "Add"};
+  char* functional_unit_name[]= {"Int", "Mul", "Add"};
+  char *instruction_names[] = INSTRUCTION_NAMES;
+
   for(int i = 0; i < num_ufs; i++){
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
-      functional_unit_name[funcional_unit_states[i].type],
+    
+      table_format_text(functional_unit_name[funcional_unit_states[i].type], funcional_unit_states[i].type_index),
       yesno[funcional_unit_states[i].busy],
-      table_format_number(funcional_unit_states[i].op),
-      table_format_register(funcional_unit_states[i].fi),
-      table_format_register(funcional_unit_states[i].fj),
-      table_format_register(funcional_unit_states[i].fk),
+      funcional_unit_states[i].op == -1 ? empty : instruction_names[funcional_unit_states[i].op],
+      table_format_text("R", funcional_unit_states[i].fi),
+      table_format_text("R", funcional_unit_states[i].fj),
+      table_format_text("R", funcional_unit_states[i].fk),
       table_format_number(funcional_unit_states[i].qj),
       table_format_number(funcional_unit_states[i].qk),
       yesno[funcional_unit_states[i].rj],
@@ -236,7 +240,7 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
   
   printf("|");
   for(int i = 0; i < 16; i++){
-    printf("%-5s|", table_format_register(i));
+    printf("%-5s|", table_format_text("R", i));
   }
 
   printf("\n");
@@ -250,7 +254,7 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
 
   printf("\n|");
   for(int i = 16; i < 32; i++){
-    printf("%-5s|", table_format_register(i));   
+    printf("%-5s|", table_format_text("R", i));   
   }
   printf("\n");
 

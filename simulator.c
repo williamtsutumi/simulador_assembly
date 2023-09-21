@@ -65,9 +65,6 @@ void issue_instruction(){
   g_score_board.instructions_states[g_instruction_register.program_counter].issue = g_current_cycle;
 
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
-  printf("%d\n", g_instruction_register.binary);
-  printf("%d\n", get_binary_subnumber(g_instruction_register.binary, 0, 31));
-  printf("%d\n", get_binary_subnumber(g_instruction_register.binary, 26, 31));
 
   int idle_uf_index=-1;
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
@@ -167,12 +164,20 @@ void malloc_cpu(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   g_functional_units = (FunctionalUnit*)malloc(total_ufs * sizeof(FunctionalUnit));
   for (int i=0; i<total_ufs; i++){
-    if (i < g_cpu_configs.size_add_ufs)
+    if (i < g_cpu_configs.size_add_ufs){
       (g_functional_units)[i].type = ADD_UF;
-    else if (i < g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs)
+      (g_functional_units)[i].type_index = i;
+    }
+      
+    else if (i < g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs){
       (g_functional_units)[i].type = MUL_UF;
-    else
+      (g_functional_units)[i].type_index = i - g_cpu_configs.size_add_ufs;
+    }
+    else{
       (g_functional_units)[i].type = INTEGER_UF;
+      (g_functional_units)[i].type_index = i - (g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs);
+
+    }
   }
 }
 
@@ -182,6 +187,7 @@ void malloc_ufs_states(){
     for(int i = 0; i < total_ufs; i++){
 
       g_score_board.ufs_states[i].type = g_functional_units[i].type;
+      g_score_board.ufs_states[i].type_index = g_functional_units[i].type_index;
       g_score_board.ufs_states[i].fi = -1;
       g_score_board.ufs_states[i].fj = -1;
       g_score_board.ufs_states[i].fk = -1;

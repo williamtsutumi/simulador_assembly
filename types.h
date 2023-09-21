@@ -37,6 +37,7 @@ typedef enum {
     {
         UF_TYPE type;
         int current_cycle;
+        int type_index;
     } FunctionalUnit;
 
 /* TYPES do scoreboarding */
@@ -62,6 +63,8 @@ typedef struct InstructionState {
 typedef struct FunctionalUnitState
 {
     UF_TYPE type;
+    // se tem vários do mesmo tipo, type_index é o índice q diferencia elas
+    int type_index;
     int op, fi, fj, fk, qj, qk;
     bool busy, rj, rk;
     int inst_program_counter;
