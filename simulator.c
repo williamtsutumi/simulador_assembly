@@ -52,53 +52,62 @@ bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name,
 }
 
 void fetch_next_instruction(){
-  if (g_bus.instruction_register == CONTINUE){
-    g_score_board.instructions_states[g_program_counter].current_state = FETCH;
-    g_score_board.instructions_states[g_program_counter].fetch = g_current_cycle;
-    
-    g_instruction_register.binary = g_instructions[g_program_counter];
-    g_instruction_register.program_counter = g_program_counter;
-    g_program_counter++;
-
-    g_bus.instruction_register = STALL;
-    g_score_board.can_issue_next_instruction = true;
-  }
+  g_score_board.instructions_states[g_program_counter].current_state = FETCH;
+  g_score_board.instructions_states[g_program_counter].fetch = g_current_cycle;
+  
+  g_instruction_register.binary = g_instructions[g_program_counter];
+  g_instruction_register.program_counter = g_program_counter;
+  g_program_counter++;
 }
 
 void issue_instruction(){
+  g_score_board.instructions_states[g_instruction_register.program_counter].current_state = ISSUE;
+  g_score_board.instructions_states[g_instruction_register.program_counter].issue = g_current_cycle;
+
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
-  bool has_idle_uf = false;
-  int idle_uf_index = -1;
-  FunctionalUnitState *uf;
-  int num_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < num_ufs; i++){
+  int idle_uf_index;
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
     if (g_score_board.ufs_states[i].type == type && !g_score_board.ufs_states[i].busy){
-      has_idle_uf = true;
       idle_uf_index = i;
-      // *uf = g_functional_units[i];
     }
   }
 
-  if (has_idle_uf){
-    g_score_board.instructions_states[g_instruction_register.program_counter].current_state = ISSUE;
-    g_score_board.instructions_states[g_instruction_register.program_counter].issue = g_current_cycle;
-
-    g_bus.instruction_register = CONTINUE;
-    g_score_board.can_issue_next_instruction = false;
-  }
+  g_score_board.ufs_states[idle_uf_index].busy = true;
+  g_score_board.ufs_states[idle_uf_index].inst_program_counter = g_instruction_register.binary;
 }
 
 void read_operands(){
-
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
+    if (g_score_board.instructions_states[i].current_state == ISSUE){
+      g_score_board.instructions_states[i].current_state = READ_OPERANDS;
+      g_score_board.instructions_states[i].read_operands = g_current_cycle;
+    }
+  }
 }
 
 void execute(){
-  
+  int inst;
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
+    if (g_score_board.instructions_states[i].current_state == READ_OPERANDS){
+      g_score_board.instructions_states[i].current_state = EXECUTE;
+      g_score_board.instructions_states[i].execute = g_current_cycle;
+    }
+  }
 }
 
 void write_result(){
-  
+  int inst;
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
+    if (g_score_board.instructions_states[i].current_state == EXECUTE){
+      g_score_board.instructions_states[i].current_state = WRITE_RESULT;
+      g_score_board.instructions_states[i].write_result = g_current_cycle;
+    }
+  }
 }
 
 void run_one_cycle(FILE *output){
@@ -110,8 +119,8 @@ void run_one_cycle(FILE *output){
 
   write_result();
   execute();
-  read_operands();
-  if (g_score_board.can_issue_next_instruction) issue_instruction();
+  if (g_score_board.can_read_operands) read_operands();
+  if (g_score_board.can_issue) issue_instruction();
   if (g_bus.instruction_register == CONTINUE) fetch_next_instruction();
 }
 
@@ -204,7 +213,11 @@ void malloc_memory(){
 }
 
 void init_scoreboard(){
-  g_score_board.can_issue_next_instruction = false;
+  g_score_board.can_fetch = true;
+  g_score_board.can_issue = true;
+  g_score_board.can_read_operands = true;
+  g_score_board.can_execute = true;
+  g_score_board.can_write_result = true;
 }
 
 int main(int argc, char *argv[])

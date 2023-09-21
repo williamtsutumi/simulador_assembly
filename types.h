@@ -64,6 +64,7 @@ typedef struct FunctionalUnitState
     UF_TYPE type;
     int op, fi, fj, fk, qj, qk;
     bool busy, rj, rk;
+    int inst_program_counter;
 } FunctionalUnitState;
 
     typedef struct ScoreBoard
@@ -75,7 +76,11 @@ typedef struct FunctionalUnitState
         // já esteja sendo sofrendo escrita por outra instrução.
         FunctionalUnit* result_register_state[NUM_REGISTERS];
 
-        bool can_issue_next_instruction;
+        bool can_fetch;
+        bool can_issue;
+        bool can_read_operands;
+        bool can_execute;
+        bool can_write_result;
     } ScoreBoard;
 
 /* TYPES do barramento */
