@@ -29,7 +29,8 @@ typedef enum OPERAND_TYPE
 typedef enum {
     INTEGER_UF,
     MUL_UF,
-    ADD_UF
+    ADD_UF,
+    NOT_APPLIED_UF
 } UF_TYPE;
 
     typedef struct FunctionalUnit
@@ -73,6 +74,8 @@ typedef struct FunctionalUnitState
         // Qualquer instrução deve dar stall caso o registrador de destino
         // já esteja sendo sofrendo escrita por outra instrução.
         FunctionalUnit* result_register_state[NUM_REGISTERS];
+
+        bool can_issue_next_instruction;
     } ScoreBoard;
 
 /* TYPES do barramento */
@@ -105,6 +108,11 @@ typedef enum SignalFlag {
 
 
 /* GERAL */
+
+typedef struct InstructionRegister{
+    int binary;
+    int program_counter;
+} InstructionRegister;
 
 typedef struct CPU_Configurations
 {

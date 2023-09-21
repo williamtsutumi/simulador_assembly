@@ -28,7 +28,7 @@ int g_instruction_count = 0;
 
 int g_current_cycle = 0;
 int g_program_counter = 0; // PC
-int g_instruction_register; // IR
+InstructionRegister g_instruction_register; // IR
 
 bool read_args(int argc, char *argv[], int *memory_size, char **input_file_name, FILE **input_file, FILE **output_stream){
   for(int i = 1; i < argc; i+=2){
@@ -56,21 +56,36 @@ void fetch_next_instruction(){
     g_score_board.instructions_states[g_program_counter].current_state = FETCH;
     g_score_board.instructions_states[g_program_counter].fetch = g_current_cycle;
     
-    g_instruction_register = g_instructions[g_program_counter];
+    g_instruction_register.binary = g_instructions[g_program_counter];
+    g_instruction_register.program_counter = g_program_counter;
     g_program_counter++;
 
     g_bus.instruction_register = STALL;
+    g_score_board.can_issue_next_instruction = true;
   }
 }
 
 void issue_instruction(){
-  FunctionalUnitState instruction_info = get_instruction_information(g_instruction_register);
+  UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
-  if (has_idle_uf(instruction_info)){
-    // FunctionalUnitState *uf = find_uf_with_type(instruction_info.type);
-    // *uf = instruction_info;
+  bool has_idle_uf = false;
+  int idle_uf_index = -1;
+  FunctionalUnitState *uf;
+  int num_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < num_ufs; i++){
+    if (g_score_board.ufs_states[i].type == type && !g_score_board.ufs_states[i].busy){
+      has_idle_uf = true;
+      idle_uf_index = i;
+      // *uf = g_functional_units[i];
+    }
+  }
+
+  if (has_idle_uf){
+    g_score_board.instructions_states[g_instruction_register.program_counter].current_state = ISSUE;
+    g_score_board.instructions_states[g_instruction_register.program_counter].issue = g_current_cycle;
 
     g_bus.instruction_register = CONTINUE;
+    g_score_board.can_issue_next_instruction = false;
   }
 }
 
@@ -96,8 +111,8 @@ void run_one_cycle(FILE *output){
   write_result();
   execute();
   read_operands();
-  issue_instruction();
-  fetch_next_instruction();
+  if (g_score_board.can_issue_next_instruction) issue_instruction();
+  if (g_bus.instruction_register == CONTINUE) fetch_next_instruction();
 }
 
 void run_simulation(FILE *output){
@@ -188,6 +203,10 @@ void malloc_memory(){
 
 }
 
+void init_scoreboard(){
+  g_score_board.can_issue_next_instruction = false;
+}
+
 int main(int argc, char *argv[])
 {
   g_code_file_name = argv[0];
@@ -202,6 +221,7 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions, &g_instruction_count)){
       malloc_memory();
+      init_scoreboard();
       run_simulation(output_stream);
     }
   }

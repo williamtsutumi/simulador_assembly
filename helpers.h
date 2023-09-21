@@ -21,16 +21,38 @@ void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, Funct
 
 /* issue_instruction helpers */
 
-bool has_idle_uf(){
-  return true;
+int get_opcode_from_binary(int instruction){
+  return instruction >> 25;
 }
 
-FunctionalUnitState *find_uf_with_type(UF_TYPE type){
-  
+UF_TYPE get_uf_type_from_opcode(int op_code){
+  if (
+      op_code == ADD_OPCODE
+    || op_code == ADDI_OPCODE
+    || op_code == SUB_OPCODE
+    || op_code == SUBI_OPCODE
+    ) return ADD_UF;
+
+  else if (
+      op_code == MUL_OPCODE
+    || op_code == DIV_OPCODE
+  ) return MUL_UF;
+
+  else if (
+      op_code == AND_OPCODE
+    || op_code == OR_OPCODE
+    || op_code == NOT_OPCODE
+    || op_code == LW_OPCODE
+    || op_code == SW_OPCODE
+  ) return INTEGER_UF;
+
+  // blt, bgt, beq, bne, j, exit
+  return NOT_APPLIED_UF;
 }
 
-FunctionalUnitState get_instruction_information(int instruction_binary){
-
+UF_TYPE get_uf_type_from_instruction(int instruction){
+  int op_code = get_opcode_from_binary(instruction);
+  return get_uf_type_from_opcode(op_code);
 }
 
 /* read_operands helpers */
@@ -75,6 +97,8 @@ char* table_format_register(int number) {
     snprintf(result, sizeof(result), "R%d", number);
     return result;
 }
+
+// NAO CONFIAVEL
 char* table_format_number(int number) {
   static char empty[1];
   empty[0] = '\0';
@@ -94,13 +118,27 @@ void print_instruction_status(InstructionState** instruction_states, int num_ins
   printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
 
   for(int i = 0; i < num_instructions; i++){
-    printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
-    i,
-    table_format_number((*instruction_states)[i].fetch),
-    table_format_number((*instruction_states)[i].issue),
-    table_format_number((*instruction_states)[i].read_operands),
-    table_format_number((*instruction_states)[i].execute),
-    table_format_number((*instruction_states)[i].write_result));
+    char fetch[20];
+    if ((*instruction_states)[i].fetch == -1) fetch[0] = '\0';
+    else snprintf(fetch, sizeof(fetch), "%d", (*instruction_states)[i].fetch);
+
+    char issue[20];
+    if ((*instruction_states)[i].issue == -1) issue[0] = '\0';
+    else snprintf(issue, sizeof(issue), "%d", (*instruction_states)[i].issue);
+
+    char read_operands[20];
+    if ((*instruction_states)[i].read_operands == -1) read_operands[0] = '\0';
+    else snprintf(read_operands, sizeof(read_operands), "%d", (*instruction_states)[i].read_operands);
+
+    char execute[20];
+    if ((*instruction_states)[i].execute == -1) execute[0] = '\0';
+    else snprintf(execute, sizeof(execute), "%d", (*instruction_states)[i].execute);
+
+    char write_result[20];
+    if ((*instruction_states)[i].write_result == -1) write_result[0] = '\0';
+    else snprintf(write_result, sizeof(write_result), "%d", (*instruction_states)[i].write_result);
+
+    printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n", i, fetch, issue, read_operands, execute, write_result);
   }
 }
 
