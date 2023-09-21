@@ -49,11 +49,64 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
   // blt, bgt, beq, bne, j, exit
   return NOT_APPLIED_UF;
 }
+int get_binary_subnumber(int instruction, int start_bit, int end_bit){
+  instruction >>= start_bit;
+  int bitmask = (1ll << (end_bit - start_bit + 1))-1;
+
+  return instruction & bitmask;
+}
 
 UF_TYPE get_uf_type_from_instruction(int instruction){
-  int op_code = get_opcode_from_binary(instruction);
+  int op_code = get_binary_subnumber(instruction, 26, 31);
   return get_uf_type_from_opcode(op_code);
 }
+
+int get_destination_register_from_instruction(int instruction){
+  int op_code = get_binary_subnumber(instruction, 26, 31);
+
+  if (
+    op_code == ADD_OPCODE
+  || op_code == SUB_OPCODE
+  || op_code == MUL_OPCODE
+  || op_code == DIV_OPCODE
+  || op_code == AND_OPCODE
+  || op_code == OR_OPCODE
+  || op_code == NOT_OPCODE
+  ) return get_binary_subnumber(instruction, 11, 15);
+
+  else if (
+      op_code == SUBI_OPCODE
+    || op_code == ADDI_OPCODE
+  ) return get_binary_subnumber(instruction, 16, 20);
+
+  return -1;
+}
+
+void get_operands_register_from_instruction(int instruction, int* op1, int* op2){
+  int op_code = get_binary_subnumber(instruction, 26, 31);
+
+  if (
+    op_code == ADD_OPCODE
+  || op_code == SUB_OPCODE
+  || op_code == MUL_OPCODE
+  || op_code == DIV_OPCODE
+  || op_code == AND_OPCODE
+  || op_code == OR_OPCODE
+  || op_code == NOT_OPCODE
+  ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 16, 20);
+
+  else if (
+      op_code == SUBI_OPCODE
+    || op_code == ADDI_OPCODE
+    || op_code == NOT_OPCODE
+  ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = -1;
+
+  else{
+    *op1 = -1, *op2 = -1;
+  }
+}
+
+
 
 /* read_operands helpers */
 
@@ -89,7 +142,7 @@ void increment_all_uf_current_cycle(FILE *output, CPU_Configurations cpu_configs
 
 char* table_format_register(int number) {
 
-    static char result[20];
+    char* result = (char*)malloc(sizeof(char) * 20);
     result[0] = '\0';
     
     if(number == -1) return result;
@@ -100,13 +153,12 @@ char* table_format_register(int number) {
 
 // NAO CONFIAVEL
 char* table_format_number(int number) {
-  static char empty[1];
-  empty[0] = '\0';
-  if(number == -1){
-    return empty;
-  }
+  char* result = (char*)malloc(sizeof(char) * 20);
+  result[0] = '\0';
 
-  static char result[20];
+  if(number == -1){
+    return result;
+  }
   // memset(result, '\0', sizeof(result));
   snprintf(result, sizeof(result), "%d", number);
   return result;
@@ -118,6 +170,7 @@ void print_instruction_status(InstructionState** instruction_states, int num_ins
   printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
 
   for(int i = 0; i < num_instructions; i++){
+    /*
     char fetch[20];
     if ((*instruction_states)[i].fetch == -1) fetch[0] = '\0';
     else snprintf(fetch, sizeof(fetch), "%d", (*instruction_states)[i].fetch);
@@ -137,8 +190,15 @@ void print_instruction_status(InstructionState** instruction_states, int num_ins
     char write_result[20];
     if ((*instruction_states)[i].write_result == -1) write_result[0] = '\0';
     else snprintf(write_result, sizeof(write_result), "%d", (*instruction_states)[i].write_result);
+    */
 
-    printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n", i, fetch, issue, read_operands, execute, write_result);
+    printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
+    i,
+    table_format_number((*instruction_states)[i].fetch),
+    table_format_number((*instruction_states)[i].issue),
+    table_format_number((*instruction_states)[i].read_operands),
+    table_format_number((*instruction_states)[i].execute),
+    table_format_number((*instruction_states)[i].write_result));
   }
 }
 
@@ -154,10 +214,10 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
 
   char* functional_unit_name[]= {"Integer", "Mul", "Add"};
   for(int i = 0; i < num_ufs; i++){
-    printf("|%-15s|%-10s|%-10d|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
+    printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
       functional_unit_name[funcional_unit_states[i].type],
       yesno[funcional_unit_states[i].busy],
-      funcional_unit_states[i].op,
+      table_format_number(funcional_unit_states[i].op),
       table_format_register(funcional_unit_states[i].fi),
       table_format_register(funcional_unit_states[i].fj),
       table_format_register(funcional_unit_states[i].fk),
@@ -209,14 +269,7 @@ void print_table(ScoreBoard* scoreboarding, int curr_cycle, int num_instructions
   print_result_register_status(scoreboarding->result_register_state);
 }
 
-int dec_to_bin(int num){
 
-  for(int i = 0; i < 32; i++){
-    printf("%d", (num&(1 << (31-i)))!=0);
-  }
-  putchar('\n');
-
-}
 
 
 #endif

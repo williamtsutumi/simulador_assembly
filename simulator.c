@@ -65,8 +65,11 @@ void issue_instruction(){
   g_score_board.instructions_states[g_instruction_register.program_counter].issue = g_current_cycle;
 
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
+  printf("%d\n", g_instruction_register.binary);
+  printf("%d\n", get_binary_subnumber(g_instruction_register.binary, 0, 31));
+  printf("%d\n", get_binary_subnumber(g_instruction_register.binary, 26, 31));
 
-  int idle_uf_index;
+  int idle_uf_index=-1;
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int i = 0; i < total_ufs; i++){
     if (g_score_board.ufs_states[i].type == type && !g_score_board.ufs_states[i].busy){
@@ -76,6 +79,18 @@ void issue_instruction(){
 
   g_score_board.ufs_states[idle_uf_index].busy = true;
   g_score_board.ufs_states[idle_uf_index].inst_program_counter = g_instruction_register.binary;
+
+  g_score_board.ufs_states[idle_uf_index].fi = get_destination_register_from_instruction(g_instruction_register.binary);
+  int op1, op2;
+  get_operands_register_from_instruction(g_instruction_register.binary, &op1, &op2);
+  g_score_board.ufs_states[idle_uf_index].fj = op1;
+  g_score_board.ufs_states[idle_uf_index].fk = op2;
+  g_score_board.ufs_states[idle_uf_index].op = get_binary_subnumber(g_instruction_register.binary, 26, 31);
+  //g_score_board.ufs_states[idle_uf_index].qj = g_score_board.result_register_state[g_score_board.ufs_states[idle_uf_index].fj]->type;
+  //g_score_board.ufs_states[idle_uf_index].qk = g_score_board.result_register_state[g_score_board.ufs_states[idle_uf_index].fk]->type;
+
+  
+
 }
 
 void read_operands(){
@@ -120,8 +135,8 @@ void run_one_cycle(FILE *output){
   write_result();
   execute();
   if (g_score_board.can_read_operands) read_operands();
-  if (g_score_board.can_issue) issue_instruction();
   if (g_bus.instruction_register == CONTINUE) fetch_next_instruction();
+  if (g_score_board.can_issue) issue_instruction();
 }
 
 void run_simulation(FILE *output){
@@ -165,12 +180,13 @@ void malloc_ufs_states(){
     int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
     g_score_board.ufs_states = (FunctionalUnitState*)malloc(total_ufs * sizeof(FunctionalUnitState));
     for(int i = 0; i < total_ufs; i++){
+
       g_score_board.ufs_states[i].type = g_functional_units[i].type;
-      g_score_board.ufs_states[i].fi =
-      g_score_board.ufs_states[i].fj =
-      g_score_board.ufs_states[i].fk =
-      g_score_board.ufs_states[i].qj =
-      g_score_board.ufs_states[i].qk =
+      g_score_board.ufs_states[i].fi = -1;
+      g_score_board.ufs_states[i].fj = -1;
+      g_score_board.ufs_states[i].fk = -1;
+      g_score_board.ufs_states[i].qj = -1;
+      g_score_board.ufs_states[i].qk = -1;
       g_score_board.ufs_states[i].op = -1;
     }
 

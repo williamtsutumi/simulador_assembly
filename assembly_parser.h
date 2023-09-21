@@ -219,7 +219,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case ADDI_OPCODE:
       rt = read_operand(arq, REGISTER, true);
@@ -231,7 +231,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case SUBI_OPCODE:
       rt = read_operand(arq, REGISTER, true);
@@ -244,30 +244,30 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
 
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case DIV_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case AND_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case OR_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, false);
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case NOT_OPCODE:
       rd = read_operand(arq, REGISTER, true);
       rs = read_operand(arq, REGISTER, false);
-      return read_instructionR(opcode, rs, rs, rt, 0);
+      return read_instructionR(opcode, rd, rs, rt, 0);
 
     case BLT_OPCODE:
       rs = read_operand(arq, REGISTER, true);
@@ -664,13 +664,18 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
   }
 
   *instructions = (int *)malloc(MAX_NUM_INSTRUCTIONS * sizeof(int));
-  memset(*instructions, -1, sizeof(*instructions));
+  for(int i = 0; i < MAX_NUM_INSTRUCTIONS; i++){
+    (*instructions)[i] = -1;
+    printf("%d\n", (*instructions)[i]);
+  }
 
   int instruction_code;
   int last_ftell = ftell(input);
+  
   for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i++){
     if (last_ftell == ftell(input)) break;
     last_ftell = ftell(input);
+
     
     (*instructions)[i] = instruction_code;
     (*instruction_count)++;
