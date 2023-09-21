@@ -326,17 +326,15 @@ bool read_data_section(FILE *arq, Byte **memory, int memory_size){
     while (isspace(c)) c = fgetc(arq);
 
     fseek(arq, -1, SEEK_CUR);
-    printf("c: %c\n", c);
     if (isdigit(c)){
       int num = read_number(arq);
       (*memory)[i + 3] = (num >> 24) & 0b11111111;
       (*memory)[i + 2] = (num >> 16) & 0b11111111;
       (*memory)[i + 1] = (num >> 8) & 0b11111111;
       (*memory)[i] = (num >> 0) & 0b11111111;
-      printf("%d\n", (*memory)[i] | (*memory)[i + 1] << 8 | (*memory)[i + 2] << 16 | (*memory)[i + 3] << 24);
+      // printf("%d\n", (*memory)[i] | (*memory)[i + 1] << 8 | (*memory)[i + 2] << 16 | (*memory)[i + 3] << 24);
     }
   }
-  printf("SAIU\n");
   return true;
 }
 
@@ -683,12 +681,6 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
     return false;
   }
 
-  *instructions = (int *)malloc(MAX_NUM_INSTRUCTIONS * sizeof(int));
-  for(int i = 0; i < MAX_NUM_INSTRUCTIONS; i++){
-    (*instructions)[i] = -1;
-    printf("%d\n", (*instructions)[i]);
-  }
-
   int instruction_code;
   int last_ftell = ftell(input);
   
@@ -696,11 +688,11 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
     if (last_ftell == ftell(input)) break;
     last_ftell = ftell(input);
 
-    
-    (*instructions)[i] = instruction_code;
+    (*memory)[i + 403] = (instruction_code >> 24) & 0b11111111;
+    (*memory)[i + 402] = (instruction_code >> 16) & 0b11111111;
+    (*memory)[i + 401] = (instruction_code >> 8) & 0b11111111;
+    (*memory)[i + 400] = (instruction_code >> 0) & 0b11111111;
     (*instruction_count)++;
-
-    (*memory)[400 + i*4] = instruction_code;
   }
 
   return true;

@@ -9,7 +9,7 @@
 INST:
 
     add: 2
-    integer                         :   4
+    integer    :   4
     mul         :15
 
 
