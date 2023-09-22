@@ -14,8 +14,6 @@ TODO -> decidir como setar o barramento e quando de fato enviar as informações
 #include "helpers.h"
 #include "configuration.h"
 
-#define PROGRAM_FIRST_ADDRESS 400
-
 CPU_Configurations g_cpu_configs;
 FunctionalUnit *g_functional_units;
 ScoreBoard g_score_board;
@@ -45,23 +43,26 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
     }
   }
 
-  g_memory = (Byte*)(malloc(sizeof(Byte)*g_memory_size*4));
+  g_memory = (Byte*)(malloc(sizeof(Byte)* (PROGRAM_FIRST_ADDRESS + g_memory_size*4)));
   *input_file = fopen(*input_file_name, "r");
   return *input_file != NULL;
 }
 
 void fetch_next_instruction(){
-  g_score_board.instructions_states[(g_program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = FETCH;
-  g_score_board.instructions_states[(g_program_counter - PROGRAM_FIRST_ADDRESS) / 4].fetch = g_current_cycle;
+  int instruction_index = (g_program_counter - PROGRAM_FIRST_ADDRESS) / 4;
+  if(g_instruction_count <= instruction_index){
+    assert(false && "acabou as intruções pra serem fetchadas");
+  }
+  g_score_board.instructions_states[instruction_index].current_state = FETCH;
+  g_score_board.instructions_states[instruction_index].fetch = g_current_cycle;
   
-  g_instruction_register.binary = get_instruction_from_memory(g_program_counter, g_memory);
+  g_instruction_register.binary = get_instruction_from_memory(instruction_index, g_memory);
   g_instruction_register.program_counter = g_program_counter;
   g_program_counter += 4;
 }
 
 void issue_instruction(){
   g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
-  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = g_current_cycle;
 
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
@@ -70,8 +71,16 @@ void issue_instruction(){
   for (int i = 0; i < total_ufs; i++){
     if (g_score_board.ufs_states[i].type == type && !g_score_board.ufs_states[i].busy){
       idle_uf_index = i;
+      break;
     }
   }
+  if(idle_uf_index == -1){
+    printf("não tem unidades funcionais livres!\n");
+    return;
+  }
+
+  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = g_current_cycle;
+
 
   g_score_board.ufs_states[idle_uf_index].busy = true;
   g_score_board.ufs_states[idle_uf_index].inst_program_counter = g_instruction_register.binary;
@@ -114,7 +123,7 @@ void execute(){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
       printf("ALO\n");
       int cycles_to_complete;
-      int inst = get_instruction_from_memory(i * 4 + PROGRAM_FIRST_ADDRESS, g_memory);
+      int inst = get_instruction_from_memory(i, g_memory);
       printf("inst: %d", inst);
       UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
       if (inst_uf_type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;

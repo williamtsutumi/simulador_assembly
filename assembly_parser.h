@@ -684,14 +684,15 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
   int instruction_code;
   int last_ftell = ftell(input);
   
-  for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i++){
+  for(int i=0; (instruction_code = read_instruction(input, output)) != -1; i+=4){
     if (last_ftell == ftell(input)) break;
     last_ftell = ftell(input);
 
-    (*memory)[i + 403] = (instruction_code >> 24) & 0b11111111;
-    (*memory)[i + 402] = (instruction_code >> 16) & 0b11111111;
-    (*memory)[i + 401] = (instruction_code >> 8) & 0b11111111;
-    (*memory)[i + 400] = (instruction_code >> 0) & 0b11111111;
+
+    (*memory)[i + PROGRAM_FIRST_ADDRESS + 0] = (instruction_code >> 24) & 0b11111111;
+    (*memory)[i + PROGRAM_FIRST_ADDRESS + 1] = (instruction_code >> 16) & 0b11111111;
+    (*memory)[i + PROGRAM_FIRST_ADDRESS + 2] = (instruction_code >> 8) & 0b11111111;
+    (*memory)[i + PROGRAM_FIRST_ADDRESS + 3] = (instruction_code >> 0) & 0b11111111;
     (*instruction_count)++;
   }
 

@@ -13,6 +13,12 @@
 #define MAX_NUM_ROWS_TABLE 100
 #define NUM_REGISTERS 32
 #define MAX_QUEUE_SIZE 8
+// "Os 100 endereços (32 bits) iniciais são reservados para dados",
+// acho q então começa em 100
+#define PROGRAM_FIRST_ADDRESS 100
+
+
+
 
 /* TYPES para leitura do input */
 
@@ -23,7 +29,7 @@ typedef enum OPERAND_TYPE
     MEMORY,
 } OPERAND_TYPE;
 
-typedef char Byte;
+typedef unsigned char Byte;
 
 /* TYPES da representação das unidades funcionais */
 

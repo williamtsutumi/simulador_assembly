@@ -101,8 +101,10 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
 
 /* Outros */
 
-int get_instruction_from_memory(int first_mem_index, Byte *mem){
-  return (mem[first_mem_index] << 24) | (mem[first_mem_index + 1] << 16) | (mem[first_mem_index + 2] << 8) | (mem[first_mem_index + 3]);
+int get_instruction_from_memory(int instruction_index, Byte *mem){
+  int mem_address = instruction_index*4 + PROGRAM_FIRST_ADDRESS;
+
+  return (mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
 }
 
 bool uf_is_ready(FunctionalUnit uf, CPU_Configurations cpu_configs){
