@@ -54,15 +54,14 @@ void fetch_next_instruction(){
   g_score_board.instructions_states[(g_program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = FETCH;
   g_score_board.instructions_states[(g_program_counter - PROGRAM_FIRST_ADDRESS) / 4].fetch = g_current_cycle;
   
-  printf("instruciton:: %d\n", g_memory[g_program_counter] | g_memory[g_program_counter + 1] << 8 | g_memory[g_program_counter + 2] << 16 | g_memory[g_program_counter + 3] << 24);
   g_instruction_register.binary = get_instruction_from_memory(g_program_counter, g_memory);
   g_instruction_register.program_counter = g_program_counter;
   g_program_counter += 4;
 }
 
 void issue_instruction(){
-  g_score_board.instructions_states[g_instruction_register.program_counter].current_state = ISSUE;
-  g_score_board.instructions_states[g_instruction_register.program_counter].issue = g_current_cycle;
+  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
+  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = g_current_cycle;
 
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
