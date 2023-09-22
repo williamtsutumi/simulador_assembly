@@ -102,20 +102,33 @@ void read_operands(){
 }
 
 void execute(){
-  int inst;
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
+  // todo -> enviar para execução se possível ao inves de sempre enviar
+  for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == READ_OPERANDS){
       g_score_board.instructions_states[i].current_state = EXECUTE;
       g_score_board.instructions_states[i].execute = g_current_cycle;
     }
   }
+
+  for (int i = 0; i < g_instruction_count; i++){
+    if (g_score_board.instructions_states[i].current_state == EXECUTE){
+      printf("ALO\n");
+      int cycles_to_complete;
+      int inst = get_instruction_from_memory(i * 4 + PROGRAM_FIRST_ADDRESS, g_memory);
+      printf("inst: %d", inst);
+      UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
+      if (inst_uf_type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
+      else if (inst_uf_type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
+      else if (inst_uf_type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
+      
+      if (g_score_board.instructions_states[i].execute < cycles_to_complete)
+        g_score_board.instructions_states[i].execute++;
+    }
+  }
 }
 
 void write_result(){
-  int inst;
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
+  for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
       g_score_board.instructions_states[i].current_state = WRITE_RESULT;
       g_score_board.instructions_states[i].write_result = g_current_cycle;
