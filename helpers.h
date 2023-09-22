@@ -4,8 +4,6 @@
 #include "types.h"
 char* empty = "";
 
-/* DEBUG helpers */
-
 void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, FunctionalUnit functional_units[]){
   int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
   for (int i=0; i<total_ufs; i++){
@@ -15,12 +13,6 @@ void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, Funct
     printf("functional unit [%d].cycle: %d\n", i, functional_units[i].current_cycle);
   }
 }
-
-
-
-/* fetch_next_instruction helpers */
-
-/* issue_instruction helpers */
 
 int get_opcode_from_binary(int instruction){
   return instruction >> 25;
@@ -107,15 +99,11 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
   }
 }
 
-
-
-/* read_operands helpers */
-
-/* execute helpers */
-
-/* write_result helpers */
-
 /* Outros */
+
+int get_instruction_from_memory(int first_mem_index, Byte *mem){
+  return (mem[first_mem_index] << 24) | (mem[first_mem_index + 1] << 16) | (mem[first_mem_index + 2] << 8) | (mem[first_mem_index + 3]);
+}
 
 bool uf_is_ready(FunctionalUnit uf, CPU_Configurations cpu_configs){
   if (uf.type == ADD_UF)
@@ -152,7 +140,6 @@ char* table_format_text(char* pfx, int number) {
     return result;
 }
 
-// NAO CONFIAVEL
 char* table_format_number(int number) {
   char* result = (char*)malloc(sizeof(char) * 30);
   result[0] = '\0';

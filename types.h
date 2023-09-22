@@ -27,7 +27,6 @@ typedef char Byte;
 
 /* TYPES da representação das unidades funcionais */
 
-// NÃO MEXER
 typedef enum {
     INTEGER_UF,
     MUL_UF,

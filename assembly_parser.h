@@ -87,7 +87,7 @@ bool read_config(FILE *, FILE *, CPU_Configurations *);
 
 bool read_data_section(FILE *, Byte **, int);
 
-bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int **, int *, Byte **, int);
+bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int *, Byte **, int);
 
 //*****************************************************//
 
@@ -525,7 +525,7 @@ bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
   skip_spaces(arq);
 
   char token[strlen(expected_token)+1];
-  fread(token, strlen(expected_token), 1, arq);
+  bool read = fread(token, strlen(expected_token), 1, arq);
   token[strlen(expected_token)] = '\0';
   bool found = strncmp(token, expected_token, strlen(expected_token)) == 0;
   if (!found) fseek(arq, -strlen(expected_token), SEEK_CUR);
@@ -662,7 +662,7 @@ bool read_config(FILE *input, FILE *output, CPU_Configurations *cpu_configs)
   return read_next_token(input, "*/", false);
 }
 
-bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int **instructions, int *instruction_count, Byte **memory, int memory_size){
+bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int *instruction_count, Byte **memory, int memory_size){
   fprintf(output, "Lendo configs\n");
   if (!read_config(input, output, cpu_configs)){
     fprintf(output, "Erro ao ler as configuracoes\n");

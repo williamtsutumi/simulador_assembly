@@ -14,6 +14,7 @@ TODO -> decidir como setar o barramento e quando de fato enviar as informações
 #include "helpers.h"
 #include "configuration.h"
 
+#define PROGRAM_FIRST_ADDRESS 400
 
 CPU_Configurations g_cpu_configs;
 FunctionalUnit *g_functional_units;
@@ -23,11 +24,10 @@ Bus g_bus;
 Byte *g_memory;
 int g_memory_size = 32;
 int *g_registers;
-int *g_instructions;
 int g_instruction_count = 0;
 
 int g_current_cycle = 0;
-int g_program_counter = 100; // PC
+int g_program_counter = PROGRAM_FIRST_ADDRESS; // PC
 InstructionRegister g_instruction_register; // IR
 
 bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file, FILE **output_stream){
@@ -51,10 +51,11 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
 }
 
 void fetch_next_instruction(){
-  g_score_board.instructions_states[g_program_counter].current_state = FETCH;
-  g_score_board.instructions_states[g_program_counter].fetch = g_current_cycle;
+  g_score_board.instructions_states[(g_program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = FETCH;
+  g_score_board.instructions_states[(g_program_counter - PROGRAM_FIRST_ADDRESS) / 4].fetch = g_current_cycle;
   
-  g_instruction_register.binary = g_instructions[g_program_counter];
+  printf("instruciton:: %d\n", g_memory[g_program_counter] | g_memory[g_program_counter + 1] << 8 | g_memory[g_program_counter + 2] << 16 | g_memory[g_program_counter + 3] << 24);
+  g_instruction_register.binary = get_instruction_from_memory(g_program_counter, g_memory);
   g_instruction_register.program_counter = g_program_counter;
   g_program_counter += 4;
 }
@@ -149,7 +150,6 @@ void run_simulation(FILE *output){
 
 void free_memory(FILE *input, FILE*output){
   free(g_functional_units);
-  free(g_instructions);
 
   free(g_bus.ufs_data);
   free(g_bus.ufs_state);
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
   
   if (read_args(argc, argv, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
-    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instructions, &g_instruction_count, &g_memory, g_memory_size)){
+    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
       malloc_memory();
       init_scoreboard();
       run_simulation(output_stream);
