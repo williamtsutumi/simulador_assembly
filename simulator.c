@@ -68,9 +68,14 @@ void fetch_next_instruction(){
 void issue_instruction(){
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
-  int idle_uf_index=-1;
+  int idle_uf_index = -1;
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int i = 0; i < total_ufs; i++){
+    // todo -> perguntar o que fazer com os desvios condicionais
+    if (type == NOT_APPLIED_UF && !g_score_board.ufs_states[i].busy){
+      idle_uf_index = i;
+      break;
+    }
     if (g_score_board.ufs_states[i].type == type && !g_score_board.ufs_states[i].busy){
       idle_uf_index = i;
       break;
@@ -83,6 +88,7 @@ void issue_instruction(){
 
   // Controle do pipeline
   g_score_board.can_fetch = true;
+  g_score_board.instructions_states[idle_uf_index].uf_index = idle_uf_index;
   //*********************
   g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = g_current_cycle;
@@ -159,15 +165,17 @@ void write_result(){
         g_score_board.instructions_states[i].current_state = WRITE_RESULT;
         g_score_board.instructions_states[i].write_result = g_current_cycle;
 
-        g_score_board.ufs_states[i].fi = -1;
-        g_score_board.ufs_states[i].fj = -1;
-        g_score_board.ufs_states[i].fk = -1;
-        g_score_board.ufs_states[i].qj = -1;
-        g_score_board.ufs_states[i].qk = -1;
-        g_score_board.ufs_states[i].inst_program_counter = -1;
-        g_score_board.ufs_states[i].busy = false;
-        g_score_board.ufs_states[i].rj = false;
-        g_score_board.ufs_states[i].rk = false;
+        int uf_idx = g_score_board.instructions_states[i].uf_index;
+        g_score_board.ufs_states[uf_idx].fi = -1;
+        g_score_board.ufs_states[uf_idx].fj = -1;
+        g_score_board.ufs_states[uf_idx].fk = -1;
+        g_score_board.ufs_states[uf_idx].qj = -1;
+        g_score_board.ufs_states[uf_idx].qk = -1;
+        g_score_board.ufs_states[uf_idx].op = -1;
+        g_score_board.ufs_states[uf_idx].inst_program_counter = -1;
+        g_score_board.ufs_states[uf_idx].busy = false;
+        g_score_board.ufs_states[uf_idx].rj = false;
+        g_score_board.ufs_states[uf_idx].rk = false;
       }
       else{
         g_score_board.instructions_states[i].finish_execute++;

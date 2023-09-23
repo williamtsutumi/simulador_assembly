@@ -63,6 +63,8 @@ typedef struct InstructionState {
     int finish_execute;
     int write_result;
 
+    // Índice no array de FunctionalUnitState onde a instrução está
+    int uf_index;
     InstructionStateType current_state;
 } InstructionState;
 
