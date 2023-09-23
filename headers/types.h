@@ -59,7 +59,7 @@
 #define NUM_REGISTERS 32
 // "Os 100 endereços (32 bits) iniciais são reservados para dados",
 // acho q então começa em 100
-#define PROGRAM_FIRST_ADDRESS 100
+#define PROGRAM_FIRST_ADDRESS 400
 
 
 /* Representação de Byte para a memória simulada */

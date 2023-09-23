@@ -15,7 +15,7 @@ void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, Funct
 }
 
 int get_opcode_from_binary(int instruction){
-  return instruction >> 25;
+  return instruction >> 26;
 }
 char *get_inst_name_from_opcode(Byte op_code){
   if (op_code == ADD_OPCODE)  return ADD;
@@ -123,6 +123,8 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
 
 /* Outros */
 
+// instruction_index se refere à i-ésima instrução - 1
+// primeira instrução => instruction_index 0
 int get_instruction_from_memory(int instruction_index, Byte *mem){
   int mem_address = instruction_index*4 + PROGRAM_FIRST_ADDRESS;
 

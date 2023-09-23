@@ -192,7 +192,9 @@ void run_one_cycle(FILE *output){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   Byte inst_opcodes[g_instruction_count];
   for (int i = 0; i < g_instruction_count; i++){
-    inst_opcodes[i] = g_memory[4 * (i + PROGRAM_FIRST_ADDRESS)];
+    int inst = get_instruction_from_memory(i, g_memory);
+    int opcode = get_opcode_from_binary(inst);
+    inst_opcodes[i] = opcode;
     printf("opcode: %d\n", inst_opcodes[i]);
   }
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
@@ -227,6 +229,7 @@ int main(int argc, char *argv[])
       malloc_memory(&g_functional_units, &g_score_board, &g_bus, g_cpu_configs, g_instruction_count);
       init_scoreboard(&g_score_board);
 
+      // printf("AAAAAAA: %d\n", g_memory[400]);
       run_simulation(output_stream);
     }
   }
