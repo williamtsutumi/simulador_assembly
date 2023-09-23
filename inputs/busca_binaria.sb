@@ -1,30 +1,30 @@
-
-# algum comentario qualquer
- /*
-      UF   :
+/*
+    UF:
+    add: 1
     integer: 1
-    mul:3
-    add:   1
+    mul: 3
 
 INST:
-
     add: 2
-    integer   :   1
-    mul     :10
+    integer: 1
+    mul: 10
+*/
 
 
-    */ 
-
-# mais um comentario
-
+#Perguntar: Posso fazer o programa ler da memória em posicoes fixas? Se tiver mais números, seria necessário ajustar o programa
 .data
+5 #Numero a ser encontrado
+3
+4
 5
-
-# olha outro aqui
+6
+7
+8
+9
+10
+11
 
 .text
-
-# Tem mais um aqui
 
 
 exit
