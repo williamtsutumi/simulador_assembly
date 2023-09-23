@@ -8,6 +8,51 @@
 #include <stdbool.h>
 #include <assert.h>
 
+// Símbolos para leitura da entrada
+#define ADD "add "
+#define ADD_OPCODE 0
+#define ADDI "addi "
+#define ADDI_OPCODE 1
+#define SUB "sub "
+#define SUB_OPCODE 2
+#define SUBI "subi "
+#define SUBI_OPCODE 3
+#define MUL "mul "
+#define MUL_OPCODE 4
+#define DIV "div "
+#define DIV_OPCODE 5
+#define AND "and "
+#define AND_OPCODE 6
+#define OR "or "
+#define OR_OPCODE 7
+#define NOT "not "
+#define NOT_OPCODE 8
+#define BLT "blt "
+#define BLT_OPCODE 9
+#define BGT "bgt "
+#define BGT_OPCODE 10
+#define BEQ "beq "
+#define BEQ_OPCODE 11
+#define BNE "bne "
+#define BNE_OPCODE 12
+#define J "j "
+#define J_OPCODE 13
+#define LW "lw "
+#define LW_OPCODE 14
+#define SW "sw "
+#define SW_OPCODE 15
+#define EXIT "exit"
+#define EXIT_OPCODE 16
+#define INSTRUCTION_NAMES { ADD, ADDI, SUB, SUBI, MUL, DIV, AND, OR, NOT, BLT, BGT, BEQ, BNE, J, LW, SW, EXIT }
+
+// Símbolos para leitura das configurações
+#define UF_SYMBOL "UF"
+#define INST_SYMBOL "INST"
+#define ADD_SYMBOL "add"
+#define MUL_SYMBOL "mul"
+#define INTEGER_SYMBOL "integer"
+#define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
+
 
 #define MAX_NUM_INSTRUCTIONS 50
 #define MAX_NUM_ROWS_TABLE 100

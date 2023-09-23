@@ -188,9 +188,15 @@ void write_result(){
 void run_one_cycle(FILE *output){
   g_current_cycle++;
 
+  // Imprimindo tabelas, não fiel à simulação
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-
-  print_table(&g_score_board, g_current_cycle, g_instruction_count, total_ufs);
+  Byte inst_opcodes[g_instruction_count];
+  for (int i = 0; i < g_instruction_count; i++){
+    inst_opcodes[i] = g_memory[4 * (i + PROGRAM_FIRST_ADDRESS)];
+    printf("opcode: %d\n", inst_opcodes[i]);
+  }
+  print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
+  // ****************************************
 
   write_result();
   execute();

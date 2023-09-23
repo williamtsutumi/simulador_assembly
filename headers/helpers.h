@@ -17,6 +17,27 @@ void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, Funct
 int get_opcode_from_binary(int instruction){
   return instruction >> 25;
 }
+char *get_inst_name_from_opcode(Byte op_code){
+  if (op_code == ADD_OPCODE)  return ADD;
+  else if (op_code == ADDI_OPCODE) return ADDI;
+  else if (op_code == SUB_OPCODE)  return SUB;
+  else if (op_code == SUBI_OPCODE) return SUBI;
+  else if (op_code == MUL_OPCODE)  return MUL;
+  else if (op_code == DIV_OPCODE)  return DIV;
+  else if (op_code == AND_OPCODE)  return AND;
+  else if (op_code == OR_OPCODE)   return OR;
+  else if (op_code == NOT_OPCODE)  return NOT;
+  else if (op_code == BLT_OPCODE)  return BLT;
+  else if (op_code == BGT_OPCODE)  return  BGT;
+  else if (op_code == BEQ_OPCODE)  return  BEQ;
+  else if (op_code == BNE_OPCODE)  return  BNE;
+  else if (op_code == J_OPCODE)    return  J;
+  else if (op_code == LW_OPCODE)   return  LW;
+  else if (op_code == SW_OPCODE)   return  SW;
+  else if (op_code == EXIT_OPCODE) return  EXIT;
+
+  return "";
+}
 
 UF_TYPE get_uf_type_from_opcode(int op_code){
   if (
@@ -42,6 +63,7 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
   // blt, bgt, beq, bne, j, exit
   return NOT_APPLIED_UF;
 }
+
 int get_binary_subnumber(int instruction, int start_bit, int end_bit){
   instruction >>= start_bit;
   int bitmask = (1ll << (end_bit - start_bit + 1))-1;
@@ -107,30 +129,6 @@ int get_instruction_from_memory(int instruction_index, Byte *mem){
   return (mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
 }
 
-bool uf_is_ready(FunctionalUnit uf, CPU_Configurations cpu_configs){
-  if (uf.type == ADD_UF)
-    return uf.current_cycle == cpu_configs.cycles_to_complete_add;
-  else if (uf.type == MUL_UF)
-    return uf.current_cycle == cpu_configs.cycles_to_complete_mul;
-  else if (uf.type == INTEGER_UF)
-    return uf.current_cycle == cpu_configs.cycles_to_complete_integer;
-  return false;
-}
-
-void increment_all_uf_current_cycle(FILE *output, CPU_Configurations cpu_configs, FunctionalUnit functional_units[]){
-  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
-  for (int i=0; i<total_ufs; i++){
-    if (uf_is_ready(functional_units[i], cpu_configs)){
-      functional_units[i].current_cycle = 1;
-      // write_result(functional_units[i]);
-      continue;
-    }
-    // if is busy
-    functional_units[i].current_cycle++;
-  }
-  print_ufs_current_cycle(output, cpu_configs, functional_units);
-}
-
 char* table_format_text(char* pfx, int number) {
 
     char* result = (char*)malloc(sizeof(char) * 30);
@@ -154,7 +152,7 @@ char* table_format_number(int number) {
   return result;
 }
 
-void print_instruction_status(InstructionState** instruction_states, int num_instructions){
+void print_instruction_status(InstructionState** instruction_states, Byte inst_opcodes[], int num_instructions){
   printf("Status das Instruções:\n");
   char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Execution", "Write result"};
 
@@ -189,8 +187,8 @@ void print_instruction_status(InstructionState** instruction_states, int num_ins
       strcat(exec, " - ");
       strcat(exec, table_format_number((*instruction_states)[i].finish_execute));
     }
-    printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
-      i,
+    printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
+      get_inst_name_from_opcode(inst_opcodes[i]),
       table_format_number((*instruction_states)[i].fetch),
       table_format_number((*instruction_states)[i].issue),
       table_format_number((*instruction_states)[i].read_operands),
@@ -233,7 +231,6 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
   }
 }
 
-
 void print_result_register_status(FunctionalUnit* result_register_state[]){
   printf("Status dos Resultados dos Registradores:\n");
   char* functional_unit_name[]= {"Integer", "Mul", "Add"};
@@ -264,10 +261,10 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
 
 }
 
-void print_table(ScoreBoard* scoreboarding, int curr_cycle, int num_instructions, int num_ufs){
+void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs){
   printf("*******************************************************************************************\n");
   printf("Ciclo atual: %d\n", curr_cycle);
-  print_instruction_status(&scoreboarding->instructions_states, num_instructions);
+  print_instruction_status(&scoreboarding->instructions_states, inst_opcodes, num_instructions);
   print_functional_unit_status(scoreboarding->ufs_states, num_ufs);
   print_result_register_status(scoreboarding->result_register_state);
 }
