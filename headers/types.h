@@ -12,13 +12,13 @@
 #define MAX_NUM_INSTRUCTIONS 50
 #define MAX_NUM_ROWS_TABLE 100
 #define NUM_REGISTERS 32
-#define MAX_QUEUE_SIZE 8
 // "Os 100 endereços (32 bits) iniciais são reservados para dados",
 // acho q então começa em 100
 #define PROGRAM_FIRST_ADDRESS 100
 
 
-
+/* Representação de Byte para a memória simulada */
+typedef unsigned char Byte;
 
 /* TYPES para leitura do input */
 
@@ -28,8 +28,6 @@ typedef enum OPERAND_TYPE
     IMM,
     MEMORY,
 } OPERAND_TYPE;
-
-typedef unsigned char Byte;
 
 /* TYPES da representação das unidades funcionais */
 
@@ -117,7 +115,6 @@ typedef enum SignalFlag {
         typedef struct Bus {
             DataSignal regs[32]; // Informação sendo enviada aos registradores
             DataSignal *ufs_data; // Informação sendo enviada às unidades funcionais
-            ControlSignal instruction_register;
             ControlSignal *ufs_state;
         } Bus;
 

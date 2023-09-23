@@ -51,7 +51,7 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
 void fetch_next_instruction(){
   int instruction_index = (g_program_counter - PROGRAM_FIRST_ADDRESS) / 4;
   if(g_instruction_count <= instruction_index){
-    assert(false && "acabou as intruções pra serem fetchadas");
+    // assert(false && "acabou as intruções pra serem fetchadas");
   }
   g_score_board.instructions_states[instruction_index].current_state = FETCH;
   g_score_board.instructions_states[instruction_index].fetch = g_current_cycle;
@@ -59,11 +59,13 @@ void fetch_next_instruction(){
   g_instruction_register.binary = get_instruction_from_memory(instruction_index, g_memory);
   g_instruction_register.program_counter = g_program_counter;
   g_program_counter += 4;
+
+  // Controle do pipeline
+  g_score_board.can_fetch = false;
+  //*********************
 }
 
 void issue_instruction(){
-  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
-
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
   int idle_uf_index=-1;
@@ -79,6 +81,10 @@ void issue_instruction(){
     return;
   }
 
+  // Controle do pipeline
+  g_score_board.can_fetch = true;
+  //*********************
+  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = g_current_cycle;
 
 
@@ -147,12 +153,21 @@ void write_result(){
       else if (inst_uf_type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
       else if (inst_uf_type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
       
-      printf("to complete: %d\n", cycles_to_complete);
       int start = g_score_board.instructions_states[i].start_execute;
       int finish = g_score_board.instructions_states[i].finish_execute;
       if (finish - start + 1 == cycles_to_complete){
         g_score_board.instructions_states[i].current_state = WRITE_RESULT;
         g_score_board.instructions_states[i].write_result = g_current_cycle;
+
+        g_score_board.ufs_states[i].fi = -1;
+        g_score_board.ufs_states[i].fj = -1;
+        g_score_board.ufs_states[i].fk = -1;
+        g_score_board.ufs_states[i].qj = -1;
+        g_score_board.ufs_states[i].qk = -1;
+        g_score_board.ufs_states[i].inst_program_counter = -1;
+        g_score_board.ufs_states[i].busy = false;
+        g_score_board.ufs_states[i].rj = false;
+        g_score_board.ufs_states[i].rk = false;
       }
       else{
         g_score_board.instructions_states[i].finish_execute++;
@@ -172,8 +187,8 @@ void run_one_cycle(FILE *output){
   write_result();
   execute();
   if (g_score_board.can_read_operands) read_operands();
-  if (g_bus.instruction_register == CONTINUE) fetch_next_instruction();
   if (g_score_board.can_issue) issue_instruction();
+  if (g_score_board.can_fetch) fetch_next_instruction();
 }
 
 void run_simulation(FILE *output){
@@ -191,7 +206,9 @@ int main(int argc, char *argv[])
   FILE* input_file;
   
   if (read_args(argc, argv, &input_file_name, &input_file, &output_stream)){
+    
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
+
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
       malloc_memory(&g_functional_units, &g_score_board, &g_bus, g_cpu_configs, g_instruction_count);
       init_scoreboard(&g_score_board);
