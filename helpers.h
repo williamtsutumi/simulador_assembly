@@ -156,7 +156,7 @@ char* table_format_number(int number) {
 
 void print_instruction_status(InstructionState** instruction_states, int num_instructions){
   printf("Status das Instruções:\n");
-  char* labels[] = {"Instruction", "Fetch", "Issue", "Read opearands", "Exec Complete", "Write result"};
+  char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Exec Complete", "Write result"};
   printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
 
   for(int i = 0; i < num_instructions; i++){

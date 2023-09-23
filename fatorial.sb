@@ -18,11 +18,11 @@ INST:
 # mais um comentario
 
 .data
+5
 
 # olha outro aqui
 
 .text
-5
 
 # Tem mais um aqui
 

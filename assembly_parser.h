@@ -299,12 +299,22 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 
     case LW_OPCODE:
       rt = read_operand(arq, REGISTER, true);
-      imm = read_operand(arq, MEMORY, false);
+
+      imm = read_operand(arq, IMM, false);
+      if (!read_next_token(arq, "(", false)) break;
+      rs = read_number(arq);
+      if (!read_next_token(arq, ")", false)) break;
+
       return read_instructionI(opcode, rs, rt, imm);
 
     case SW_OPCODE:
       rt = read_operand(arq, REGISTER, true);
-      imm = read_operand(arq, MEMORY, false);
+
+      imm = read_operand(arq, IMM, false);
+      if (!read_next_token(arq, "(", false)) break;
+      rs = read_number(arq);
+      if (!read_next_token(arq, ")", false)) break;
+
       return read_instructionI(opcode, rs, rt, imm);
 
     case EXIT_OPCODE:
