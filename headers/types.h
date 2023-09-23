@@ -61,7 +61,8 @@ typedef struct InstructionState {
     int fetch;
     int issue;
     int read_operands;
-    int execute;
+    int start_execute;
+    int finish_execute;
     int write_result;
 
     InstructionStateType current_state;

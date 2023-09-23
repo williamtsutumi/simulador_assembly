@@ -1,5 +1,5 @@
 /*
-    UF:
+UF:
     add: 1
     integer: 1
     mul: 3
@@ -10,9 +10,8 @@ INST:
     mul: 10
 */
 
-
-#Perguntar: Posso fazer o programa ler da memória em posicoes fixas? Se tiver mais números, seria necessário ajustar o programa
-.data
+.data   
+9 #Quantidade de numeros
 5 #Numero a ser encontrado
 3
 4
@@ -25,6 +24,8 @@ INST:
 11
 
 .text
-
+lw 50, 0(0)         #r50 = Mem[0]
+lw 51, 1(0)         #r51 = Mem[1]
+add 49, 0(r0)
 
 exit

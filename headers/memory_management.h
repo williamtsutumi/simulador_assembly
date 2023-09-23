@@ -55,7 +55,8 @@ void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_configs, 
       (*score_board).instructions_states[i].fetch = 
       (*score_board).instructions_states[i].issue = 
       (*score_board).instructions_states[i].read_operands = 
-      (*score_board).instructions_states[i].execute = 
+      (*score_board).instructions_states[i].start_execute = 
+      (*score_board).instructions_states[i].finish_execute = 
       (*score_board).instructions_states[i].write_result = -1; 
   }
 

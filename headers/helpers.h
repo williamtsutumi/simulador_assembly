@@ -156,8 +156,11 @@ char* table_format_number(int number) {
 
 void print_instruction_status(InstructionState** instruction_states, int num_instructions){
   printf("Status das Instruções:\n");
-  char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Exec Complete", "Write result"};
+  char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Execution", "Write result"};
+
+  yellow();
   printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
+  reset();
 
   for(int i = 0; i < num_instructions; i++){
     /*
@@ -181,14 +184,20 @@ void print_instruction_status(InstructionState** instruction_states, int num_ins
     if ((*instruction_states)[i].write_result == -1) write_result[0] = '\0';
     else snprintf(write_result, sizeof(write_result), "%d", (*instruction_states)[i].write_result);
     */
-
+    char *exec = table_format_number((*instruction_states)[i].start_execute);
+    if (exec != NULL && exec[0] != '\0'){
+      strcat(exec, " - ");
+      strcat(exec, table_format_number((*instruction_states)[i].finish_execute));
+    }
     printf("|%-20d|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
-    i,
-    table_format_number((*instruction_states)[i].fetch),
-    table_format_number((*instruction_states)[i].issue),
-    table_format_number((*instruction_states)[i].read_operands),
-    table_format_number((*instruction_states)[i].execute),
-    table_format_number((*instruction_states)[i].write_result));
+      i,
+      table_format_number((*instruction_states)[i].fetch),
+      table_format_number((*instruction_states)[i].issue),
+      table_format_number((*instruction_states)[i].read_operands),
+      exec,
+      table_format_number((*instruction_states)[i].write_result));
+
+
   }
 }
 
@@ -199,8 +208,10 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
   char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
   char* yesno[] = {"No", "Yes"};
 
+  yellow();
   printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
    labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
+  reset();
 
   char* functional_unit_name[]= {"Int", "Mul", "Add"};
   char *instruction_names[] = INSTRUCTION_NAMES;
@@ -228,13 +239,15 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
   char* functional_unit_name[]= {"Integer", "Mul", "Add"};
   
   for(int k = 0; k < 2; k++){
-    printf("|");
     
+    yellow();
+    printf("|");
     for(int i = k*16; i < (k+1)*16; i++){
       printf("%-7s|", table_format_text("R", i));
     }
     printf("\n");
     printf("|");
+    reset();
 
     for(int i = k*16; i < (k+1)*16; i++){
       if(result_register_state[i] != NULL){

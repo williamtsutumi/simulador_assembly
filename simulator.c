@@ -115,7 +115,8 @@ void execute(){
   for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == READ_OPERANDS){
       g_score_board.instructions_states[i].current_state = EXECUTE;
-      g_score_board.instructions_states[i].execute = g_current_cycle;
+      g_score_board.instructions_states[i].start_execute = g_current_cycle;
+      g_score_board.instructions_states[i].finish_execute = g_current_cycle;
     }
   }
 
@@ -123,14 +124,14 @@ void execute(){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
       int cycles_to_complete;
       int inst = get_instruction_from_memory(i, g_memory);
-      printf("inst: %d", inst);
+      // printf("inst: %d", inst);
       UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
       if (inst_uf_type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
       else if (inst_uf_type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
       else if (inst_uf_type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
       
-      if (g_score_board.instructions_states[i].execute < cycles_to_complete)
-        g_score_board.instructions_states[i].execute++;
+      if (g_score_board.instructions_states[i].start_execute < cycles_to_complete)
+        g_score_board.instructions_states[i].start_execute++;
     }
   }
 }
@@ -138,8 +139,25 @@ void execute(){
 void write_result(){
   for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
-      g_score_board.instructions_states[i].current_state = WRITE_RESULT;
-      g_score_board.instructions_states[i].write_result = g_current_cycle;
+      int cycles_to_complete;
+      int inst = get_instruction_from_memory(i, g_memory);
+      // printf("inst: %d", inst);
+      UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
+      if (inst_uf_type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
+      else if (inst_uf_type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
+      else if (inst_uf_type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
+      
+      printf("to complete: %d\n", cycles_to_complete);
+      int start = g_score_board.instructions_states[i].start_execute;
+      int finish = g_score_board.instructions_states[i].finish_execute;
+      if (finish - start + 1 == cycles_to_complete){
+        g_score_board.instructions_states[i].current_state = WRITE_RESULT;
+        g_score_board.instructions_states[i].write_result = g_current_cycle;
+      }
+      else{
+        g_score_board.instructions_states[i].finish_execute++;
+      }
+
     }
   }
 }
