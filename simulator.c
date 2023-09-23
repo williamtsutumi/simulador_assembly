@@ -9,10 +9,11 @@
 TODO -> decidir como setar o barramento e quando de fato enviar as informações do barramento
 */
 
-#include "assembly_parser.h"
-#include "types.h"
-#include "helpers.h"
-#include "configuration.h"
+#include "headers/assembly_parser.h"
+#include "headers/types.h"
+#include "headers/helpers.h"
+#include "headers/configuration.h"
+#include "headers/memory_management.h"
 
 CPU_Configurations g_cpu_configs;
 FunctionalUnit *g_functional_units;
@@ -167,106 +168,6 @@ void run_simulation(FILE *output){
   }
 }
 
-/* Gerenciamento de memória */
-
-void free_memory(FILE *input, FILE*output){
-  free(g_functional_units);
-
-  free(g_bus.ufs_data);
-  free(g_bus.ufs_state);
-
-  free(g_score_board.instructions_states);
-  free(g_score_board.ufs_states);
-
-  fclose(input);
-  fclose(output);
-}
-
-void malloc_cpu(){
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  g_functional_units = (FunctionalUnit*)malloc(total_ufs * sizeof(FunctionalUnit));
-  for (int i=0; i<total_ufs; i++){
-    if (i < g_cpu_configs.size_add_ufs){
-      (g_functional_units)[i].type = ADD_UF;
-      (g_functional_units)[i].type_index = i;
-    }
-      
-    else if (i < g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs){
-      (g_functional_units)[i].type = MUL_UF;
-      (g_functional_units)[i].type_index = i - g_cpu_configs.size_add_ufs;
-    }
-    else{
-      (g_functional_units)[i].type = INTEGER_UF;
-      (g_functional_units)[i].type_index = i - (g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs);
-
-    }
-  }
-}
-
-void malloc_ufs_states(){
-    int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-    g_score_board.ufs_states = (FunctionalUnitState*)malloc(total_ufs * sizeof(FunctionalUnitState));
-    for(int i = 0; i < total_ufs; i++){
-
-      g_score_board.ufs_states[i].type = g_functional_units[i].type;
-      g_score_board.ufs_states[i].type_index = g_functional_units[i].type_index;
-      g_score_board.ufs_states[i].fi = -1;
-      g_score_board.ufs_states[i].fj = -1;
-      g_score_board.ufs_states[i].fk = -1;
-      g_score_board.ufs_states[i].qj = -1;
-      g_score_board.ufs_states[i].qk = -1;
-      g_score_board.ufs_states[i].op = -1;
-      g_score_board.ufs_states[i].rj = 0;
-      g_score_board.ufs_states[i].rk = 0;
-
-      g_score_board.ufs_states[i].busy = false;
-    }
-
-}
-
-void malloc_instruction_states(){
-    int num_instructions = g_instruction_count;
-
-    g_score_board.instructions_states = (InstructionState*)malloc(num_instructions * sizeof(InstructionState));
-    int num_allocated_inst = sizeof(g_score_board.instructions_states)/sizeof(InstructionState);
-
-    for(int i = 0; i < num_instructions; i++){
-      g_score_board.instructions_states[i].current_state = 
-      g_score_board.instructions_states[i].fetch = 
-      g_score_board.instructions_states[i].issue = 
-      g_score_board.instructions_states[i].read_operands = 
-      g_score_board.instructions_states[i].execute = 
-      g_score_board.instructions_states[i].write_result = -1; 
-
-    }
-}
-
-void malloc_bus(){
-  int num_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-
-  g_bus.ufs_state = (ControlSignal*)malloc(sizeof(ControlSignal) * num_ufs);
-  g_bus.ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
-}
-
-void malloc_scoreboard(){
-  malloc_instruction_states();
-  malloc_ufs_states();
-}
-
-void malloc_memory(){
-  malloc_cpu();
-  malloc_bus();
-  malloc_scoreboard();
-}
-
-void init_scoreboard(){
-  g_score_board.can_fetch = true;
-  g_score_board.can_issue = true;
-  g_score_board.can_read_operands = true;
-  g_score_board.can_execute = true;
-  g_score_board.can_write_result = true;
-}
-
 int main(int argc, char *argv[])
 {
   FILE* output_stream = stdout;
@@ -276,8 +177,8 @@ int main(int argc, char *argv[])
   if (read_args(argc, argv, &input_file_name, &input_file, &output_stream)){
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
-      malloc_memory();
-      init_scoreboard();
+      malloc_memory(&g_functional_units, &g_score_board, &g_bus, g_cpu_configs, g_instruction_count);
+      init_scoreboard(&g_score_board);
       run_simulation(output_stream);
     }
   }
@@ -285,7 +186,7 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Falha na leitura do arquivo %s.\n", input_file_name);
   }
 
-  free_memory(input_file, output_stream);
+  free_memory(input_file, output_stream, &g_bus, &g_score_board, &g_functional_units);
 
   return 0;
 
