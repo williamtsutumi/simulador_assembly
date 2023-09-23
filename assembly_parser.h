@@ -62,7 +62,7 @@ void reset();
 void print_str_int(char *, FILE *);
 void print_str_char(char *, FILE *);
 
-int read_number(FILE *);
+int read_number(FILE *, bool);
 bool validate_number(char *);
 void decapitalize(char *);
 void skip(FILE *);
@@ -302,7 +302,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 
       imm = read_operand(arq, IMM, false);
       if (!read_next_token(arq, "(", false)) break;
-      rs = read_number(arq);
+      rs = read_number(arq, true);
       if (!read_next_token(arq, ")", false)) break;
 
       return read_instructionI(opcode, rs, rt, imm);
@@ -312,7 +312,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 
       imm = read_operand(arq, IMM, false);
       if (!read_next_token(arq, "(", false)) break;
-      rs = read_number(arq);
+      rs = read_number(arq, true);
       if (!read_next_token(arq, ")", false)) break;
 
       return read_instructionI(opcode, rs, rt, imm);
@@ -337,7 +337,7 @@ bool read_data_section(FILE *arq, Byte **memory, int memory_size){
 
     fseek(arq, -1, SEEK_CUR);
     if (isdigit(c)){
-      int num = read_number(arq);
+      int num = read_number(arq, true);
       (*memory)[i + 3] = (num >> 24) & 0b11111111;
       (*memory)[i + 2] = (num >> 16) & 0b11111111;
       (*memory)[i + 1] = (num >> 8) & 0b11111111;
@@ -368,27 +368,27 @@ int read_instruction(FILE *arq, FILE *output){
 int read_operand(FILE* arq, OPERAND_TYPE type, bool expect_comma){
   
   if(type == REGISTER){
-    if(!read_next_token(arq, "r", false)) return -1;
+    if(!read_next_token(arq, "r", true)) return -1;
 
-    int register_id = read_number(arq);
-    if(expect_comma && !read_next_token(arq, ",", false)){
+    int register_id = read_number(arq, false);
+    if(expect_comma && !read_next_token(arq, ",", true)){
       die(arq, "Expected ','");
     }
 
     return register_id;
   }
   else if(type == IMM){
-    return read_number(arq);
+    return read_number(arq, true);
   }
   else if(type == MEMORY){
-    int desvio = read_number(arq);
-    if(!read_next_token(arq, "(", false))
+    int desvio = read_number(arq, true);
+    if(!read_next_token(arq, "(", true))
       die(arq, "Expected '('");
-    if(!read_next_token(arq, "r", false))
+    if(!read_next_token(arq, "r", true))
       die(arq, "Expected 'r'");
-    int register_id = read_number(arq);
+    int register_id = read_number(arq, false);
 
-    if(!read_next_token(arq, ")", false))
+    if(!read_next_token(arq, ")", true))
       die(arq, "Expected ')'");
 
     return -1;
@@ -544,11 +544,14 @@ bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
   return found;
 }
 
-int read_number(FILE *arq){
+int read_number(FILE *arq, bool expect_spaces){
   char c = fgetc(arq);
-  while (c != EOF && isspace(c)){
-    c = fgetc(arq);
+  if (expect_spaces){
+    while (c != EOF && isspace(c)){
+      c = fgetc(arq);
+    }
   }
+
   char buffer[10];
   int index = 0;
   while (isdigit(c)){
@@ -577,7 +580,7 @@ bool read_uf(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
         && read_next_token(input, expected_tokens[j], false)
         && read_next_token(input, ":", false))
       {
-        num_ufs[j] = read_number(input);
+        num_ufs[j] = read_number(input, true);
       }
     }
   }
@@ -620,7 +623,7 @@ bool read_inst(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
         && read_next_token(input, expected_tokens[j], false)
         && read_next_token(input, ":", false))
       {
-        num_cycles[j] = read_number(input);
+        num_cycles[j] = read_number(input, true);
       }
     }
   }

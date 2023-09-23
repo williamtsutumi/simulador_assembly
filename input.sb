@@ -34,9 +34,12 @@ and r1,   r2, r5
 add      r0, r1, r2
 add r3,      r7,  r15
 
-# Tem mais um aqui
-
-sub r15, r15 ,  r2
+#Comentario
+sub r15 #Comentario
+    ,   #Comentario
+    r15 #Comentario
+    ,   #Comentario
+    r2  #Comentario
 subi r2, r12,       1000
 mul r1, r2       ,   r5
 div r1, r2, r5
