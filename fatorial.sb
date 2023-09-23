@@ -1,0 +1,35 @@
+
+# algum comentario qualquer
+ /*
+      UF   :
+    integer: 1
+    mul:3
+    add:   1
+
+INST:
+
+    add: 2
+    integer                         :   1
+    mul         :10
+
+
+    */ 
+
+# mais um comentario
+
+.data
+
+# olha outro aqui
+
+.text
+5
+
+# Tem mais um aqui
+
+addi r1, r2, 1      #r1 = 1
+lw r10, 100(0)      #r10 = n, deve ser calculado n!
+mul r1, r1, r10     #r1 = r1 * r10
+subi r10, r10, 1    #r10 = r10 - 1
+beq r0, r10, 1      #if (r0 == r10) pc = 2
+sw r1, 1(0)         #Memoria[0+1] = r1
+exit
