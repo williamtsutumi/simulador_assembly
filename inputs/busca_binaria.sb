@@ -1,0 +1,30 @@
+
+# algum comentario qualquer
+ /*
+      UF   :
+    integer: 1
+    mul:3
+    add:   1
+
+INST:
+
+    add: 2
+    integer   :   1
+    mul     :10
+
+
+    */ 
+
+# mais um comentario
+
+.data
+5
+
+# olha outro aqui
+
+.text
+
+# Tem mais um aqui
+
+
+exit

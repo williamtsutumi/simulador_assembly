@@ -12,7 +12,6 @@ TODO -> decidir como setar o barramento e quando de fato enviar as informações
 #include "headers/assembly_parser.h"
 #include "headers/types.h"
 #include "headers/helpers.h"
-#include "headers/configuration.h"
 #include "headers/memory_management.h"
 
 CPU_Configurations g_cpu_configs;
@@ -122,7 +121,6 @@ void execute(){
 
   for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
-      printf("ALO\n");
       int cycles_to_complete;
       int inst = get_instruction_from_memory(i, g_memory);
       printf("inst: %d", inst);
@@ -179,6 +177,7 @@ int main(int argc, char *argv[])
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
       malloc_memory(&g_functional_units, &g_score_board, &g_bus, g_cpu_configs, g_instruction_count);
       init_scoreboard(&g_score_board);
+
       run_simulation(output_stream);
     }
   }
