@@ -114,7 +114,9 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
       *input_file_name = argv[i+1];
     }
     else if(strcmp(argv[i], "-m") == 0){
-      // todo -> validar que argv[i+1] é uma inteiro
+      // Validando se é um número
+      if (strspn(argv[i+1], "0123456789") != strlen(argv[i+1])) return false;
+
       g_memory_size = atoi(argv[i+1]);
     }
     else if(strcmp(argv[i], "-o") == 0){
@@ -141,12 +143,11 @@ int main(int argc, char *argv[])
       malloc_memory(&g_functional_units, &g_score_board, &g_bus, g_cpu_configs, g_instruction_count);
       init_scoreboard(&g_score_board);
 
-      // printf("AAAAAAA: %d\n", g_memory[400]);
       run_simulation(output_stream);
     }
   }
   else{
-    fprintf(output_stream, "Falha na leitura do arquivo %s.\n", input_file_name);
+    fprintf(output_stream, "Falha na leitura da linha de comando.\n");
   }
 
   free_memory(input_file, output_stream, &g_bus, &g_score_board, &g_functional_units);

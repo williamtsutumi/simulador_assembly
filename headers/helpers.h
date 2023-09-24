@@ -143,7 +143,7 @@ void clear_uf_state(FunctionalUnitState *uf_state){
 // Checa se pode enviar alguma instrução para write result
 // Senão, continua a executar
 void update_write_result(Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
-  // todo -> enviar para write resulta se possível ao invés de sempre enviar
+  // todo -> enviar para write result se possível ao invés de sempre enviar
   int count_instructions_sent_to_write = 0;
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == EXECUTE){
