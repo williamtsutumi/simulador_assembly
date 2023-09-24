@@ -5,10 +5,6 @@
 #include <stdbool.h>
 #include <assert.h>
 
-/*
-TODO -> decidir como setar o barramento e quando de fato enviar as informações do barramento
-*/
-
 #include "headers/assembly_parser.h"
 #include "headers/types.h"
 #include "headers/helpers.h"
@@ -18,9 +14,11 @@ CPU_Configurations g_cpu_configs;
 FunctionalUnit *g_functional_units;
 ScoreBoard g_score_board;
 Bus g_bus;
+Bus g_bus_buffer;
 
 Byte *g_memory;
 int g_memory_size = 32;
+
 int *g_registers;
 int g_instruction_count = 0;
 
@@ -28,25 +26,7 @@ int g_current_cycle = 0;
 int g_program_counter = PROGRAM_FIRST_ADDRESS; // PC
 InstructionRegister g_instruction_register; // IR
 
-bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file, FILE **output_stream){
-  for(int i = 1; i < argc; i+=2){
-
-    if(strcmp(argv[i], "-p") == 0){
-      *input_file_name = argv[i+1];
-    }
-    else if(strcmp(argv[i], "-m") == 0){
-      // todo -> validar que argv[i+1] é uma inteiro
-      g_memory_size = atoi(argv[i+1]);
-    }
-    else if(strcmp(argv[i], "-o") == 0){
-      *output_stream = fopen(argv[i+1], "w");
-    }
-  }
-
-  g_memory = (Byte*)(malloc(sizeof(Byte)* (PROGRAM_FIRST_ADDRESS + g_memory_size*4)));
-  *input_file = fopen(*input_file_name, "r");
-  return *input_file != NULL;
-}
+/* Estágios do pipeline */
 
 void fetch_next_instruction(){
   int instruction_index = (g_program_counter - PROGRAM_FIRST_ADDRESS) / 4;
@@ -64,14 +44,13 @@ void fetch_next_instruction(){
   g_score_board.can_fetch = false;
   //*********************
 }
-
 void issue_instruction(){
   UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
 
   int idle_uf_index = -1;
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int i = 0; i < total_ufs; i++){
-    // todo -> perguntar o que fazer com os desvios condicionais
+    // todo -> branchs não condicionais tá entrando em qualquer lugar
     if (type == NOT_APPLIED_UF && !g_score_board.ufs_states[i].busy){
       idle_uf_index = i;
       break;
@@ -111,7 +90,6 @@ void issue_instruction(){
   
 
 }
-
 void read_operands(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int i = 0; i < total_ufs; i++){
@@ -121,7 +99,6 @@ void read_operands(){
     }
   }
 }
-
 void execute(){
   // todo -> enviar para execução se possível ao inves de sempre enviar
   for (int i = 0; i < g_instruction_count; i++){
@@ -147,7 +124,6 @@ void execute(){
     }
   }
 }
-
 void write_result(){
   for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
@@ -185,8 +161,26 @@ void write_result(){
   }
 }
 
+/************************/
+
+void update_scoreboard(){
+
+}
+
+void send_data_to_bus(){
+
+}
+
+void receive_data_from_bus(){
+
+}
+
 void run_one_cycle(FILE *output){
   g_current_cycle++;
+
+  send_data_to_bus();
+  receive_data_from_bus();
+  update_scoreboard();
 
   // Imprimindo tabelas, não fiel à simulação
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
@@ -213,6 +207,26 @@ void run_simulation(FILE *output){
     getchar();
     run_one_cycle(output);
   }
+}
+
+bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file, FILE **output_stream){
+  for(int i = 1; i < argc; i+=2){
+
+    if(strcmp(argv[i], "-p") == 0){
+      *input_file_name = argv[i+1];
+    }
+    else if(strcmp(argv[i], "-m") == 0){
+      // todo -> validar que argv[i+1] é uma inteiro
+      g_memory_size = atoi(argv[i+1]);
+    }
+    else if(strcmp(argv[i], "-o") == 0){
+      *output_stream = fopen(argv[i+1], "w");
+    }
+  }
+
+  g_memory = (Byte*)(malloc(sizeof(Byte)* (PROGRAM_FIRST_ADDRESS + g_memory_size*4)));
+  *input_file = fopen(*input_file_name, "r");
+  return *input_file != NULL;
 }
 
 int main(int argc, char *argv[])

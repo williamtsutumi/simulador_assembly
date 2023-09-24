@@ -54,11 +54,8 @@
 #define CONFIG_SYMBOLS { ADD_SYMBOL, MUL_SYMBOL, INTEGER_SYMBOL }
 
 
-#define MAX_NUM_INSTRUCTIONS 50
 #define MAX_NUM_ROWS_TABLE 100
 #define NUM_REGISTERS 32
-// "Os 100 endereços (32 bits) iniciais são reservados para dados",
-// acho q então começa em 100
 #define PROGRAM_FIRST_ADDRESS 400
 
 

@@ -1,0 +1,9 @@
+imprimir o conteudo de todos os registrador ao encerrar a simulação
+
+
+Como o programa termina?
+Precisa ter um exit?
+Como a exit é processada?
+Como branchs condicionais são processados?
+
+Colocar um has_branch_on_pipeline no scoreboarding?

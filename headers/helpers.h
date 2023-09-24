@@ -271,7 +271,4 @@ void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[],
   print_result_register_status(scoreboarding->result_register_state);
 }
 
-
-
-
 #endif
