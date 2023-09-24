@@ -92,7 +92,7 @@ typedef enum FunctionalUnitStatus {
     CONTINUE_READ_OPERAND,
     CONTINUE_EXECUTE,
     CONTINUE_WRITE_RESULT,
-    STALL
+    STALL,
 } FunctionalUnitStatus;
 
     typedef struct FunctionalUnit

@@ -181,13 +181,14 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
       
       int start = (*score_board).instructions_states[i].start_execute;
       int finish = (*score_board).instructions_states[i].finish_execute;
+      printf("PORRA\n");
       if (finish - start + 1 == cycles_to_complete){
         (*bus_buffer).ufs_state[i] = STALL;
-
+        
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
-          (*bus_buffer).ufs_state[i] = CONTINUE_WRITE_RESULT;
-
           count_instructions_sent_to_write++;
+
+          (*bus_buffer).ufs_state[i] = CONTINUE_WRITE_RESULT;
 
           (*score_board).instructions_states[i].current_state = WRITE_RESULT;
           (*score_board).instructions_states[i].write_result = curr_cycle;
