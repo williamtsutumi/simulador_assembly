@@ -58,11 +58,11 @@
 #define NUM_REGISTERS 32
 #define PROGRAM_FIRST_ADDRESS 400
 
-
-#define FETCH_CAPACITY 1
-#define ISSUE_CAPACITY 1
-#define READ_OPERANDS_CAPACITY 1
-// #define EXECUTE_CAPACITY 1 acho que esse não faz sentido
+// Acho que essas capacities não vão ser usadas por causa do funcionamento dessa cpu
+// #define FETCH_CAPACITY 1
+// #define ISSUE_CAPACITY 1
+// #define READ_OPERANDS_CAPACITY 1
+// #define EXECUTE_CAPACITY 1 
 #define WRITE_RESULT_CAPACITY 1
 
 /* Representação de Byte para a memória simulada */

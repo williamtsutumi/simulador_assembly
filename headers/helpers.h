@@ -166,7 +166,7 @@ void update_write_result(Byte *memory, ScoreBoard *score_board, CPU_Configuratio
         int uf_idx = (*score_board).instructions_states[i].uf_index;
         clear_uf_state(&((*score_board).ufs_states[uf_idx]));
       }
-      else{
+      else if (finish - start + 1 < cycles_to_complete){
         (*score_board).instructions_states[i].finish_execute = curr_cycle;
       }
     }
