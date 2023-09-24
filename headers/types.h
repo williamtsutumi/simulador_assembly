@@ -87,8 +87,11 @@ typedef enum {
 } UF_TYPE;
 
 // Indica o que a unidade funcional deve fazer: continuar sua execução ou permanecer parado
+// A uf recebe esse status do scoreboard em todo ciclo
 typedef enum FunctionalUnitStatus {
-    CONTINUE,
+    CONTINUE_READ_OPERAND,
+    CONTINUE_EXECUTE,
+    CONTINUE_WRITE_RESULT,
     STALL
 } FunctionalUnitStatus;
 

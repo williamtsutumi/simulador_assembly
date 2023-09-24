@@ -69,6 +69,7 @@ UF_TYPE get_uf_type_from_instruction(int instruction){
   return get_uf_type_from_opcode(op_code);
 }
 
+// Retorna o índice (no array de registradores) do registrador de destino
 int get_destination_register_from_instruction(int instruction){
   int op_code = get_binary_subnumber(instruction, 26, 31);
 
@@ -184,17 +185,20 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
         (*bus_buffer).ufs_state[i] = STALL;
 
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
+          (*bus_buffer).ufs_state[i] = CONTINUE_WRITE_RESULT;
+
           count_instructions_sent_to_write++;
 
           (*score_board).instructions_states[i].current_state = WRITE_RESULT;
           (*score_board).instructions_states[i].write_result = curr_cycle;
 
           int uf_idx = (*score_board).instructions_states[i].uf_index;
+          // todo -> tem algum problema com o clear pq a instrução continuar sendo printada
           clear_uf_state(&((*score_board).ufs_states[uf_idx]));
         }
       }
       else{
-        (*bus_buffer).ufs_state[i] = CONTINUE;
+        (*bus_buffer).ufs_state[i] = CONTINUE_EXECUTE;
         (*score_board).instructions_states[i].finish_execute++;
       }
     }

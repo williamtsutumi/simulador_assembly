@@ -41,7 +41,7 @@ void execute(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
   for (int i = 0; i < total_ufs; i++){
-    if (g_functional_units[i].status == CONTINUE){
+    if (g_functional_units[i].status == CONTINUE_EXECUTE){
       UF_TYPE type = g_functional_units[i].type;
       int cycles_to_complete;
       if (type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
@@ -59,7 +59,16 @@ void execute(){
   }
 }
 void write_result(){
-  
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
+    if (g_functional_units[i].status == CONTINUE_WRITE_RESULT){
+      printf("OI\n"); 
+      int result = get_destination_register_from_instruction(g_functional_units[i].instruction_binary);
+
+      g_bus_buffer.regs[result].data = g_functional_units[i].operation_result;
+      g_bus_buffer.regs[result].flag = WRITE_TO_DESTINATION;
+    }
+  }
 }
 
 /************************/
