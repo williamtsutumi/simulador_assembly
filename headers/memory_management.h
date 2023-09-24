@@ -3,11 +3,16 @@
 
 #include "types.h"
 
-void free_memory(FILE *input, FILE*output, Bus *bus, ScoreBoard *score_board, FunctionalUnit **functional_units){
+void free_memory(FILE *input, FILE*output, Bus *bus, Bus *bus_buffer, ScoreBoard *score_board, FunctionalUnit **functional_units){
   free(*functional_units);
 
   free((*bus).ufs_data);
   free((*bus).ufs_state);
+  free((*bus).memory);
+
+  free((*bus_buffer).ufs_data);
+  free((*bus_buffer).ufs_state);
+  free((*bus_buffer).memory);
 
   free((*score_board).instructions_states);
   free((*score_board).ufs_states);
@@ -38,11 +43,16 @@ void malloc_cpu(FunctionalUnit **functional_units, CPU_Configurations cpu_config
   }
 }
 
-void malloc_bus(Bus *bus, CPU_Configurations cpu_configs){
+void malloc_bus(Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int memory_size){
   int num_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
 
-  (*bus).ufs_state = (ControlSignal*)malloc(sizeof(ControlSignal) * num_ufs);
+  (*bus).ufs_state = (FunctionalUnitStatus*)malloc(sizeof(FunctionalUnitStatus) * num_ufs);
   (*bus).ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
+  (*bus).memory = (DataSignal*)malloc(sizeof(DataSignal) * memory_size);
+
+  (*bus_buffer).ufs_state = (FunctionalUnitStatus*)malloc(sizeof(FunctionalUnitStatus) * num_ufs);
+  (*bus_buffer).ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
+  (*bus_buffer).memory = (DataSignal*)malloc(sizeof(DataSignal) * memory_size);
 }
 
 void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_configs, FunctionalUnit *functional_units, int num_instructions){
@@ -80,9 +90,9 @@ void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_configs, 
     }
 }
 
-void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, Bus *bus, CPU_Configurations cpu_configs, int num_instructions){
+void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int num_instructions, int memory_size){
   malloc_cpu(functional_units, cpu_configs);
-  malloc_bus(bus, cpu_configs);
+  malloc_bus(bus, bus_buffer, cpu_configs, memory_size);
   malloc_scoreboard(score_board, cpu_configs, *functional_units, num_instructions);
 }
 

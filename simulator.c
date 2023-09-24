@@ -29,6 +29,7 @@ InstructionRegister g_instruction_register; // IR
 /* Estágios do pipeline */
 
 void fetch_next_instruction(){
+
 }
 void issue_instruction(){
   
@@ -37,19 +38,28 @@ void read_operands(){
   
 }
 void execute(){
-  for (int i = 0; i < g_instruction_count; i++){
-    if (g_score_board.instructions_states[i].current_state == EXECUTE){
-      
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+
+  for (int i = 0; i < total_ufs; i++){
+    if (g_functional_units[i].status == CONTINUE){
+      UF_TYPE type = g_functional_units[i].type;
+      int cycles_to_complete;
+      if (type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
+      if (type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
+      if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
+
+      g_functional_units[i].current_cycle++;
+      if (g_functional_units[i].current_cycle == cycles_to_complete){
+        int opcode = get_opcode_from_binary(g_functional_units[i].instruction_binary);
+        int operand1 = g_functional_units[i].operand1;
+        int operand2 = g_functional_units[i].operand2;
+        g_functional_units[i].operation_result = actually_execute(opcode, operand1, operand2);
+      }
     }
   }
 }
 void write_result(){
-  for (int i = 0; i < g_instruction_count; i++){
-    if (g_score_board.instructions_states[i].current_state == WRITE_RESULT){
-      
-
-    }
-  }
+  
 }
 
 /************************/
@@ -57,7 +67,7 @@ void write_result(){
 void update_scoreboard(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
-  update_write_result(g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
+  update_write_result(&g_bus_buffer, g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
   update_execute(&g_score_board, g_current_cycle, g_instruction_count);
   update_read_operands(&g_score_board, g_current_cycle, total_ufs);
   update_issue(&g_score_board, g_instruction_register, g_current_cycle, total_ufs);
@@ -140,7 +150,7 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
 
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
-      malloc_memory(&g_functional_units, &g_score_board, &g_bus, g_cpu_configs, g_instruction_count);
+      malloc_memory(&g_functional_units, &g_score_board, &g_bus, &g_bus_buffer, g_cpu_configs, g_instruction_count, g_memory_size);
       init_scoreboard(&g_score_board);
 
       run_simulation(output_stream);
@@ -150,7 +160,7 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Falha na leitura da linha de comando.\n");
   }
 
-  free_memory(input_file, output_stream, &g_bus, &g_score_board, &g_functional_units);
+  free_memory(input_file, output_stream, &g_bus, &g_bus_buffer, &g_score_board, &g_functional_units);
 
   return 0;
 

@@ -140,9 +140,32 @@ void clear_uf_state(FunctionalUnitState *uf_state){
   (*uf_state).inst_program_counter = -1;
 }
 
+int actually_execute(int opcode, int operand1, int operand2){
+  if (opcode == ADD_OPCODE)  return operand1 + operand2;
+  if (opcode == ADDI_OPCODE) return operand1 + operand2; // Sim, é igual ao anterior
+  if (opcode == SUB_OPCODE)  return operand1 - operand2;
+  if (opcode == SUBI_OPCODE) return operand1 - operand2; // Sim, é igual ao anterior
+  if (opcode == MUL_OPCODE)  return operand1 * operand2;
+  if (opcode == DIV_OPCODE)  return operand1 / operand2;
+  if (opcode == AND_OPCODE)  return operand1 & operand2;
+  if (opcode == OR_OPCODE)   return operand1 | operand2;
+  if (opcode == NOT_OPCODE)  return ~operand1;
+  
+  // todo -> não tenho certeza o que fazer com essas
+  // if (opcode == BLT_OPCODE)  
+  // if (opcode == BGT_OPCODE) 
+  // if (opcode == BEQ_OPCODE) 
+  // if (opcode == BNE_OPCODE) 
+  // if (opcode == J_OPCODE) 
+  // if (opcode == LW_OPCODE) 
+  // if (opcode == SW_OPCODE) 
+  // if (opcode == EXIT_OPCODE) 
+
+}
+
 // Checa se pode enviar alguma instrução para write result
 // Senão, continua a executar
-void update_write_result(Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
+void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
   // todo -> enviar para write result se possível ao invés de sempre enviar
   int count_instructions_sent_to_write = 0;
   for (int i = 0; i < inst_count; i++){
@@ -157,17 +180,22 @@ void update_write_result(Byte *memory, ScoreBoard *score_board, CPU_Configuratio
       
       int start = (*score_board).instructions_states[i].start_execute;
       int finish = (*score_board).instructions_states[i].finish_execute;
-      if (finish - start + 1 == cycles_to_complete && count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
-        count_instructions_sent_to_write++;
+      if (finish - start + 1 == cycles_to_complete){
+        (*bus_buffer).ufs_state[i] = STALL;
 
-        (*score_board).instructions_states[i].current_state = WRITE_RESULT;
-        (*score_board).instructions_states[i].write_result = curr_cycle;
+        if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
+          count_instructions_sent_to_write++;
 
-        int uf_idx = (*score_board).instructions_states[i].uf_index;
-        clear_uf_state(&((*score_board).ufs_states[uf_idx]));
+          (*score_board).instructions_states[i].current_state = WRITE_RESULT;
+          (*score_board).instructions_states[i].write_result = curr_cycle;
+
+          int uf_idx = (*score_board).instructions_states[i].uf_index;
+          clear_uf_state(&((*score_board).ufs_states[uf_idx]));
+        }
       }
-      else if (finish - start + 1 < cycles_to_complete){
-        (*score_board).instructions_states[i].finish_execute = curr_cycle;
+      else{
+        (*bus_buffer).ufs_state[i] = CONTINUE;
+        (*score_board).instructions_states[i].finish_execute++;
       }
     }
   }

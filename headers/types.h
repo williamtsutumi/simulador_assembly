@@ -86,15 +86,33 @@ typedef enum {
     NOT_APPLIED_UF
 } UF_TYPE;
 
+// Indica o que a unidade funcional deve fazer: continuar sua execução ou permanecer parado
+typedef enum FunctionalUnitStatus {
+    CONTINUE,
+    STALL
+} FunctionalUnitStatus;
+
     typedef struct FunctionalUnit
     {
         UF_TYPE type;
-        int current_cycle;
         int type_index;
+
+        // Nao sei direito a utilidade disso
+        int current_cycle;
+
+        // Coisas que eu acho que vai ter que botar
+        int instruction_binary;
+        int operand1;
+        int operand2;
+
+
+        int operation_result;
+        FunctionalUnitStatus status;
     } FunctionalUnit;
 
 /* TYPES do scoreboarding */
 
+// Indica qual estágio do pipeline a instrução está
 typedef enum InstructionStateType {
     FETCH,
     ISSUE,
@@ -103,6 +121,7 @@ typedef enum InstructionStateType {
     WRITE_RESULT
 } InstructionStateType;
 
+// Estado da instrução, controle realizado pelo scoreboard
 typedef struct InstructionState {
     int fetch;
     int issue;
@@ -116,6 +135,7 @@ typedef struct InstructionState {
     InstructionStateType current_state;
 } InstructionState;
 
+// Estado da unidade funcional, controle realizado pelo scoreboard
 typedef struct FunctionalUnitState
 {
     UF_TYPE type;
@@ -123,6 +143,9 @@ typedef struct FunctionalUnitState
     int type_index;
     int op, fi, fj, fk, qj, qk;
     bool busy, rj, rk;
+
+
+    // Não gostei de ter esse cara aqui
     int inst_program_counter;
 } FunctionalUnitState;
 
@@ -144,12 +167,6 @@ typedef struct FunctionalUnitState
 
 /* TYPES do barramento */
 
-// Indica o que deve um componente deve fazer: continuar sua execução ou permanecer parado
-typedef enum ControlSignal {
-    CONTINUE,
-    STALL
-} ControlSignal;
-
 // Indica se a informação no barramento deve ser lido ou não
 typedef enum SignalFlag {
     IGNORE,
@@ -164,8 +181,11 @@ typedef enum SignalFlag {
 
         typedef struct Bus {
             DataSignal regs[32]; // Informação sendo enviada aos registradores
+
             DataSignal *ufs_data; // Informação sendo enviada às unidades funcionais
-            ControlSignal *ufs_state;
+            FunctionalUnitStatus *ufs_state; // Controle do scoreboard para as unidades funcionais
+
+            DataSignal *memory; // Informação sendo enviada à memória
         } Bus;
 
 
