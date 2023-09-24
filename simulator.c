@@ -29,133 +29,24 @@ InstructionRegister g_instruction_register; // IR
 /* Estágios do pipeline */
 
 void fetch_next_instruction(){
-  int instruction_index = (g_program_counter - PROGRAM_FIRST_ADDRESS) / 4;
-  if(g_instruction_count <= instruction_index){
-    // assert(false && "acabou as intruções pra serem fetchadas");
-  }
-  g_score_board.instructions_states[instruction_index].current_state = FETCH;
-  g_score_board.instructions_states[instruction_index].fetch = g_current_cycle;
-  
-  g_instruction_register.binary = get_instruction_from_memory(instruction_index, g_memory);
-  g_instruction_register.program_counter = g_program_counter;
-  g_program_counter += 4;
-
-  // Controle do pipeline
-  g_score_board.can_fetch = false;
-  //*********************
 }
 void issue_instruction(){
-  UF_TYPE type = get_uf_type_from_instruction(g_instruction_register.binary);
-
-  int idle_uf_index = -1;
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
-    // todo -> branchs não condicionais tá entrando em qualquer lugar
-    if (type == NOT_APPLIED_UF && !g_score_board.ufs_states[i].busy){
-      idle_uf_index = i;
-      break;
-    }
-    if (g_score_board.ufs_states[i].type == type && !g_score_board.ufs_states[i].busy){
-      idle_uf_index = i;
-      break;
-    }
-  }
-  if(idle_uf_index == -1){
-    printf("não tem unidades funcionais livres!\n");
-    return;
-  }
-
-  // Controle do pipeline
-  g_score_board.can_fetch = true;
-  g_score_board.instructions_states[idle_uf_index].uf_index = idle_uf_index;
-  //*********************
-  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
-  g_score_board.instructions_states[(g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = g_current_cycle;
-
-
-  g_score_board.ufs_states[idle_uf_index].busy = true;
-  g_score_board.ufs_states[idle_uf_index].inst_program_counter = g_instruction_register.binary;
-
-  g_score_board.ufs_states[idle_uf_index].fi = get_destination_register_from_instruction(g_instruction_register.binary);
-  int op1, op2;
-  get_operands_register_from_instruction(g_instruction_register.binary, &op1, &op2);
-  g_score_board.ufs_states[idle_uf_index].fj = op1;
-  g_score_board.ufs_states[idle_uf_index].fk = op2;
-  g_score_board.ufs_states[idle_uf_index].op = get_binary_subnumber(g_instruction_register.binary, 26, 31);
-
-  g_score_board.result_register_state[rand()%32] = &g_functional_units[rand()%total_ufs];
-  //g_score_board.ufs_states[idle_uf_index].qj = g_score_board.result_register_state[g_score_board.ufs_states[idle_uf_index].fj]->type;
-  //g_score_board.ufs_states[idle_uf_index].qk = g_score_board.result_register_state[g_score_board.ufs_states[idle_uf_index].fk]->type;
-
   
-
 }
 void read_operands(){
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
-    if (g_score_board.instructions_states[i].current_state == ISSUE){
-      g_score_board.instructions_states[i].current_state = READ_OPERANDS;
-      g_score_board.instructions_states[i].read_operands = g_current_cycle;
-    }
-  }
+  
 }
 void execute(){
-  // todo -> enviar para execução se possível ao inves de sempre enviar
-  for (int i = 0; i < g_instruction_count; i++){
-    if (g_score_board.instructions_states[i].current_state == READ_OPERANDS){
-      g_score_board.instructions_states[i].current_state = EXECUTE;
-      g_score_board.instructions_states[i].start_execute = g_current_cycle;
-      g_score_board.instructions_states[i].finish_execute = g_current_cycle;
-    }
-  }
-
   for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state == EXECUTE){
-      int cycles_to_complete;
-      int inst = get_instruction_from_memory(i, g_memory);
-      // printf("inst: %d", inst);
-      UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
-      if (inst_uf_type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
-      else if (inst_uf_type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
-      else if (inst_uf_type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
       
-      if (g_score_board.instructions_states[i].start_execute < cycles_to_complete)
-        g_score_board.instructions_states[i].start_execute++;
     }
   }
 }
 void write_result(){
   for (int i = 0; i < g_instruction_count; i++){
-    if (g_score_board.instructions_states[i].current_state == EXECUTE){
-      int cycles_to_complete;
-      int inst = get_instruction_from_memory(i, g_memory);
-      // printf("inst: %d", inst);
-      UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
-      if (inst_uf_type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
-      else if (inst_uf_type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
-      else if (inst_uf_type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
+    if (g_score_board.instructions_states[i].current_state == WRITE_RESULT){
       
-      int start = g_score_board.instructions_states[i].start_execute;
-      int finish = g_score_board.instructions_states[i].finish_execute;
-      if (finish - start + 1 == cycles_to_complete){
-        g_score_board.instructions_states[i].current_state = WRITE_RESULT;
-        g_score_board.instructions_states[i].write_result = g_current_cycle;
-
-        int uf_idx = g_score_board.instructions_states[i].uf_index;
-        g_score_board.ufs_states[uf_idx].fi = -1;
-        g_score_board.ufs_states[uf_idx].fj = -1;
-        g_score_board.ufs_states[uf_idx].fk = -1;
-        g_score_board.ufs_states[uf_idx].qj = -1;
-        g_score_board.ufs_states[uf_idx].qk = -1;
-        g_score_board.ufs_states[uf_idx].op = -1;
-        g_score_board.ufs_states[uf_idx].inst_program_counter = -1;
-        g_score_board.ufs_states[uf_idx].busy = false;
-        g_score_board.ufs_states[uf_idx].rj = false;
-        g_score_board.ufs_states[uf_idx].rk = false;
-      }
-      else{
-        g_score_board.instructions_states[i].finish_execute++;
-      }
 
     }
   }
@@ -164,7 +55,13 @@ void write_result(){
 /************************/
 
 void update_scoreboard(){
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
+  update_write_result(g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
+  update_execute(&g_score_board, g_current_cycle, g_instruction_count);
+  update_read_operands(&g_score_board, g_current_cycle, total_ufs);
+  update_issue(&g_score_board, g_instruction_register, g_current_cycle, total_ufs);
+  update_fetch(g_memory, &g_score_board, &g_instruction_register, &g_program_counter, g_current_cycle, total_ufs);
 }
 
 void send_data_to_bus(){
@@ -178,9 +75,16 @@ void receive_data_from_bus(){
 void run_one_cycle(FILE *output){
   g_current_cycle++;
 
+  update_scoreboard();
   send_data_to_bus();
   receive_data_from_bus();
-  update_scoreboard();
+
+  write_result();
+  execute();
+  // Possívelmente não vai ter essas três
+  // read_operands();
+  // issue_instruction();
+  // fetch_next_instruction();
 
   // Imprimindo tabelas, não fiel à simulação
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
@@ -194,11 +98,6 @@ void run_one_cycle(FILE *output){
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
   // ****************************************
 
-  write_result();
-  execute();
-  if (g_score_board.can_read_operands) read_operands();
-  if (g_score_board.can_issue) issue_instruction();
-  if (g_score_board.can_fetch) fetch_next_instruction();
 }
 
 void run_simulation(FILE *output){

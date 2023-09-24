@@ -4,19 +4,12 @@
 #include "types.h"
 char* empty = "";
 
-void print_ufs_current_cycle(FILE *output, CPU_Configurations cpu_configs, FunctionalUnit functional_units[]){
-  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
-  for (int i=0; i<total_ufs; i++){
-    if (i == 0) printf("ADD UFS:\n");
-    else if (i == cpu_configs.size_add_ufs) printf("MUL UFS:\n");
-    else if (i == cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs) printf("INTEGER UFS:\n");
-    printf("functional unit [%d].cycle: %d\n", i, functional_units[i].current_cycle);
-  }
-}
+/* Utilidades */
 
 int get_opcode_from_binary(int instruction){
   return instruction >> 26;
 }
+
 char *get_inst_name_from_opcode(Byte op_code){
   if (op_code == ADD_OPCODE)  return ADD;
   else if (op_code == ADDI_OPCODE) return ADDI;
@@ -121,8 +114,6 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
   }
 }
 
-/* Outros */
-
 // instruction_index se refere à i-ésima instrução - 1
 // primeira instrução => instruction_index 0
 int get_instruction_from_memory(int instruction_index, Byte *mem){
@@ -130,6 +121,146 @@ int get_instruction_from_memory(int instruction_index, Byte *mem){
 
   return (mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
 }
+
+
+
+
+/* Utilidades Scoreboard */
+
+void clear_uf_state(FunctionalUnitState *uf_state){
+  (*uf_state).fi = -1;
+  (*uf_state).fj = -1;
+  (*uf_state).fk = -1;
+  (*uf_state).qj = -1;
+  (*uf_state).qk = -1;
+  (*uf_state).op = -1;
+  (*uf_state).busy = false;
+  (*uf_state).rj = false;
+  (*uf_state).rk = false;
+  (*uf_state).inst_program_counter = -1;
+}
+
+// Checa se pode enviar alguma instrução para write result
+// Senão, continua a executar
+void update_write_result(Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
+  // todo -> enviar para write resulta se possível ao invés de sempre enviar
+  int count_instructions_sent_to_write = 0;
+  for (int i = 0; i < inst_count; i++){
+    if ((*score_board).instructions_states[i].current_state == EXECUTE){
+      int cycles_to_complete;
+      int inst = get_instruction_from_memory(i, memory);
+      // printf("inst: %d", inst);
+      UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
+      if (inst_uf_type == ADD_UF) cycles_to_complete = cpu_configs.cycles_to_complete_add;
+      else if (inst_uf_type == MUL_UF) cycles_to_complete = cpu_configs.cycles_to_complete_mul;
+      else if (inst_uf_type == INTEGER_UF) cycles_to_complete = cpu_configs.cycles_to_complete_integer;
+      
+      int start = (*score_board).instructions_states[i].start_execute;
+      int finish = (*score_board).instructions_states[i].finish_execute;
+      if (finish - start + 1 == cycles_to_complete && count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
+        count_instructions_sent_to_write++;
+
+        (*score_board).instructions_states[i].current_state = WRITE_RESULT;
+        (*score_board).instructions_states[i].write_result = curr_cycle;
+
+        int uf_idx = (*score_board).instructions_states[i].uf_index;
+        clear_uf_state(&((*score_board).ufs_states[uf_idx]));
+      }
+      else{
+        (*score_board).instructions_states[i].finish_execute = curr_cycle;
+      }
+    }
+  }
+}
+
+// Checa se pode enviar alguma instrução para execute
+void update_execute(ScoreBoard *score_board, int curr_cycle, int inst_count){
+  // todo -> enviar para execução se possível ao invés de sempre enviar
+  for (int i = 0; i < inst_count; i++){
+    if ((*score_board).instructions_states[i].current_state == READ_OPERANDS){
+      (*score_board).instructions_states[i].current_state = EXECUTE;
+      (*score_board).instructions_states[i].start_execute = curr_cycle;
+      (*score_board).instructions_states[i].finish_execute = curr_cycle;
+    }
+  }
+}
+
+// Checa se pode enviar alguma instrução para read operands
+void update_read_operands(ScoreBoard *score_board, int curr_cycle, int total_ufs){
+  for (int i = 0; i < total_ufs; i++){
+    if ((*score_board).instructions_states[i].current_state == ISSUE){
+      (*score_board).instructions_states[i].current_state = READ_OPERANDS;
+      (*score_board).instructions_states[i].read_operands = curr_cycle;
+    }
+  }
+}
+
+// Checa se pode enviar alguma instrução para issue
+void update_issue(ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs){
+  UF_TYPE type = get_uf_type_from_instruction(ir.binary);
+  int idle_uf_index = -1;
+  for (int i = 0; i < total_ufs; i++){
+    // todo -> branchs não condicionais tá entrando em qualquer lugar
+    if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[i].busy){
+      idle_uf_index = i;
+      break;
+    }
+    if ((*score_board).ufs_states[i].type == type && !(*score_board).ufs_states[i].busy){
+      idle_uf_index = i;
+      break;
+    }
+  }
+  if(idle_uf_index == -1){
+    printf("não tem unidades funcionais livres!\n");
+    return;
+  }
+
+  // Controle do pipeline
+  (*score_board).can_fetch = true;
+  (*score_board).instructions_states[idle_uf_index].uf_index = idle_uf_index;
+  //*********************
+  (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
+  (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = curr_cycle;
+
+
+  (*score_board).ufs_states[idle_uf_index].busy = true;
+  (*score_board).ufs_states[idle_uf_index].inst_program_counter = ir.binary;
+
+  (*score_board).ufs_states[idle_uf_index].fi = get_destination_register_from_instruction(ir.binary);
+  int op1, op2;
+  get_operands_register_from_instruction(ir.binary, &op1, &op2);
+  (*score_board).ufs_states[idle_uf_index].fj = op1;
+  (*score_board).ufs_states[idle_uf_index].fk = op2;
+  (*score_board).ufs_states[idle_uf_index].op = get_binary_subnumber(ir.binary, 26, 31);
+
+  // (*score_board).result_register_state[rand()%32] = &g_functional_units[rand()%total_ufs];
+  //(*score_board).ufs_states[idle_uf_index].qj = (*score_board).result_register_state[(*score_board).ufs_states[idle_uf_index].fj]->type;
+  //(*score_board).ufs_states[idle_uf_index].qk = (*score_board).result_register_state[(*score_board).ufs_states[idle_uf_index].fk]->type;
+}
+
+// Checa se pode enviar alguma instrução para fetch
+void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir, int *pc, int curr_cycle, int total_ufs){
+  if ((*score_board).can_fetch){
+    int instruction_index = ((*pc) - PROGRAM_FIRST_ADDRESS) / 4;
+    // if(g_instruction_count <= instruction_index){
+    //   assert(false && "acabou as intruções pra serem fetchadas");
+    // }
+    (*score_board).instructions_states[instruction_index].current_state = FETCH;
+    (*score_board).instructions_states[instruction_index].fetch = curr_cycle;
+
+    (*ir).binary = get_instruction_from_memory(instruction_index, memory);
+    (*ir).program_counter = (*pc);
+    (*pc) += 4;
+
+
+    (*score_board).can_fetch = false;
+  }
+}
+
+
+
+
+/* Print table helpers */
 
 char* table_format_text(char* pfx, int number) {
 
