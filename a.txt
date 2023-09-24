@@ -10,3 +10,5 @@ Colocar um has_branch_on_pipeline no scoreboarding?
 A unidade funcional armazena o binário da instrução que ela está excutando?
 Ou é armazenado no scoreboard uf states
 E o resultado a operação é armazenado onde?
+
+Como são escritas as instruções? lw r0, 0(0) ou lw 0, 0(0)
