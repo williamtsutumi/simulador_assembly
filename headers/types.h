@@ -173,16 +173,28 @@ typedef enum SignalFlag {
     WRITE_TO_DESTINATION
 } SignalFlag;
 
+typedef enum UF_DataType {
+    OPERAND1,
+    OPERAND2,
+    INSTRUCTION_BINARY
+} UF_DataType;
+
     // Indica um dado se movendo de um componente a outro, representa uma parte do barramento
     typedef struct DataSignal {
         int data;
         SignalFlag flag;
     } DataSignal;
 
+    typedef struct UF_DataSignal {
+        int data;
+        SignalFlag flag;
+        UF_DataType type;
+    } UF_DataSignal;
+
         typedef struct Bus {
             DataSignal regs[32]; // Informação sendo enviada aos registradores
 
-            DataSignal *ufs_data; // Informação sendo enviada às unidades funcionais
+            UF_DataSignal *ufs_data; // Informação sendo enviada às unidades funcionais
             FunctionalUnitStatus *ufs_state; // Controle do scoreboard para as unidades funcionais
 
             DataSignal *memory; // Informação sendo enviada à memória

@@ -47,11 +47,11 @@ void malloc_bus(Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int m
   int num_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
 
   (*bus).ufs_state = (FunctionalUnitStatus*)malloc(sizeof(FunctionalUnitStatus) * num_ufs);
-  (*bus).ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
+  (*bus).ufs_data = (UF_DataSignal*)malloc(sizeof(UF_DataSignal) * num_ufs);
   (*bus).memory = (DataSignal*)malloc(sizeof(DataSignal) * memory_size);
 
   (*bus_buffer).ufs_state = (FunctionalUnitStatus*)malloc(sizeof(FunctionalUnitStatus) * num_ufs);
-  (*bus_buffer).ufs_data = (DataSignal*)malloc(sizeof(DataSignal) * num_ufs);
+  (*bus_buffer).ufs_data = (UF_DataSignal*)malloc(sizeof(UF_DataSignal) * num_ufs);
   (*bus_buffer).memory = (DataSignal*)malloc(sizeof(DataSignal) * memory_size);
 }
 

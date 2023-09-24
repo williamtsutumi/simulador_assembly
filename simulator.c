@@ -74,12 +74,59 @@ void update_scoreboard(){
   update_fetch(g_memory, &g_score_board, &g_instruction_register, &g_program_counter, g_current_cycle, total_ufs);
 }
 
+// Envia para o barramento tudo o que está no buffer do barramento e reseta a flag do buffer
 void send_data_to_bus(){
+  for (int i = 0; i < g_memory_size; i++){
+    g_bus.memory[i].data = g_bus_buffer.memory[i].data;
+    g_bus.memory[i].flag = g_bus_buffer.memory[i].flag;
+    // Clear buffer
+    g_bus_buffer.memory[i].flag = IGNORE;
+  }
+  
+  for (int i = 0; i < NUM_REGISTERS; i++){
+    g_bus.regs[i].data = g_bus_buffer.regs[i].data;
+    g_bus.regs[i].flag = g_bus_buffer.regs[i].flag;
+    // Clear buffer
+    g_bus_buffer.regs[i].flag = IGNORE;
+  }
 
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
+    g_bus.ufs_data[i].data = g_bus_buffer.ufs_data[i].data;
+    g_bus.ufs_data[i].flag = g_bus_buffer.ufs_data[i].flag;
+    g_bus.ufs_data[i].type = g_bus_buffer.ufs_data[i].type;
+
+    g_bus.ufs_state[i] = g_bus_buffer.ufs_state[i];
+    // Clear buffer
+    g_bus_buffer.ufs_data[i].flag = IGNORE;
+  }
 }
 
 void receive_data_from_bus(){
+  for (int i = 0; i < g_memory_size; i++){
+    if (g_bus.memory[i].flag == WRITE_TO_DESTINATION)
+      g_memory[i] = g_bus.memory[i].data;
+  }
+  
+  for (int i = 0; i < NUM_REGISTERS; i++){
+    if (g_bus.regs[i].flag == WRITE_TO_DESTINATION)
+      g_registers[i] = g_bus.regs[i].data;
+  }
 
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  for (int i = 0; i < total_ufs; i++){
+    if (g_bus.ufs_data[i].flag == WRITE_TO_DESTINATION){
+      UF_DataType type = g_bus.ufs_data[i].type;
+      if (type == OPERAND1)
+        g_functional_units[i].operand1 = g_bus.ufs_data[i].data;
+      else if (type == OPERAND2)
+        g_functional_units[i].operand2 = g_bus.ufs_data[i].data;
+      else if (type == INSTRUCTION_BINARY)
+        g_functional_units[i].instruction_binary = g_bus.ufs_data[i].data;
+    }
+
+    g_bus.ufs_state[i] = g_bus_buffer.ufs_state[i];
+  }
 }
 
 void run_one_cycle(FILE *output){
