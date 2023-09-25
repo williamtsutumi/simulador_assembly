@@ -121,7 +121,8 @@ typedef enum InstructionStateType {
     ISSUE,
     READ_OPERANDS,
     EXECUTE,
-    WRITE_RESULT
+    WRITE_RESULT,
+    FINISHED
 } InstructionStateType;
 
 // Estado da instrução, controle realizado pelo scoreboard

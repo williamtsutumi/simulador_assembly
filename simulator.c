@@ -63,12 +63,12 @@ void write_result(){
   for (int i = 0; i < total_ufs; i++){
     if (g_functional_units[i].status == CONTINUE_WRITE_RESULT){
       g_functional_units[i].status = STALL; // Aqui stall indica que está livre
-      
       int result = get_destination_register_from_instruction(g_functional_units[i].instruction_binary);
 
       g_bus_buffer.regs[result].data = g_functional_units[i].operation_result;
       g_bus_buffer.regs[result].flag = WRITE_TO_DESTINATION;
-      printf("VEIO AQUI\n");
+      // printf("index: %d\n", i);
+      // printf("op result: %d\n", g_functional_units[i].operation_result);
     }
   }
 }
@@ -78,6 +78,7 @@ void write_result(){
 void update_scoreboard(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
+  update_finished_instructions(&g_score_board, g_current_cycle);
   update_write_result(&g_bus_buffer, g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
   update_execute(&g_score_board, g_current_cycle, g_instruction_count);
   update_read_operands(&g_score_board, g_current_cycle, total_ufs);
@@ -110,6 +111,7 @@ void send_data_to_bus(){
     g_bus.ufs_state[i] = g_bus_buffer.ufs_state[i];
     // Clear buffer
     g_bus_buffer.ufs_data[i].flag = IGNORE;
+    g_bus_buffer.ufs_state[i] = STALL;
   }
 }
 
@@ -119,12 +121,10 @@ void receive_data_from_bus(){
       g_memory[i] = g_bus.memory[i].data;
   }
   for (int i = 0; i < NUM_REGISTERS; i++){
-    printf("flag: %d\n", g_bus.regs[i].flag);
     if (g_bus.regs[i].flag == WRITE_TO_DESTINATION)
       g_registers[i] = g_bus.regs[i].data;
   }
-  printf("Chegou aqui\n");
-
+  
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int i = 0; i < total_ufs; i++){
     if (g_bus.ufs_data[i].flag == WRITE_TO_DESTINATION){
@@ -137,20 +137,24 @@ void receive_data_from_bus(){
         g_functional_units[i].instruction_binary = g_bus.ufs_data[i].data;
     }
 
-    g_functional_units[i].status = g_bus_buffer.ufs_state[i];
+    g_functional_units[i].status = g_bus.ufs_state[i];
   }
 }
 
 void run_one_cycle(FILE *output){
   g_current_cycle++;
+  for (int i = 0; i < NUM_REGISTERS; i++){
+    printf("r%d: %d  ", i, g_registers[i]);
+  }
+  printf("\n");
 
-  printf("Comecou run one cycle\n");
+  // printf("Comecou run one cycle\n");
   update_scoreboard();
-  printf("Deu update scoreboard\n");
+  // printf("Deu update scoreboard\n");
   send_data_to_bus();
-  printf("Deu send data to bus\n");
+  // printf("Deu send data to bus\n");
   receive_data_from_bus();
-  printf("Deu receive data from bus\n");
+  // printf("Deu receive data from bus\n");
 
   write_result();
   execute();
@@ -204,6 +208,8 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
 
 int main(int argc, char *argv[])
 {
+  memset(g_registers, 0, sizeof(g_registers));
+
   FILE* output_stream = stdout;
   char* input_file_name = "input.sb";
   FILE* input_file;

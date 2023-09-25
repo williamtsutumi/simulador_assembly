@@ -164,6 +164,14 @@ int actually_execute(int opcode, int operand1, int operand2){
 
 }
 
+void update_finished_instructions(ScoreBoard *score_board, int inst_count){
+  for (int i = 0; i < inst_count; i++){
+    if ((*score_board).instructions_states[i].current_state == WRITE_RESULT){
+      (*score_board).instructions_states[i].current_state = FINISHED;
+    }
+  }
+}
+
 // Checa se pode enviar alguma instrução para write result
 // Senão, continua a executar
 void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
@@ -181,25 +189,26 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
       
       int start = (*score_board).instructions_states[i].start_execute;
       int finish = (*score_board).instructions_states[i].finish_execute;
-      printf("PORRA\n");
+      int uf_idx = (*score_board).instructions_states[i].uf_index;
       if (finish - start + 1 == cycles_to_complete){
         (*bus_buffer).ufs_state[i] = STALL;
-        
+        printf("PASSOU AQUI\n");
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
           count_instructions_sent_to_write++;
 
-          (*bus_buffer).ufs_state[i] = CONTINUE_WRITE_RESULT;
+          printf("uf idx: %d\n", uf_idx);
+          (*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;
 
           (*score_board).instructions_states[i].current_state = WRITE_RESULT;
           (*score_board).instructions_states[i].write_result = curr_cycle;
 
           int uf_idx = (*score_board).instructions_states[i].uf_index;
-          // todo -> tem algum problema com o clear pq a instrução continuar sendo printada
+          // todo -> tem algum problema com o clear pq a instrução continua sendo printada
           clear_uf_state(&((*score_board).ufs_states[uf_idx]));
         }
       }
       else{
-        (*bus_buffer).ufs_state[i] = CONTINUE_EXECUTE;
+        (*bus_buffer).ufs_state[uf_idx] = CONTINUE_EXECUTE;
         (*score_board).instructions_states[i].finish_execute++;
       }
     }
