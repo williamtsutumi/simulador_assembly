@@ -74,22 +74,22 @@ void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_configs, 
 
   // ufs states
   int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
-    (*score_board).ufs_states = (FunctionalUnitState*)malloc(total_ufs * sizeof(FunctionalUnitState));
-    for(int i = 0; i < total_ufs; i++){
+  (*score_board).ufs_states = (FunctionalUnitState*)malloc(total_ufs * sizeof(FunctionalUnitState));
+  for(int i = 0; i < total_ufs; i++){
 
-      (*score_board).ufs_states[i].type = functional_units[i].type;
-      (*score_board).ufs_states[i].type_index = functional_units[i].type_index;
-      (*score_board).ufs_states[i].fi = -1;
-      (*score_board).ufs_states[i].fj = -1;
-      (*score_board).ufs_states[i].fk = -1;
-      (*score_board).ufs_states[i].qj = -1;
-      (*score_board).ufs_states[i].qk = -1;
-      (*score_board).ufs_states[i].op = -1;
-      (*score_board).ufs_states[i].rj = 0;
-      (*score_board).ufs_states[i].rk = 0;
+    (*score_board).ufs_states[i].type = functional_units[i].type;
+    (*score_board).ufs_states[i].type_index = functional_units[i].type_index;
+    (*score_board).ufs_states[i].fi = -1;
+    (*score_board).ufs_states[i].fj = -1;
+    (*score_board).ufs_states[i].fk = -1;
+    (*score_board).ufs_states[i].qj = -1;
+    (*score_board).ufs_states[i].qk = -1;
+    (*score_board).ufs_states[i].op = -1;
+    (*score_board).ufs_states[i].rj = 0;
+    (*score_board).ufs_states[i].rk = 0;
 
-      (*score_board).ufs_states[i].busy = false;
-    }
+    (*score_board).ufs_states[i].busy = false;
+  }
 }
 
 void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int num_instructions, int memory_size){
@@ -100,10 +100,10 @@ void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, B
 
 void init_scoreboard(ScoreBoard *score_board){
   (*score_board).can_fetch = true;
-  (*score_board).can_issue = true;
-  (*score_board).can_read_operands = true;
-  (*score_board).can_execute = true;
-  (*score_board).can_write_result = true;
+  // (*score_board).can_issue = true;
+  // (*score_board).can_read_operands = true;
+  // (*score_board).can_execute = true;
+  // (*score_board).can_write_result = true;
 }
 
 #endif

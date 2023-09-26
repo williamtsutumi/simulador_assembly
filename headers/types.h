@@ -171,10 +171,10 @@ typedef struct FunctionalUnitState
         FunctionalUnit* result_register_state[NUM_REGISTERS];
 
         bool can_fetch;
-        bool can_issue;
-        bool can_read_operands;
-        bool can_execute;
-        bool can_write_result;
+        // bool can_issue;
+        // bool can_read_operands;
+        // bool can_execute;
+        // bool can_write_result;
     } ScoreBoard;
 
 /* TYPES do barramento */

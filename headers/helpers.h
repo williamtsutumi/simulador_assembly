@@ -4,6 +4,15 @@
 #include "types.h"
 char* empty = "";
 
+/* Debug */
+void print_uf(FunctionalUnit uf){
+  printf("uf.instruction_binary: %d\n", uf.instruction_binary);
+  printf("uf.operand1: %d\n", uf.operand1);
+  printf("uf.operand2: %d\n", uf.operand2);
+  printf("uf.operantion_result: %d\n", uf.operation_result);
+  printf("uf.status: %d\n", uf.status);
+}
+
 /* Utilidades */
 
 int get_opcode_from_binary(int instruction){
@@ -204,8 +213,10 @@ int actually_execute(int opcode, int operand1, int operand2){
 }
 
 void update_finished_instructions(ScoreBoard *score_board, int inst_count){
+  printf("ALO\n");
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == WRITE_RESULT){
+      printf("A\n");
       (*score_board).instructions_states[i].current_state = FINISHED;
     }
   }
@@ -215,6 +226,7 @@ void update_finished_instructions(ScoreBoard *score_board, int inst_count){
 // Senão, continua a executar
 void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
   // todo -> enviar para write result se possível ao invés de sempre enviar
+  printf("chegou aqui\n");
   int count_instructions_sent_to_write = 0;
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == EXECUTE){
@@ -229,20 +241,18 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
       int start = (*score_board).instructions_states[i].start_execute;
       int finish = (*score_board).instructions_states[i].finish_execute;
       int uf_idx = (*score_board).instructions_states[i].uf_index;
+      printf("uf idx: %d\n", uf_idx);
       if (finish - start + 1 == cycles_to_complete){
-        (*bus_buffer).ufs_state[i] = STALL;
+        (*bus_buffer).ufs_state[uf_idx] = STALL;
         
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
           count_instructions_sent_to_write++;
 
-          printf("era pra ta\n");
-          printf("uf idx: %d\n", uf_idx);
           (*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;
 
           (*score_board).instructions_states[i].current_state = WRITE_RESULT;
           (*score_board).instructions_states[i].write_result = curr_cycle;
 
-          int uf_idx = (*score_board).instructions_states[i].uf_index;
           // todo -> tem algum problema com o clear pq a instrução continua sendo printada
           clear_uf_state(&((*score_board).ufs_states[uf_idx]));
         }
@@ -256,13 +266,21 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
 }
 
 // Checa se pode enviar alguma instrução para execute
-void update_execute(ScoreBoard *score_board, int curr_cycle, int inst_count){
+void update_execute(Bus *bus_buffer, ScoreBoard *score_board, int curr_cycle, int inst_count){
   // todo -> enviar para execução se possível ao invés de sempre enviar
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == READ_OPERANDS){
+
+      printf("Deu read operands\n");
       (*score_board).instructions_states[i].current_state = EXECUTE;
       (*score_board).instructions_states[i].start_execute = curr_cycle;
       (*score_board).instructions_states[i].finish_execute = curr_cycle;
+
+      int uf_index = (*score_board).instructions_states[i].uf_index;
+      (*bus_buffer).ufs_state[uf_index] = CONTINUE_EXECUTE;
+      printf("uf index: %d\n", uf_index);
+      printf("i: %d\n", i);
+
     }
   }
 }
@@ -301,13 +319,14 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
     return;
   }
 
-  // Controle do pipeline
+  if (get_opcode_from_binary(ir.binary) == EXIT_OPCODE)
+    return;
+
   (*score_board).can_fetch = true;
-  (*score_board).instructions_states[idle_uf_index].uf_index = idle_uf_index;
-  //*********************
+  
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = curr_cycle;
-
+  (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].uf_index = idle_uf_index;
 
   (*score_board).ufs_states[idle_uf_index].busy = true;
   (*score_board).ufs_states[idle_uf_index].inst_program_counter = ir.binary;
@@ -325,10 +344,13 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
 }
 
 // Checa se pode enviar alguma instrução para fetch
-void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir, int *pc, int curr_cycle, int total_ufs){
+void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir, int *pc, int curr_cycle, int total_ufs, int instruction_count){
   if ((*score_board).can_fetch){
+    (*score_board).can_fetch = false;
+
     int instruction_index = ((*pc) - PROGRAM_FIRST_ADDRESS) / 4;
-    // if(g_instruction_count <= instruction_index){
+    // printf("inst index: %d\n", instruction_index);
+    // if(instruction_count <= instruction_index){
     //   assert(false && "acabou as intruções pra serem fetchadas");
     // }
     (*score_board).instructions_states[instruction_index].current_state = FETCH;
@@ -339,7 +361,7 @@ void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir
     (*pc) += 4;
 
 
-    (*score_board).can_fetch = false;
+    
   }
 }
 
@@ -380,41 +402,29 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
   reset();
 
   for(int i = 0; i < num_instructions; i++){
-    /*
-    char fetch[20];
-    if ((*instruction_states)[i].fetch == -1) fetch[0] = '\0';
-    else snprintf(fetch, sizeof(fetch), "%d", (*instruction_states)[i].fetch);
-
-    char issue[20];
-    if ((*instruction_states)[i].issue == -1) issue[0] = '\0';
-    else snprintf(issue, sizeof(issue), "%d", (*instruction_states)[i].issue);
-
-    char read_operands[20];
-    if ((*instruction_states)[i].read_operands == -1) read_operands[0] = '\0';
-    else snprintf(read_operands, sizeof(read_operands), "%d", (*instruction_states)[i].read_operands);
-
-    char execute[20];
-    if ((*instruction_states)[i].execute == -1) execute[0] = '\0';
-    else snprintf(execute, sizeof(execute), "%d", (*instruction_states)[i].execute);
-
-    char write_result[20];
-    if ((*instruction_states)[i].write_result == -1) write_result[0] = '\0';
-    else snprintf(write_result, sizeof(write_result), "%d", (*instruction_states)[i].write_result);
-    */
     char *exec = table_format_number((*instruction_states)[i].start_execute);
     if (exec != NULL && exec[0] != '\0'){
       strcat(exec, " - ");
       strcat(exec, table_format_number((*instruction_states)[i].finish_execute));
     }
+
+    char *fetch = table_format_number((*instruction_states)[i].fetch);
+    char *issue = table_format_number((*instruction_states)[i].issue);
+    char *read_operands = table_format_number((*instruction_states)[i].read_operands);
+    char *write_result = table_format_number((*instruction_states)[i].write_result);
     printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
       get_inst_name_from_opcode(inst_opcodes[i]),
-      table_format_number((*instruction_states)[i].fetch),
-      table_format_number((*instruction_states)[i].issue),
-      table_format_number((*instruction_states)[i].read_operands),
+      fetch,
+      issue,
+      read_operands,
       exec,
-      table_format_number((*instruction_states)[i].write_result));
+      write_result);
 
-
+    free(exec);
+    free(fetch);
+    free(issue);
+    free(read_operands);
+    free(write_result);
   }
 }
 
@@ -434,19 +444,31 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
   char *instruction_names[] = INSTRUCTION_NAMES;
 
   for(int i = 0; i < num_ufs; i++){
+    char *type_index = table_format_text(functional_unit_name[funcional_unit_states[i].type], funcional_unit_states[i].type_index);
+    char *fi = table_format_text("R", funcional_unit_states[i].fi);
+    char *fj = table_format_text("R", funcional_unit_states[i].fj);
+    char *fk = table_format_text("R", funcional_unit_states[i].fk);
+
+    char *qj = table_format_number(funcional_unit_states[i].qj);
+    char *qk = table_format_number(funcional_unit_states[i].qk);
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
-    
-      table_format_text(functional_unit_name[funcional_unit_states[i].type], funcional_unit_states[i].type_index),
+      type_index,
       yesno[funcional_unit_states[i].busy],
       funcional_unit_states[i].op == -1 ? empty : instruction_names[funcional_unit_states[i].op],
-      table_format_text("R", funcional_unit_states[i].fi),
-      table_format_text("R", funcional_unit_states[i].fj),
-      table_format_text("R", funcional_unit_states[i].fk),
-      table_format_number(funcional_unit_states[i].qj),
-      table_format_number(funcional_unit_states[i].qk),
+      fi,
+      fj,
+      fk,
+      qj,
+      qk,
       yesno[funcional_unit_states[i].rj],
       yesno[funcional_unit_states[i].rk]);
 
+    free(type_index);
+    free(fi);
+    free(fj);
+    free(fk);
+    free(qj);
+    free(qk);
   }
 }
 

@@ -49,9 +49,7 @@ void read_operands(){
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status == CONTINUE_READ_OPERAND){
       int binary = g_functional_units[uf_index].instruction_binary;
-      printf("Ta no read operand\n");
-      printf("uf index: %d\n", uf_index);
-      // printf("binary: %d\n", binary);
+      
       int opcode = get_opcode_from_binary(binary);
       InstructionFormat format = get_inst_format_from_opcode(opcode);
       
@@ -71,7 +69,7 @@ void read_operands(){
       else if (format == FORMAT_I){
         operand1_index = get_rt_from_instruction_binary(binary);
         operand2 = get_imm_from_instruction_binary(binary);
-
+        printf("operand2: %d\n", operand2);
         g_bus_buffer.ufs_data[0][uf_index].data = g_registers[operand1_index];
         g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
         g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
@@ -104,11 +102,11 @@ void execute(){
         int opcode = get_opcode_from_binary(g_functional_units[i].instruction_binary);
         int operand1 = g_functional_units[i].operand1;
         int operand2 = g_functional_units[i].operand2;
-        printf("opcode: %d\n", opcode);
-        printf("operand1: %d\n", operand1);
-        printf("operand2: %d\n", operand2);
+        // printf("opcode: %d\n", opcode);
+        // printf("operand1: %d\n", operand1);
+        // printf("operand2: %d\n", operand2);
+        // printf("op result: %d\n", g_functional_units[i].operation_result);
         g_functional_units[i].operation_result = actually_execute(opcode, operand1, operand2);
-        printf("op result: %d\n", g_functional_units[i].operation_result);
       }
     }
   }
@@ -122,9 +120,6 @@ void write_result(){
 
       g_bus_buffer.regs[result].data = g_functional_units[uf_index].operation_result;
       g_bus_buffer.regs[result].flag = WRITE_TO_DESTINATION;
-      printf("ta no write result\n");
-      printf("uf index: %d\n", uf_index);
-      printf("op result: %d\n", g_functional_units[uf_index].operation_result);
     }
   }
 }
@@ -134,12 +129,19 @@ void write_result(){
 void update_scoreboard(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
-  update_finished_instructions(&g_score_board, g_current_cycle);
+  printf("1\n");
+  // update_finished_instructions(&g_score_board, g_current_cycle);
+  printf("2\n");
   update_write_result(&g_bus_buffer, g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
-  update_execute(&g_score_board, g_current_cycle, g_instruction_count);
+  printf("3\n");
+  update_execute(&g_bus_buffer, &g_score_board, g_current_cycle, g_instruction_count);
+  printf("4\n");
   update_read_operands(&g_bus_buffer, &g_score_board, g_current_cycle, total_ufs);
+  printf("5\n");
   update_issue(&g_bus_buffer, &g_score_board, g_instruction_register, g_current_cycle, total_ufs);
-  update_fetch(g_memory, &g_score_board, &g_instruction_register, &g_program_counter, g_current_cycle, total_ufs);
+  printf("6\n");
+  update_fetch(g_memory, &g_score_board, &g_instruction_register, &g_program_counter, g_current_cycle, total_ufs, g_instruction_count);
+  printf("7\n");
 }
 
 // Envia para o barramento tudo o que está no buffer do barramento e reseta a flag do buffer
@@ -159,20 +161,22 @@ void send_data_to_bus(){
   }
 
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
-    g_bus.ufs_data[0][i].data = g_bus_buffer.ufs_data[0][i].data;
-    g_bus.ufs_data[0][i].flag = g_bus_buffer.ufs_data[0][i].flag;
-    g_bus.ufs_data[0][i].type = g_bus_buffer.ufs_data[0][i].type;
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    g_bus.ufs_data[0][uf_index].data = g_bus_buffer.ufs_data[0][uf_index].data;
+    g_bus.ufs_data[0][uf_index].flag = g_bus_buffer.ufs_data[0][uf_index].flag;
+    g_bus.ufs_data[0][uf_index].type = g_bus_buffer.ufs_data[0][uf_index].type;
 
-    g_bus.ufs_data[1][i].data = g_bus_buffer.ufs_data[1][i].data;
-    g_bus.ufs_data[1][i].flag = g_bus_buffer.ufs_data[1][i].flag;
-    g_bus.ufs_data[1][i].type = g_bus_buffer.ufs_data[1][i].type;
+    g_bus.ufs_data[1][uf_index].data = g_bus_buffer.ufs_data[1][uf_index].data;
+    g_bus.ufs_data[1][uf_index].flag = g_bus_buffer.ufs_data[1][uf_index].flag;
+    g_bus.ufs_data[1][uf_index].type = g_bus_buffer.ufs_data[1][uf_index].type;
 
-    g_bus.ufs_state[i] = g_bus_buffer.ufs_state[i];
+    g_bus.ufs_state[uf_index] = g_bus_buffer.ufs_state[uf_index];
+    printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
+    printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
     // Clear buffer
-    g_bus_buffer.ufs_data[0][i].flag = IGNORE;
-    g_bus_buffer.ufs_data[1][i].flag = IGNORE;
-    g_bus_buffer.ufs_state[i] = STALL;
+    g_bus_buffer.ufs_data[0][uf_index].flag = IGNORE;
+    g_bus_buffer.ufs_data[1][uf_index].flag = IGNORE;
+    g_bus_buffer.ufs_state[uf_index] = STALL;
   }
 }
 
@@ -219,6 +223,7 @@ void run_one_cycle(FILE *output){
   }
   printf("\n");
 
+  
 
   write_result();
   execute();
@@ -228,13 +233,13 @@ void run_one_cycle(FILE *output){
   // fetch_next_instruction();
 
 
-  // printf("Comecou run one cycle\n");
+  printf("Comecou run one cycle\n");
   update_scoreboard();
-  // printf("Deu update scoreboard\n");
+  printf("Deu update scoreboard\n");
   send_data_to_bus();
-  // printf("Deu send data to bus\n");
+  printf("Deu send data to bus\n");
   receive_data_from_bus();
-  // printf("Deu receive data from bus\n");
+  printf("Deu receive data from bus\n");
 
   // Imprimindo tabelas, não fiel à simulação
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
@@ -246,6 +251,8 @@ void run_one_cycle(FILE *output){
   }
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
   // ****************************************
+
+  print_uf(g_functional_units[0]);
 
 }
 
@@ -282,6 +289,7 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
 int main(int argc, char *argv[])
 {
   memset(g_registers, 0, sizeof(g_registers));
+  g_instruction_register.program_counter = PROGRAM_FIRST_ADDRESS; 
 
   FILE* output_stream = stdout;
   char* input_file_name = "input.sb";

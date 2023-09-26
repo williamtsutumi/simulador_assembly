@@ -1,32 +1,9 @@
 imprimir o conteudo de todos os registrador ao encerrar a simulação
 
 
-Como o programa termina?
-
-
-Precisa ter um exit?
-
-
-Como a exit é processada?
-
-
-Como branchs condicionais são processados? Vao até qual estágio do pipeline
-
-
-As instruções do tipo J passam pelo estágio read operands?
-
-
-As branchs são processadas nas UF tipo integer? E levam a mesma quantidade de ciclos para concluir
-
 
 A unidade funcional armazena o binário da instrução que ela está excutando?
 Ou é armazenado no scoreboard uf states?
 
 
 E o resultado a operação é armazenado onde?
-
-
-Como são escritas as instruções? lw r0, 0(0) ou lw 0, 0(0)
-
-
-O que significa o mais ou menos nas intruções de load e store?
