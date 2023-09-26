@@ -5,11 +5,12 @@
 char* empty = "";
 
 /* Debug */
+
 void print_uf(FunctionalUnit uf){
   printf("uf.instruction_binary: %d\n", uf.instruction_binary);
   printf("uf.operand1: %d\n", uf.operand1);
   printf("uf.operand2: %d\n", uf.operand2);
-  printf("uf.operantion_result: %d\n", uf.operation_result);
+  printf("uf.operation_result: %d\n", uf.operation_result);
   printf("uf.status: %d\n", uf.status);
 }
 
@@ -240,11 +241,11 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
       int start = (*score_board).instructions_states[i].start_execute;
       int finish = (*score_board).instructions_states[i].finish_execute;
       int uf_idx = (*score_board).instructions_states[i].uf_index;
-      printf("uf idx: %d\n", uf_idx);
       if (finish - start + 1 == cycles_to_complete){
         (*bus_buffer).ufs_state[uf_idx] = STALL;
         
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
+          // printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
           count_instructions_sent_to_write++;
 
           (*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;
@@ -362,10 +363,8 @@ void update_fetch(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board, Instru
     (*bus_buffer).ir_pc.flag = WRITE_TO_DESTINATION;
     (*pc) += 4;
 
-    printf("instruction index no update fetch: %d\n", instruction_index);
-    printf("ir binary no update fetch: %d\n", (*bus_buffer).ir_binary.data);
-
-    
+    // printf("instruction index no update fetch: %d\n", instruction_index);
+    // printf("ir binary no update fetch: %d\n", (*bus_buffer).ir_binary.data);
   }
 }
 

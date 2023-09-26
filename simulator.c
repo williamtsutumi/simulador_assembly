@@ -53,10 +53,10 @@ void read_operands(){
       
       int opcode = get_opcode_from_binary(binary);
       InstructionFormat format = get_inst_format_from_opcode(opcode);
-      printf("index que entrou no continue read op: %d\n", uf_index);
-      printf("binary: %d\n", binary);
-      printf("opcode: %d\n", opcode);
-      printf("format: %d\n", format);
+      // printf("index que entrou no continue read op: %d\n", uf_index);
+      // printf("binary: %d\n", binary);
+      // printf("opcode: %d\n", opcode);
+      // printf("format: %d\n", format);
       int operand1_index, operand2_index, operand2;
       if (format == FORMAT_R){
         operand1_index = get_rt_from_instruction_binary(binary);
@@ -102,7 +102,9 @@ void execute(){
       if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
 
       g_functional_units[i].current_cycle++;
+      printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
       if (g_functional_units[i].current_cycle == cycles_to_complete){
+        printf("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n");
         int opcode = get_opcode_from_binary(g_functional_units[i].instruction_binary);
         int operand1 = g_functional_units[i].operand1;
         int operand2 = g_functional_units[i].operand2;
@@ -111,6 +113,7 @@ void execute(){
         // printf("operand2: %d\n", operand2);
         // printf("op result: %d\n", g_functional_units[i].operation_result);
         g_functional_units[i].operation_result = actually_execute(opcode, operand1, operand2);
+        printf("deu actually execute\n");
       }
     }
   }
@@ -198,8 +201,8 @@ void send_data_to_bus(){
     g_bus.ufs_data[1][uf_index].type = g_bus_buffer.ufs_data[1][uf_index].type;
 
     g_bus.ufs_state[uf_index] = g_bus_buffer.ufs_state[uf_index];
-    printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
-    printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
+    // printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
+    // printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
     // Clear buffer
     g_bus_buffer.ufs_data[0][uf_index].flag = IGNORE;
     g_bus_buffer.ufs_data[1][uf_index].flag = IGNORE;
@@ -258,6 +261,21 @@ void receive_data_from_bus(){
 
 void run_one_cycle(FILE *output){
   g_current_cycle++;
+  
+
+  write_result();
+  execute();
+  read_operands();
+  issue_instruction();
+  fetch_next_instruction();
+
+  printf("Deu update scoreboard\n");
+  update_scoreboard();
+  printf("Deu send data to bus\n");
+  send_data_to_bus();
+  printf("Deu receive data from bus\n");
+  receive_data_from_bus();
+
   for (int i = 0; i < NUM_REGISTERS; i++){
     printf("r%d:%d  ", i, g_registers[i]);
   }
@@ -276,19 +294,6 @@ void run_one_cycle(FILE *output){
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
   // ****************************************
 
-  
-  write_result();
-  execute();
-  read_operands();
-  issue_instruction();
-  fetch_next_instruction();
-
-  printf("Deu update scoreboard\n");
-  update_scoreboard();
-  printf("Deu send data to bus\n");
-  send_data_to_bus();
-  printf("Deu receive data from bus\n");
-  receive_data_from_bus();
 }
 
 void run_simulation(FILE *output){
@@ -337,6 +342,7 @@ int main(int argc, char *argv[])
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
       malloc_memory(&g_functional_units, &g_score_board, &g_bus, &g_bus_buffer, g_cpu_configs, g_instruction_count, g_memory_size);
       init_scoreboard(&g_score_board);
+      init_functional_units(g_functional_units, g_cpu_configs);
 
       printf("printando instructions binaries\n");
       for (int i=0; i<g_instruction_count; i++) printf("instruction[%d]: %d\n", i, get_instruction_from_memory(i, g_memory));

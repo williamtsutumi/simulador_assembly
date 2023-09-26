@@ -106,4 +106,11 @@ void init_scoreboard(ScoreBoard *score_board){
   // (*score_board).can_write_result = true;
 }
 
+void init_functional_units(FunctionalUnit *functional_units, CPU_Configurations cpu_configs){
+  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    functional_units[uf_index].current_cycle = 0;
+  }
+}
+
 #endif
