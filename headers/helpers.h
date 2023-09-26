@@ -298,29 +298,34 @@ void update_read_operands(Bus *bus_buffer, ScoreBoard *score_board, int curr_cyc
 }
 
 // Checa se pode enviar alguma instrução para issue
-void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs){
+void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs, int inst_count){
+  if (get_opcode_from_binary(ir.binary) == EXIT_OPCODE)
+    return;
+
   UF_TYPE type = get_uf_type_from_instruction(ir.binary);
   int idle_uf_index = -1;
-  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
-    // todo -> branchs não condicionais tá entrando em qualquer lugar
-    if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[uf_index].busy){
-      idle_uf_index = uf_index;
-      (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
-      break;
+  for (int i = 0; i < inst_count; i++){
+    if ((*score_board).instructions_states[i].current_state == FETCH){
+      // todo -> branchs não condicionais tá entrando em qualquer lugar
+      for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+        if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[uf_index].busy){
+          idle_uf_index = uf_index;
+          (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
+          break;
+        }
+        if ((*score_board).ufs_states[uf_index].type == type && !(*score_board).ufs_states[uf_index].busy){
+          idle_uf_index = uf_index;
+          (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
+          break;
+        }
+      }
     }
-    if ((*score_board).ufs_states[uf_index].type == type && !(*score_board).ufs_states[uf_index].busy){
-      idle_uf_index = uf_index;
-      (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
-      break;
-    }
+    if (idle_uf_index != -1) break;
   }
   if(idle_uf_index == -1){
     printf("não tem unidades funcionais livres!\n");
     return;
   }
-
-  if (get_opcode_from_binary(ir.binary) == EXIT_OPCODE)
-    return;
 
   (*score_board).can_fetch = true;
   
@@ -358,6 +363,8 @@ void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir
 
     (*ir).binary = get_instruction_from_memory(instruction_index, memory);
     (*ir).program_counter = (*pc);
+    printf("ir binary: %d\n", (*ir).binary);
+    printf("ir pc: %d\n", (*ir).program_counter);
     (*pc) += 4;
 
 

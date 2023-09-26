@@ -132,15 +132,37 @@ void update_scoreboard(){
   printf("1\n");
   // update_finished_instructions(&g_score_board, g_current_cycle);
   printf("2\n");
-  update_write_result(&g_bus_buffer, g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
+  update_write_result(&g_bus_buffer,
+      g_memory,
+      &g_score_board,
+      g_cpu_configs,
+      g_current_cycle,
+      g_instruction_count);
   printf("3\n");
-  update_execute(&g_bus_buffer, &g_score_board, g_current_cycle, g_instruction_count);
+  update_execute(&g_bus_buffer,
+      &g_score_board,
+      g_current_cycle,
+      g_instruction_count);
   printf("4\n");
-  update_read_operands(&g_bus_buffer, &g_score_board, g_current_cycle, total_ufs);
+  update_read_operands(&g_bus_buffer,
+      &g_score_board,
+      g_current_cycle,
+      total_ufs);
   printf("5\n");
-  update_issue(&g_bus_buffer, &g_score_board, g_instruction_register, g_current_cycle, total_ufs);
+  update_issue(&g_bus_buffer,
+      &g_score_board,
+      g_instruction_register,
+      g_current_cycle,
+      total_ufs,
+      g_instruction_count);
   printf("6\n");
-  update_fetch(g_memory, &g_score_board, &g_instruction_register, &g_program_counter, g_current_cycle, total_ufs, g_instruction_count);
+  update_fetch(g_memory,
+      &g_score_board,
+      &g_instruction_register,
+      &g_program_counter,
+      g_current_cycle,
+      total_ufs,
+      g_instruction_count);
   printf("7\n");
 }
 
@@ -229,7 +251,7 @@ void run_one_cycle(FILE *output){
   execute();
   read_operands();
   issue_instruction();
-  // Possívelmente não vai ter essa
+  // Possivelmente não vai ter essa
   // fetch_next_instruction();
 
 
