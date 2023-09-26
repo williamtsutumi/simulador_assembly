@@ -32,10 +32,61 @@ void fetch_next_instruction(){
 
 }
 void issue_instruction(){
-  
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    if (g_functional_units[uf_index].status == CONTINUE_ISSUE){
+      // printf("Passou no issue\n");
+      g_bus_buffer.ufs_data[0][uf_index].data = g_instruction_register.binary;
+      g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
+      g_bus_buffer.ufs_data[0][uf_index].type = INSTRUCTION_BINARY;
+    }
+  }
 }
 void read_operands(){
-  
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    if (g_functional_units[uf_index].status == CONTINUE_READ_OPERAND){
+      int binary = g_functional_units[uf_index].instruction_binary;
+      printf("Ta no read operand\n");
+      printf("uf index: %d\n", uf_index);
+      // printf("binary: %d\n", binary);
+      int opcode = get_opcode_from_binary(binary);
+      InstructionFormat format = get_inst_format_from_opcode(opcode);
+      
+      int operand1_index, operand2_index, operand2;
+      if (format == FORMAT_R){
+        operand1_index = get_rt_from_instruction_binary(binary);
+        operand2_index = get_rd_from_instruction_binary(binary);
+        
+        g_bus_buffer.ufs_data[0][uf_index].data = g_registers[operand1_index];
+        g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
+        g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
+
+        g_bus_buffer.ufs_data[1][uf_index].data = g_registers[operand2_index];
+        g_bus_buffer.ufs_data[1][uf_index].flag = WRITE_TO_DESTINATION;
+        g_bus_buffer.ufs_data[1][uf_index].type = OPERAND2;
+      }
+      else if (format == FORMAT_I){
+        operand1_index = get_rt_from_instruction_binary(binary);
+        operand2 = get_imm_from_instruction_binary(binary);
+
+        g_bus_buffer.ufs_data[0][uf_index].data = g_registers[operand1_index];
+        g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
+        g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
+
+        g_bus_buffer.ufs_data[1][uf_index].data = operand2;
+        g_bus_buffer.ufs_data[1][uf_index].flag = WRITE_TO_DESTINATION;
+        g_bus_buffer.ufs_data[1][uf_index].type = OPERAND2;
+      }
+      else if (format == FORMAT_J){
+        // Não sei quão certo isso está
+        g_functional_units[uf_index].operand1 = get_imm_from_instruction_binary(binary);
+      }
+
+    }
+  }
 }
 void execute(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
@@ -53,22 +104,27 @@ void execute(){
         int opcode = get_opcode_from_binary(g_functional_units[i].instruction_binary);
         int operand1 = g_functional_units[i].operand1;
         int operand2 = g_functional_units[i].operand2;
+        printf("opcode: %d\n", opcode);
+        printf("operand1: %d\n", operand1);
+        printf("operand2: %d\n", operand2);
         g_functional_units[i].operation_result = actually_execute(opcode, operand1, operand2);
+        printf("op result: %d\n", g_functional_units[i].operation_result);
       }
     }
   }
 }
 void write_result(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
-    if (g_functional_units[i].status == CONTINUE_WRITE_RESULT){
-      g_functional_units[i].status = STALL; // Aqui stall indica que está livre
-      int result = get_destination_register_from_instruction(g_functional_units[i].instruction_binary);
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    if (g_functional_units[uf_index].status == CONTINUE_WRITE_RESULT){
+      g_functional_units[uf_index].status = STALL; // Aqui stall indica que está livre
+      int result = get_destination_register_from_instruction(g_functional_units[uf_index].instruction_binary);
 
-      g_bus_buffer.regs[result].data = g_functional_units[i].operation_result;
+      g_bus_buffer.regs[result].data = g_functional_units[uf_index].operation_result;
       g_bus_buffer.regs[result].flag = WRITE_TO_DESTINATION;
-      // printf("index: %d\n", i);
-      // printf("op result: %d\n", g_functional_units[i].operation_result);
+      printf("ta no write result\n");
+      printf("uf index: %d\n", uf_index);
+      printf("op result: %d\n", g_functional_units[uf_index].operation_result);
     }
   }
 }
@@ -81,8 +137,8 @@ void update_scoreboard(){
   update_finished_instructions(&g_score_board, g_current_cycle);
   update_write_result(&g_bus_buffer, g_memory, &g_score_board, g_cpu_configs, g_current_cycle, g_instruction_count);
   update_execute(&g_score_board, g_current_cycle, g_instruction_count);
-  update_read_operands(&g_score_board, g_current_cycle, total_ufs);
-  update_issue(&g_score_board, g_instruction_register, g_current_cycle, total_ufs);
+  update_read_operands(&g_bus_buffer, &g_score_board, g_current_cycle, total_ufs);
+  update_issue(&g_bus_buffer, &g_score_board, g_instruction_register, g_current_cycle, total_ufs);
   update_fetch(g_memory, &g_score_board, &g_instruction_register, &g_program_counter, g_current_cycle, total_ufs);
 }
 
@@ -104,13 +160,18 @@ void send_data_to_bus(){
 
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int i = 0; i < total_ufs; i++){
-    g_bus.ufs_data[i].data = g_bus_buffer.ufs_data[i].data;
-    g_bus.ufs_data[i].flag = g_bus_buffer.ufs_data[i].flag;
-    g_bus.ufs_data[i].type = g_bus_buffer.ufs_data[i].type;
+    g_bus.ufs_data[0][i].data = g_bus_buffer.ufs_data[0][i].data;
+    g_bus.ufs_data[0][i].flag = g_bus_buffer.ufs_data[0][i].flag;
+    g_bus.ufs_data[0][i].type = g_bus_buffer.ufs_data[0][i].type;
+
+    g_bus.ufs_data[1][i].data = g_bus_buffer.ufs_data[1][i].data;
+    g_bus.ufs_data[1][i].flag = g_bus_buffer.ufs_data[1][i].flag;
+    g_bus.ufs_data[1][i].type = g_bus_buffer.ufs_data[1][i].type;
 
     g_bus.ufs_state[i] = g_bus_buffer.ufs_state[i];
     // Clear buffer
-    g_bus_buffer.ufs_data[i].flag = IGNORE;
+    g_bus_buffer.ufs_data[0][i].flag = IGNORE;
+    g_bus_buffer.ufs_data[1][i].flag = IGNORE;
     g_bus_buffer.ufs_state[i] = STALL;
   }
 }
@@ -126,18 +187,28 @@ void receive_data_from_bus(){
   }
   
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  for (int i = 0; i < total_ufs; i++){
-    if (g_bus.ufs_data[i].flag == WRITE_TO_DESTINATION){
-      UF_DataType type = g_bus.ufs_data[i].type;
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    if (g_bus.ufs_data[0][uf_index].flag == WRITE_TO_DESTINATION){
+      UF_DataType type = g_bus.ufs_data[0][uf_index].type;
       if (type == OPERAND1)
-        g_functional_units[i].operand1 = g_bus.ufs_data[i].data;
+        g_functional_units[uf_index].operand1 = g_bus.ufs_data[0][uf_index].data;
       else if (type == OPERAND2)
-        g_functional_units[i].operand2 = g_bus.ufs_data[i].data;
+        g_functional_units[uf_index].operand2 = g_bus.ufs_data[0][uf_index].data;
       else if (type == INSTRUCTION_BINARY)
-        g_functional_units[i].instruction_binary = g_bus.ufs_data[i].data;
+        g_functional_units[uf_index].instruction_binary = g_bus.ufs_data[0][uf_index].data;
+    }
+    if (g_bus.ufs_data[1][uf_index].flag == WRITE_TO_DESTINATION){
+      UF_DataType type = g_bus.ufs_data[1][uf_index].type;
+      if (type == OPERAND1)
+        g_functional_units[uf_index].operand1 = g_bus.ufs_data[1][uf_index].data;
+      else if (type == OPERAND2){
+        g_functional_units[uf_index].operand2 = g_bus.ufs_data[1][uf_index].data;
+      }
+      else if (type == INSTRUCTION_BINARY)
+        g_functional_units[uf_index].instruction_binary = g_bus.ufs_data[1][uf_index].data;
     }
 
-    g_functional_units[i].status = g_bus.ufs_state[i];
+    g_functional_units[uf_index].status = g_bus.ufs_state[uf_index];
   }
 }
 
@@ -148,6 +219,15 @@ void run_one_cycle(FILE *output){
   }
   printf("\n");
 
+
+  write_result();
+  execute();
+  read_operands();
+  issue_instruction();
+  // Possívelmente não vai ter essa
+  // fetch_next_instruction();
+
+
   // printf("Comecou run one cycle\n");
   update_scoreboard();
   // printf("Deu update scoreboard\n");
@@ -155,13 +235,6 @@ void run_one_cycle(FILE *output){
   // printf("Deu send data to bus\n");
   receive_data_from_bus();
   // printf("Deu receive data from bus\n");
-
-  write_result();
-  execute();
-  // Possívelmente não vai ter essas três
-  // read_operands();
-  // issue_instruction();
-  // fetch_next_instruction();
 
   // Imprimindo tabelas, não fiel à simulação
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;

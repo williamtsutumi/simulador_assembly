@@ -10,6 +10,31 @@ int get_opcode_from_binary(int instruction){
   return instruction >> 26;
 }
 
+InstructionFormat get_inst_format_from_opcode(int opcode){
+  if (opcode == ADD_OPCODE)  return FORMAT_R;
+  if (opcode == ADDI_OPCODE) return FORMAT_I;
+  if (opcode == SUB_OPCODE)  return FORMAT_R;
+  if (opcode == SUBI_OPCODE) return FORMAT_I;
+  if (opcode == MUL_OPCODE)  return FORMAT_R;
+  if (opcode == DIV_OPCODE)  return FORMAT_R;
+
+  if (opcode == AND_OPCODE) return FORMAT_R;
+  if (opcode == OR_OPCODE)  return FORMAT_R;
+  if (opcode == NOT_OPCODE) return FORMAT_R;
+
+  if (opcode == BLT_OPCODE) return FORMAT_I;
+  if (opcode == BGT_OPCODE) return FORMAT_I;
+  if (opcode == BEQ_OPCODE) return FORMAT_I;
+  if (opcode == BNE_OPCODE) return FORMAT_I;
+  if (opcode == J_OPCODE)   return FORMAT_J;
+
+  if (opcode == LW_OPCODE)   return FORMAT_I;
+  if (opcode == SW_OPCODE)   return FORMAT_I;
+  if (opcode == EXIT_OPCODE) return FORMAT_J;
+
+  return FORMAT_INVALID;
+}
+
 char *get_inst_name_from_opcode(Byte op_code){
   if (op_code == ADD_OPCODE)  return ADD;
   else if (op_code == ADDI_OPCODE) return ADDI;
@@ -57,6 +82,7 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
   return NOT_APPLIED_UF;
 }
 
+// [start_bit, end_bit]
 int get_binary_subnumber(int instruction, int start_bit, int end_bit){
   instruction >>= start_bit;
   int bitmask = (1ll << (end_bit - start_bit + 1))-1;
@@ -122,6 +148,19 @@ int get_instruction_from_memory(int instruction_index, Byte *mem){
 
   return (mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
 }
+
+int get_rt_from_instruction_binary(int binary){
+  return get_binary_subnumber(binary, 16, 20);
+}
+
+int get_rd_from_instruction_binary(int binary){
+  return get_binary_subnumber(binary, 11, 15);
+}
+
+int get_imm_from_instruction_binary(int binary){
+  return get_binary_subnumber(binary, 0, 15);
+}
+
 
 
 
@@ -192,10 +231,11 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
       int uf_idx = (*score_board).instructions_states[i].uf_index;
       if (finish - start + 1 == cycles_to_complete){
         (*bus_buffer).ufs_state[i] = STALL;
-        printf("PASSOU AQUI\n");
+        
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
           count_instructions_sent_to_write++;
 
+          printf("era pra ta\n");
           printf("uf idx: %d\n", uf_idx);
           (*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;
 
@@ -228,27 +268,31 @@ void update_execute(ScoreBoard *score_board, int curr_cycle, int inst_count){
 }
 
 // Checa se pode enviar alguma instrução para read operands
-void update_read_operands(ScoreBoard *score_board, int curr_cycle, int total_ufs){
-  for (int i = 0; i < total_ufs; i++){
-    if ((*score_board).instructions_states[i].current_state == ISSUE){
-      (*score_board).instructions_states[i].current_state = READ_OPERANDS;
-      (*score_board).instructions_states[i].read_operands = curr_cycle;
+void update_read_operands(Bus *bus_buffer, ScoreBoard *score_board, int curr_cycle, int total_ufs){
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+    if ((*score_board).instructions_states[uf_index].current_state == ISSUE){
+      (*score_board).instructions_states[uf_index].current_state = READ_OPERANDS;
+      (*score_board).instructions_states[uf_index].read_operands = curr_cycle;
+
+      (*bus_buffer).ufs_state[uf_index] = CONTINUE_READ_OPERAND;
     }
   }
 }
 
 // Checa se pode enviar alguma instrução para issue
-void update_issue(ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs){
+void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs){
   UF_TYPE type = get_uf_type_from_instruction(ir.binary);
   int idle_uf_index = -1;
-  for (int i = 0; i < total_ufs; i++){
+  for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     // todo -> branchs não condicionais tá entrando em qualquer lugar
-    if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[i].busy){
-      idle_uf_index = i;
+    if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[uf_index].busy){
+      idle_uf_index = uf_index;
+      (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
       break;
     }
-    if ((*score_board).ufs_states[i].type == type && !(*score_board).ufs_states[i].busy){
-      idle_uf_index = i;
+    if ((*score_board).ufs_states[uf_index].type == type && !(*score_board).ufs_states[uf_index].busy){
+      idle_uf_index = uf_index;
+      (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
       break;
     }
   }

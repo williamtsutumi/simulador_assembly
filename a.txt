@@ -13,10 +13,10 @@ Como a exit é processada?
 Como branchs condicionais são processados? Vao até qual estágio do pipeline
 
 
+As instruções do tipo J passam pelo estágio read operands?
+
+
 As branchs são processadas nas UF tipo integer? E levam a mesma quantidade de ciclos para concluir
-
-
-Colocar um has_branch_on_pipeline no scoreboarding?
 
 
 A unidade funcional armazena o binário da instrução que ela está excutando?

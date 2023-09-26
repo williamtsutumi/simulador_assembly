@@ -68,6 +68,13 @@
 /* Representação de Byte para a memória simulada */
 typedef unsigned char Byte;
 
+typedef enum InstructionFormat {
+    FORMAT_R,
+    FORMAT_I,
+    FORMAT_J,
+    FORMAT_INVALID
+} InstructionFormat;
+
 /* TYPES para leitura do input */
 
 typedef enum OPERAND_TYPE
@@ -89,10 +96,11 @@ typedef enum {
 // Indica o que a unidade funcional deve fazer: continuar sua execução ou permanecer parado
 // A uf recebe esse status do scoreboard em todo ciclo
 typedef enum FunctionalUnitStatus {
+    STALL,
+    CONTINUE_ISSUE,
     CONTINUE_READ_OPERAND,
     CONTINUE_EXECUTE,
     CONTINUE_WRITE_RESULT,
-    STALL,
 } FunctionalUnitStatus;
 
     typedef struct FunctionalUnit
@@ -196,12 +204,17 @@ typedef enum UF_DataType {
     } UF_DataSignal;
 
         typedef struct Bus {
-            DataSignal regs[32]; // Informação sendo enviada aos registradores
+            // Informação sendo enviada aos registradores
+            DataSignal regs[32];
 
-            UF_DataSignal *ufs_data; // Informação sendo enviada às unidades funcionais
-            FunctionalUnitStatus *ufs_state; // Controle do scoreboard para as unidades funcionais
+            // Informação sendo enviada às unidades funcionais. Tem tamanho 2 pois é possível ler os dois operandos no mesmo ciclo
+            UF_DataSignal *ufs_data[2];
 
-            DataSignal *memory; // Informação sendo enviada à memória
+            // Controle do scoreboard para as unidades funcionais
+            FunctionalUnitStatus *ufs_state;
+
+            // Informação sendo enviada à memória
+            DataSignal *memory;
         } Bus;
 
 
