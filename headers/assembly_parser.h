@@ -124,42 +124,24 @@ void decapitalize(char *str){
 int get_opcode(char* str){
 
   // puts(str);
-  if(strncmp(ADDI, str, strlen(ADDI)) == 0)
-    return ADDI_OPCODE;
-  if(strncmp(SUBI, str, strlen(SUBI)) == 0)
-    return SUBI_OPCODE;
-  if(strncmp(EXIT, str, strlen(EXIT)) == 0)
-    return EXIT_OPCODE;
-  if(strncmp(ADD, str, strlen(ADD)) == 0)
-    return ADD_OPCODE;
-  if(strncmp(SUB, str, strlen(SUB)) == 0)
-    return SUB_OPCODE;
-  if(strncmp(MUL, str, strlen(MUL)) == 0)
-    return MUL_OPCODE;
-  if(strncmp(DIV, str, strlen(DIV)) == 0)
-    return DIV_OPCODE;
-  if(strncmp(AND, str, strlen(AND)) == 0)
-    return AND_OPCODE;
-  if(strncmp(NOT, str, strlen(NOT)) == 0)
-    return NOT_OPCODE;
-  if(strncmp(BLT, str, strlen(BLT)) == 0)
-    return BLT_OPCODE;
-  if(strncmp(BGT, str, strlen(BGT)) == 0)
-    return BGT_OPCODE;
-  if(strncmp(BEQ, str, strlen(BEQ)) == 0)
-    return BEQ_OPCODE;
-  if(strncmp(BNE, str, strlen(BNE)) == 0)
-    return BNE_OPCODE;
-  if(strncmp(OR, str, strlen(OR)) == 0)
-    return OR_OPCODE;
-  if(strncmp(LW, str, strlen(LW)) == 0)
-    return LW_OPCODE;
-  if(strncmp(SW, str, strlen(SW)) == 0)
-    return SW_OPCODE;
-  if(strncmp(J, str, strlen(J)) == 0)
-    return J_OPCODE;
-  else
-    return -1;
+  if(strncmp(ADDI, str, strlen(ADDI)) == 0) return ADDI_OPCODE;
+  if(strncmp(SUBI, str, strlen(SUBI)) == 0) return SUBI_OPCODE;
+  if(strncmp(EXIT, str, strlen(EXIT)) == 0) return EXIT_OPCODE;
+  if(strncmp(ADD, str, strlen(ADD)) == 0) return ADD_OPCODE;
+  if(strncmp(SUB, str, strlen(SUB)) == 0) return SUB_OPCODE;
+  if(strncmp(MUL, str, strlen(MUL)) == 0) return MUL_OPCODE;
+  if(strncmp(DIV, str, strlen(DIV)) == 0) return DIV_OPCODE;
+  if(strncmp(AND, str, strlen(AND)) == 0) return AND_OPCODE;
+  if(strncmp(NOT, str, strlen(NOT)) == 0) return NOT_OPCODE;
+  if(strncmp(BLT, str, strlen(BLT)) == 0) return BLT_OPCODE;
+  if(strncmp(BGT, str, strlen(BGT)) == 0) return BGT_OPCODE;
+  if(strncmp(BEQ, str, strlen(BEQ)) == 0) return BEQ_OPCODE;
+  if(strncmp(BNE, str, strlen(BNE)) == 0) return BNE_OPCODE;
+  if(strncmp(OR, str, strlen(OR)) == 0) return OR_OPCODE;
+  if(strncmp(LW, str, strlen(LW)) == 0) return LW_OPCODE;
+  if(strncmp(SW, str, strlen(SW)) == 0) return SW_OPCODE;
+  if(strncmp(J, str, strlen(J)) == 0) return J_OPCODE;
+  else return -1;
   
 
 }
@@ -310,7 +292,7 @@ int read_instruction(FILE *arq, FILE *output){
 
   for (int opcode=0; opcode < num_tokens; opcode++){
     if(read_next_token(arq, expected_tokens[opcode], true)){
-      printf("LEU %s\n", expected_tokens[opcode]);
+      printf("LEU %s, opcode: %d\n", expected_tokens[opcode], opcode);
       return read_instruction_given_opcode(opcode, arq);
     }
   }
@@ -476,7 +458,7 @@ void skip_spaces(FILE *arq){
   fseek(arq, -1, SEEK_CUR);
 }
 
-// Retorna true se encontra a string "expexted_token", ignorando espaços
+// Retorna true se encontra a string "expected_token", ignorando espaços
 // antes da string. Caso não encontre a string, retorna false e volta
 // o ponteiro *arq para a posição inicial
 bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){

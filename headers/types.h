@@ -135,6 +135,7 @@ typedef enum InstructionStateType {
 
 // Estado da instrução, controle realizado pelo scoreboard
 typedef struct InstructionState {
+    // Campos que não existem de fato no scoreboard, são usados para imprimir as tabelas
     int fetch;
     int issue;
     int read_operands;
@@ -143,6 +144,7 @@ typedef struct InstructionState {
     int write_result;
 
     // Índice no array de FunctionalUnitState onde a instrução está
+    // (não gostei de ter esse cara aqui)
     int uf_index;
     InstructionStateType current_state;
 } InstructionState;

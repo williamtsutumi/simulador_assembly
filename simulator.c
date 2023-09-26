@@ -53,12 +53,13 @@ void read_operands(){
       
       int opcode = get_opcode_from_binary(binary);
       InstructionFormat format = get_inst_format_from_opcode(opcode);
-      // printf("index que entrou no continue read op: %d\n", uf_index);
-      // printf("binary: %d\n", binary);
-      // printf("opcode: %d\n", opcode);
-      // printf("format: %d\n", format);
+      printf("index que entrou no continue read op: %d\n", uf_index);
+      printf("binary: %d\n", binary);
+      printf("opcode: %d\n", opcode);
+      printf("format: %d\n", format);
       int operand1_index, operand2_index, operand2;
       if (format == FORMAT_R){
+
         operand1_index = get_rt_from_instruction_binary(binary);
         operand2_index = get_rd_from_instruction_binary(binary);
         
@@ -103,6 +104,7 @@ void execute(){
 
       g_functional_units[i].current_cycle++;
       // printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
+      // printf("cycles to complete: %d\n", cycles_to_complete);
       if (g_functional_units[i].current_cycle == cycles_to_complete){
         int opcode = get_opcode_from_binary(g_functional_units[i].instruction_binary);
         int operand1 = g_functional_units[i].operand1;
@@ -136,33 +138,43 @@ void write_result(){
 void update_scoreboard(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
-  printf("1\n");
-  // update_finished_instructions(&g_score_board, g_current_cycle);
-  printf("2\n");
+  update_finished_instructions(&g_score_board,
+      g_instruction_count);
+  
+  printf("Terminou update_finished_instructions\n");
+      
   update_write_result(&g_bus_buffer,
       g_memory,
       &g_score_board,
       g_cpu_configs,
       g_current_cycle,
       g_instruction_count);
-  printf("3\n");
+  
+  printf("Terminou update_write_result\n");
+      
   update_execute(&g_bus_buffer,
       &g_score_board,
       g_current_cycle,
       g_instruction_count);
-  printf("4\n");
+  
+  printf("Terminou update_execute\n");
+      
   update_read_operands(&g_bus_buffer,
       &g_score_board,
       g_current_cycle,
       total_ufs);
-  printf("5\n");
+  
+  printf("Terminou update_read_operands\n");
+      
   update_issue(&g_bus_buffer,
       &g_score_board,
       g_instruction_register,
       g_current_cycle,
       total_ufs,
       g_instruction_count);
-  printf("6\n");
+  
+  printf("Terminou update_issue\n");
+      
   update_fetch(&g_bus_buffer,
       g_memory,
       &g_score_board,
@@ -171,7 +183,8 @@ void update_scoreboard(){
       g_current_cycle,
       total_ufs,
       g_instruction_count);
-  printf("7\n");
+  
+  printf("Terminou update_fetch\n");
 }
 
 // Envia para o barramento tudo o que está no buffer do barramento e reseta a flag do buffer
@@ -201,8 +214,8 @@ void send_data_to_bus(){
     g_bus.ufs_data[1][uf_index].type = g_bus_buffer.ufs_data[1][uf_index].type;
 
     g_bus.ufs_state[uf_index] = g_bus_buffer.ufs_state[uf_index];
-    printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
-    printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
+    // printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
+    // printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
     // Clear buffer
     g_bus_buffer.ufs_data[0][uf_index].flag = IGNORE;
     g_bus_buffer.ufs_data[1][uf_index].flag = IGNORE;
@@ -255,36 +268,44 @@ void receive_data_from_bus(){
     g_functional_units[uf_index].status = g_bus.ufs_state[uf_index];
   }
 
-  // g_instruction_register.binary = g_bus.ir_binary.data;
-  // g_instruction_register.program_counter = g_bus.ir_pc.data;
 }
 
 void run_one_cycle(FILE *output){
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+  printf("Começou run one cycle\n");
+
   g_current_cycle++;
   
 
   write_result();
+  printf("Terminou write_result\n");
   execute();
+  printf("Terminou execute\n");
   read_operands();
+  printf("Terminou read_operands\n");
   issue_instruction();
+  printf("Terminou issue_instruction\n");
   fetch_next_instruction();
+  printf("Terminou fetch_next_instruction\n");
 
-  printf("Deu update scoreboard\n");
   update_scoreboard();
-  printf("Deu send data to bus\n");
+  printf("Terminou update_scoreboard\n");
   send_data_to_bus();
-  printf("Deu receive data from bus\n");
+  printf("Terminou send_data_to_bus\n");
   receive_data_from_bus();
+  printf("Terminou receive_data_from_bus\n");
 
   for (int i = 0; i < NUM_REGISTERS; i++){
     printf("r%d:%d  ", i, g_registers[i]);
   }
   printf("\n");
 
-  print_uf(g_functional_units[0]);
+  for (int i = 0; i < total_ufs; i++){
+    printf("Printando uf de index %d\n", i);
+    print_uf(g_functional_units[i]);
+  }
 
   // Imprimindo tabelas, não fiel à simulação
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   Byte inst_opcodes[g_instruction_count];
   for (int i = 0; i < g_instruction_count; i++){
     int inst = get_instruction_from_memory(i, g_memory);
@@ -345,7 +366,11 @@ int main(int argc, char *argv[])
       init_functional_units(g_functional_units, g_cpu_configs);
 
       printf("printando instructions binaries\n");
-      for (int i=0; i<g_instruction_count; i++) printf("instruction[%d]: %d\n", i, get_instruction_from_memory(i, g_memory));
+      for (int i=0; i<g_instruction_count; i++){
+        printf("instruction[%d]: %d\n", i, get_instruction_from_memory(i, g_memory));
+        printf("binary: \n");
+        print_bin(get_instruction_from_memory(i, g_memory));
+      }
 
       run_simulation(output_stream);
     }

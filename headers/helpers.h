@@ -14,6 +14,15 @@ void print_uf(FunctionalUnit uf){
   printf("uf.status: %d\n", uf.status);
 }
 
+void print_bin(int num){
+  for (int i = 0; num > 0; i++){
+    if (num % 2) printf("0");
+    else printf("1");
+    num /= 2;
+  }
+  printf("\n");
+}
+
 /* Utilidades */
 
 int get_opcode_from_binary(int instruction){
@@ -214,11 +223,12 @@ int actually_execute(int opcode, int operand1, int operand2){
 }
 
 void update_finished_instructions(ScoreBoard *score_board, int inst_count){
-  printf("ALO\n");
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == WRITE_RESULT){
-      printf("A\n");
       (*score_board).instructions_states[i].current_state = FINISHED;
+      
+      int uf_idx = (*score_board).instructions_states[i].uf_index;
+      clear_uf_state(&((*score_board).ufs_states[uf_idx]));
     }
   }
 }
@@ -319,7 +329,7 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
     if (idle_uf_index != -1) break;
   }
   if(idle_uf_index == -1){
-    printf("não tem unidades funcionais livres!\n");
+    // printf("não tem unidades funcionais livres!\n");
     return;
   }
 
