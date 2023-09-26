@@ -249,12 +249,12 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
           count_instructions_sent_to_write++;
 
           (*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;
-
+          printf("uf idx que ta setando pra continue write result: %d\n", uf_idx);
           (*score_board).instructions_states[i].current_state = WRITE_RESULT;
           (*score_board).instructions_states[i].write_result = curr_cycle;
 
           // todo -> tem algum problema com o clear pq a instrução continua sendo printada
-          clear_uf_state(&((*score_board).ufs_states[uf_idx]));
+          // clear_uf_state(&((*score_board).ufs_states[uf_idx]));
         }
       }
       else{

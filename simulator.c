@@ -102,18 +102,17 @@ void execute(){
       if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
 
       g_functional_units[i].current_cycle++;
-      printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
+      // printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
       if (g_functional_units[i].current_cycle == cycles_to_complete){
-        printf("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n");
         int opcode = get_opcode_from_binary(g_functional_units[i].instruction_binary);
         int operand1 = g_functional_units[i].operand1;
         int operand2 = g_functional_units[i].operand2;
+        g_functional_units[i].operation_result = actually_execute(opcode, operand1, operand2);
         // printf("opcode: %d\n", opcode);
         // printf("operand1: %d\n", operand1);
         // printf("operand2: %d\n", operand2);
         // printf("op result: %d\n", g_functional_units[i].operation_result);
-        g_functional_units[i].operation_result = actually_execute(opcode, operand1, operand2);
-        printf("deu actually execute\n");
+        // printf("deu actually execute\n");
       }
     }
   }
@@ -122,6 +121,7 @@ void write_result(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status == CONTINUE_WRITE_RESULT){
+      printf("Deu continue write result\n");
       g_functional_units[uf_index].status = STALL; // Aqui stall indica que está livre
       int result = get_destination_register_from_instruction(g_functional_units[uf_index].instruction_binary);
 
@@ -201,8 +201,8 @@ void send_data_to_bus(){
     g_bus.ufs_data[1][uf_index].type = g_bus_buffer.ufs_data[1][uf_index].type;
 
     g_bus.ufs_state[uf_index] = g_bus_buffer.ufs_state[uf_index];
-    // printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
-    // printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
+    printf("uf state: %d\n", g_bus.ufs_state[uf_index]);
+    printf("uf state buffer: %d\n", g_bus_buffer.ufs_state[uf_index]);
     // Clear buffer
     g_bus_buffer.ufs_data[0][uf_index].flag = IGNORE;
     g_bus_buffer.ufs_data[1][uf_index].flag = IGNORE;
