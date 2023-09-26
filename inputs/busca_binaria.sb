@@ -12,8 +12,9 @@ INST:
 
 .data   
 
-9
-5
+#resposta no registrador r3
+9 #num elementos
+5 #target
 3
 4
 5
@@ -30,44 +31,46 @@ INST:
 addi r20, r0, 2       # r20 = 2
 
 #r10 = target
-lw r10, 100(4)
+lw r10, 400(4)
 
 #lo = 0
-addi r1, r0, 1   
+addi r1, r0, 0   
 
 #hi = n-1
-lw r2, 100(0)          
+lw r2, 400(r0)          
 subi r2, r2, 1          
 
 # if lo > hi
-bgt r1, r2, 100  # se lo > hi, vai até o final
-
+bgt r1, r2, 48  # se lo > hi, vai até o final
 
 #mid = (lo+hi)/2
 add r3, r1, r2 
-div r3, r3 r20   
+div r3, r3, r20   
 
 #r5 = M[mid]
 mul r4, r3, r20
 mul r4, r4, r20
-lw r5, 100(4)
+lw r5, 400(r4)
 
-#if M[mid] == target
-beq r5, r10, 100
 
 #if M[mid] < target
 # vai até uma parte do código q trata isso
-blt r5, r10 
-subi r2, r2, 1
-j 24
+blt r5, r10, 8
 
 #if M[mid] > target
-bgt r5 r10 0
+bgt r5, r10, 12
 # vai até uma parte do código q trata isso
+
+#if M[mid] == target
+beq r5, r10, 
+
+subi r2, r2, 1
+j 24
 
 addi r1, r1, 1
 j 24
 
-
+beq r5, r10, 4
+sub r3 r0 r3
 
 exit
