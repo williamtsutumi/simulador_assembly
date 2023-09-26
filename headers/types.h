@@ -215,6 +215,10 @@ typedef enum UF_DataType {
 
             // Informação sendo enviada à memória
             DataSignal *memory;
+
+            // Informação sendo enviada ao instruction register
+            DataSignal ir_pc;
+            DataSignal ir_binary;
         } Bus;
 
 

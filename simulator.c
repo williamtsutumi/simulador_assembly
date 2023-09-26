@@ -29,15 +29,16 @@ InstructionRegister g_instruction_register; // IR
 /* Estágios do pipeline */
 
 void fetch_next_instruction(){
-
+  g_instruction_register.binary = g_bus.ir_binary.data;
+  g_instruction_register.program_counter = g_bus.ir_pc.data;
 }
 void issue_instruction(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status == CONTINUE_ISSUE){
-      // printf("Passou no issue\n");
       g_bus_buffer.ufs_data[0][uf_index].data = g_instruction_register.binary;
+      printf("binery no issue: %d\n", g_instruction_register.binary);
       g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
       g_bus_buffer.ufs_data[0][uf_index].type = INSTRUCTION_BINARY;
     }
@@ -52,7 +53,10 @@ void read_operands(){
       
       int opcode = get_opcode_from_binary(binary);
       InstructionFormat format = get_inst_format_from_opcode(opcode);
-      
+      printf("index que entrou no continue read op: %d\n", uf_index);
+      printf("binary: %d\n", binary);
+      printf("opcode: %d\n", opcode);
+      printf("format: %d\n", format);
       int operand1_index, operand2_index, operand2;
       if (format == FORMAT_R){
         operand1_index = get_rt_from_instruction_binary(binary);
@@ -156,7 +160,8 @@ void update_scoreboard(){
       total_ufs,
       g_instruction_count);
   printf("6\n");
-  update_fetch(g_memory,
+  update_fetch(&g_bus_buffer,
+      g_memory,
       &g_score_board,
       &g_instruction_register,
       &g_program_counter,
@@ -200,6 +205,16 @@ void send_data_to_bus(){
     g_bus_buffer.ufs_data[1][uf_index].flag = IGNORE;
     g_bus_buffer.ufs_state[uf_index] = STALL;
   }
+
+  // IR
+  g_bus.ir_binary.data = g_bus_buffer.ir_binary.data;
+  g_bus.ir_binary.flag = g_bus_buffer.ir_binary.flag;
+
+  g_bus.ir_pc.data = g_bus_buffer.ir_pc.data;
+  g_bus.ir_pc.flag = g_bus_buffer.ir_pc.flag;
+
+  g_bus_buffer.ir_binary.flag = IGNORE;
+  g_bus_buffer.ir_pc.flag = IGNORE;
 }
 
 void receive_data_from_bus(){
@@ -236,32 +251,19 @@ void receive_data_from_bus(){
 
     g_functional_units[uf_index].status = g_bus.ufs_state[uf_index];
   }
+
+  // g_instruction_register.binary = g_bus.ir_binary.data;
+  // g_instruction_register.program_counter = g_bus.ir_pc.data;
 }
 
 void run_one_cycle(FILE *output){
   g_current_cycle++;
   for (int i = 0; i < NUM_REGISTERS; i++){
-    printf("r%d: %d  ", i, g_registers[i]);
+    printf("r%d:%d  ", i, g_registers[i]);
   }
   printf("\n");
 
-  
-
-  write_result();
-  execute();
-  read_operands();
-  issue_instruction();
-  // Possivelmente não vai ter essa
-  // fetch_next_instruction();
-
-
-  printf("Comecou run one cycle\n");
-  update_scoreboard();
-  printf("Deu update scoreboard\n");
-  send_data_to_bus();
-  printf("Deu send data to bus\n");
-  receive_data_from_bus();
-  printf("Deu receive data from bus\n");
+  print_uf(g_functional_units[0]);
 
   // Imprimindo tabelas, não fiel à simulação
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
@@ -274,8 +276,19 @@ void run_one_cycle(FILE *output){
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
   // ****************************************
 
-  print_uf(g_functional_units[0]);
+  
+  write_result();
+  execute();
+  read_operands();
+  issue_instruction();
+  fetch_next_instruction();
 
+  printf("Deu update scoreboard\n");
+  update_scoreboard();
+  printf("Deu send data to bus\n");
+  send_data_to_bus();
+  printf("Deu receive data from bus\n");
+  receive_data_from_bus();
 }
 
 void run_simulation(FILE *output){
@@ -324,6 +337,9 @@ int main(int argc, char *argv[])
     if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
       malloc_memory(&g_functional_units, &g_score_board, &g_bus, &g_bus_buffer, g_cpu_configs, g_instruction_count, g_memory_size);
       init_scoreboard(&g_score_board);
+
+      printf("printando instructions binaries\n");
+      for (int i=0; i<g_instruction_count; i++) printf("instruction[%d]: %d\n", i, get_instruction_from_memory(i, g_memory));
 
       run_simulation(output_stream);
     }

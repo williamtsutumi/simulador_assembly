@@ -226,7 +226,6 @@ void update_finished_instructions(ScoreBoard *score_board, int inst_count){
 // Senão, continua a executar
 void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
   // todo -> enviar para write result se possível ao invés de sempre enviar
-  printf("chegou aqui\n");
   int count_instructions_sent_to_write = 0;
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == EXECUTE){
@@ -271,16 +270,12 @@ void update_execute(Bus *bus_buffer, ScoreBoard *score_board, int curr_cycle, in
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == READ_OPERANDS){
 
-      printf("Deu read operands\n");
       (*score_board).instructions_states[i].current_state = EXECUTE;
       (*score_board).instructions_states[i].start_execute = curr_cycle;
       (*score_board).instructions_states[i].finish_execute = curr_cycle;
 
       int uf_index = (*score_board).instructions_states[i].uf_index;
       (*bus_buffer).ufs_state[uf_index] = CONTINUE_EXECUTE;
-      printf("uf index: %d\n", uf_index);
-      printf("i: %d\n", i);
-
     }
   }
 }
@@ -349,7 +344,7 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
 }
 
 // Checa se pode enviar alguma instrução para fetch
-void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir, int *pc, int curr_cycle, int total_ufs, int instruction_count){
+void update_fetch(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board, InstructionRegister *ir, int *pc, int curr_cycle, int total_ufs, int instruction_count){
   if ((*score_board).can_fetch){
     (*score_board).can_fetch = false;
 
@@ -361,12 +356,14 @@ void update_fetch(Byte *memory, ScoreBoard *score_board, InstructionRegister *ir
     (*score_board).instructions_states[instruction_index].current_state = FETCH;
     (*score_board).instructions_states[instruction_index].fetch = curr_cycle;
 
-    (*ir).binary = get_instruction_from_memory(instruction_index, memory);
-    (*ir).program_counter = (*pc);
-    printf("ir binary: %d\n", (*ir).binary);
-    printf("ir pc: %d\n", (*ir).program_counter);
+    (*bus_buffer).ir_binary.data = get_instruction_from_memory(instruction_index, memory);
+    (*bus_buffer).ir_binary.flag = WRITE_TO_DESTINATION;
+    (*bus_buffer).ir_pc.data = *pc;
+    (*bus_buffer).ir_pc.flag = WRITE_TO_DESTINATION;
     (*pc) += 4;
 
+    printf("instruction index no update fetch: %d\n", instruction_index);
+    printf("ir binary no update fetch: %d\n", (*bus_buffer).ir_binary.data);
 
     
   }
