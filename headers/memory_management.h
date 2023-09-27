@@ -3,19 +3,13 @@
 
 #include "types.h"
 
-void free_memory(FILE *input, FILE*output, Bus *bus, Bus *bus_buffer, ScoreBoard *score_board, FunctionalUnit **functional_units){
-  free(*functional_units);
+void free_memory(FILE *input, FILE *output, Bus *bus, Bus *bus_buffer, ScoreBoard *score_board, FunctionalUnit **functional_units){
+  free(functional_units);
 
-  free((*bus).ufs_data);
-  free((*bus).ufs_state);
-  free((*bus).memory);
+  free(bus);
+  free(bus_buffer);
 
-  free((*bus_buffer).ufs_data);
-  free((*bus_buffer).ufs_state);
-  free((*bus_buffer).memory);
-
-  free((*score_board).instructions_states);
-  free((*score_board).ufs_states);
+  free(score_board);
 
   fclose(input);
   fclose(output);

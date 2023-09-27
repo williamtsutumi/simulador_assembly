@@ -31,17 +31,17 @@ INST:
 addi r1, r0, 10
 add r1, r1, r1
 sub r1, r0, r0
-subi r1, r0, 0
-#mul r1, r0, r0
+#subi r1, r0, 0
+#mul r4, r1, r1
 #div r1, r0, r0
-and r1, r0, r0
-or r1, r0, r0
-not r1, r0
-blt r1, r0, 400
-bgt r1, r0, 400
-beq r1, r0, 400
+#and r1, r0, r0
+#or r1, r0, r0
+#not r1, r0
+#blt r1, r0, 400
+#bgt r1, r0, 400
+#beq r1, r0, 400
 #bne r1, r0, 400
-j 400
-lw r1, 0(r2)
-sw r1, 0(r2)
+#j 400
+#lw r1, 0(r2)
+#sw r1, 0(r2)
 exit

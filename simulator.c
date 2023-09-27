@@ -368,12 +368,27 @@ void run_one_cycle(FILE *output){
 
 }
 
+bool program_has_exited(){
+  int output = true;
+  for (int i = 0; i < g_instruction_count - 1; i++){
+    if (g_score_board.instructions_states[i].current_state != FINISHED){
+      output = false;
+      break;
+    }
+  }
+  // Se a exit foi fetchada
+  if (g_score_board.instructions_states[g_instruction_count - 1].current_state != FETCH) output = false;
+
+  return output;
+}
+
 void run_simulation(FILE *output){
-  bool has_active_instruction = true;
-  while (has_active_instruction){
+  while (!program_has_exited()){
     getchar();
     run_one_cycle(output);
   }
+
+  printf("Program Exited.\n");
 }
 
 bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file, FILE **output_stream){
@@ -428,6 +443,7 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Falha na leitura da linha de comando.\n");
   }
 
+  printf("A\n");
   free_memory(input_file, output_stream, &g_bus, &g_bus_buffer, &g_score_board, &g_functional_units);
 
   return 0;
