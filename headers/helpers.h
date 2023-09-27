@@ -146,7 +146,7 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
   || op_code == NOT_OPCODE
   ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 16, 20);
 
-  if (
+  else if (
     op_code == SW_OPCODE
   || op_code == LW_OPCODE
   ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 0, 15);
@@ -155,17 +155,16 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
       op_code == SUBI_OPCODE
     || op_code == ADDI_OPCODE
     || op_code == NOT_OPCODE
-  ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = -1;
+  ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 0, 15);
 
   else if (
       op_code == BLT_OPCODE
     || op_code == BGT_OPCODE
     || op_code == BEQ_OPCODE
     || op_code == BNE_OPCODE
-    || op_code == J_OPCODE
   ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 16, 20);
 
-  else{
+  else{ // J
     *op1 = -1, *op2 = -1;
   }
 }
@@ -494,14 +493,16 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
     char *fi;
     if (functional_unit_states[i].op == SW_OPCODE) fi = table_format_text("M", functional_unit_states[i].fi);
     else if (functional_unit_states[i].fi == 0) fi = "PC";
-    else fi = table_format_text("R", functional_unit_states[i].fi);
-
+    else {
+      fi = table_format_text("R", functional_unit_states[i].fi);
+    }
+    
     char *fj = table_format_text("R", functional_unit_states[i].fj);
 
     char *fk;
     int opcode = functional_unit_states[i].op;
     if (opcode == ADDI_OPCODE
-        || opcode == SUB_OPCODE
+        || opcode == SUBI_OPCODE
         || opcode == LW_OPCODE
         || opcode == SW_OPCODE
     ) fk = table_format_text(" ", functional_unit_states[i].fk);
