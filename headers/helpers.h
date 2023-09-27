@@ -80,9 +80,12 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
     || op_code == BGT_OPCODE
     || op_code == BEQ_OPCODE
     || op_code == BNE_OPCODE
+    || op_code == J_OPCODE
+    || op_code == LW_OPCODE // Não sei se é aqui
+    || op_code == SW_OPCODE // Não sei se é aqui
   ) return INTEGER_UF;
 
-  // j, exit
+  // exit
   return NOT_APPLIED_UF;
 }
 
@@ -326,12 +329,8 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
 
     // todo -> branchs não condicionais tá entrando em qualquer lugar
     for (int uf_index = 0; uf_index < total_ufs; uf_index++){
-      if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[uf_index].busy){
-        idle_uf_index = uf_index;
-        (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
-        break;
-      }
-      if ((*score_board).ufs_states[uf_index].type == type && !(*score_board).ufs_states[uf_index].busy){
+      FunctionalUnitState uf_state = (*score_board).ufs_states[uf_index];
+      if (uf_state.type == type && !uf_state.busy){
         idle_uf_index = uf_index;
         (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
         break;
