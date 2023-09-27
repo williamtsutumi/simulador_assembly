@@ -240,6 +240,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 
       imm = read_operand(arq, IMM, false);
       if (!read_next_token(arq, "(", false)) break;
+      if (!read_next_token(arq, "r", false)) break; 
       rs = read_number(arq, true);
       if (!read_next_token(arq, ")", false)) break;
 
@@ -250,6 +251,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 
       imm = read_operand(arq, IMM, false);
       if (!read_next_token(arq, "(", false)) break;
+      if (!read_next_token(arq, "r", false)) break;
       rs = read_number(arq, true);
       if (!read_next_token(arq, ")", false)) break;
 

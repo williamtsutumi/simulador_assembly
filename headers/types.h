@@ -221,6 +221,8 @@ typedef enum UF_DataType {
             // Informação sendo enviada ao instruction register
             DataSignal ir_pc;
             DataSignal ir_binary;
+
+            DataSignal pc;
         } Bus;
 
 

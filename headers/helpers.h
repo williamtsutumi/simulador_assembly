@@ -4,25 +4,6 @@
 #include "types.h"
 char* empty = "";
 
-/* Debug */
-
-void print_uf(FunctionalUnit uf){
-  printf("uf.instruction_binary: %d\n", uf.instruction_binary);
-  printf("uf.operand1: %d\n", uf.operand1);
-  printf("uf.operand2: %d\n", uf.operand2);
-  printf("uf.operation_result: %d\n", uf.operation_result);
-  printf("uf.status: %d\n", uf.status);
-}
-
-void print_bin(int num){
-  for (int i = 0; num > 0; i++){
-    if (num % 2) printf("0");
-    else printf("1");
-    num /= 2;
-  }
-  printf("\n");
-}
-
 /* Utilidades */
 
 int get_opcode_from_binary(int instruction){
@@ -95,9 +76,13 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
     || op_code == NOT_OPCODE
     || op_code == LW_OPCODE
     || op_code == SW_OPCODE
+    || op_code == BLT_OPCODE
+    || op_code == BGT_OPCODE
+    || op_code == BEQ_OPCODE
+    || op_code == BNE_OPCODE
   ) return INTEGER_UF;
 
-  // blt, bgt, beq, bne, j, exit
+  // j, exit
   return NOT_APPLIED_UF;
 }
 
@@ -172,12 +157,38 @@ int get_rt_from_instruction_binary(int binary){
   return get_binary_subnumber(binary, 16, 20);
 }
 
+int get_rs_from_instruction_binary(int binary){
+  return get_binary_subnumber(binary, 21, 25);
+}
+
 int get_rd_from_instruction_binary(int binary){
   return get_binary_subnumber(binary, 11, 15);
 }
 
 int get_imm_from_instruction_binary(int binary){
   return get_binary_subnumber(binary, 0, 15);
+}
+
+bool is_branch(int opcode){
+  return opcode == BLT_OPCODE
+      || opcode == BGT_OPCODE
+      || opcode == BNE_OPCODE
+      || opcode == BEQ_OPCODE
+      || opcode == J_OPCODE;
+}
+
+
+
+
+
+/* Debug */
+
+void print_uf(FunctionalUnit uf){
+  printf("uf.instruction_binary: %d, opcode: %d\n", uf.instruction_binary, get_opcode_from_binary(uf.instruction_binary));
+  printf("uf.operand1: %d\n", uf.operand1);
+  printf("uf.operand2: %d\n", uf.operand2);
+  printf("uf.operation_result: %d\n", uf.operation_result);
+  printf("uf.status: %d\n", uf.status);
 }
 
 
@@ -199,6 +210,7 @@ void clear_uf_state(FunctionalUnitState *uf_state){
   (*uf_state).inst_program_counter = -1;
 }
 
+// Retorna o resultado das operações. Em casos de branch, apenas retorna true ou false
 int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == ADD_OPCODE)  return operand1 + operand2;
   if (opcode == ADDI_OPCODE) return operand1 + operand2; // Sim, é igual ao anterior
@@ -210,16 +222,17 @@ int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == OR_OPCODE)   return operand1 | operand2;
   if (opcode == NOT_OPCODE)  return ~operand1;
   
-  // todo -> não tenho certeza o que fazer com essas
-  // if (opcode == BLT_OPCODE)  
-  // if (opcode == BGT_OPCODE) 
-  // if (opcode == BEQ_OPCODE) 
-  // if (opcode == BNE_OPCODE) 
-  // if (opcode == J_OPCODE) 
-  // if (opcode == LW_OPCODE) 
+  if (opcode == BLT_OPCODE) return operand1 < operand2;
+  if (opcode == BGT_OPCODE) return operand1 > operand2;
+  if (opcode == BEQ_OPCODE) return operand1 == operand2;
+  if (opcode == BNE_OPCODE) return operand1 != operand2;
+  if (opcode == J_OPCODE)   return true;
+  // todo -> ainda n sei oq fazer com esses
+  // if (opcode == LW_OPCODE)  
   // if (opcode == SW_OPCODE) 
-  // if (opcode == EXIT_OPCODE) 
-
+  
+  // Não é um retorno inválido, mas, com a execução correta, nunca deve chegar nesta linha
+  return -1;
 }
 
 void update_finished_instructions(ScoreBoard *score_board, int inst_count){
@@ -241,6 +254,7 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == EXECUTE){
       int cycles_to_complete;
+      // todo -> tirar esse get from memory
       int inst = get_instruction_from_memory(i, memory);
       // printf("inst: %d", inst);
       UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
@@ -262,9 +276,6 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
           printf("uf idx que ta setando pra continue write result: %d\n", uf_idx);
           (*score_board).instructions_states[i].current_state = WRITE_RESULT;
           (*score_board).instructions_states[i].write_result = curr_cycle;
-
-          // todo -> tem algum problema com o clear pq a instrução continua sendo printada
-          // clear_uf_state(&((*score_board).ufs_states[uf_idx]));
         }
       }
       else{
@@ -311,19 +322,19 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
   UF_TYPE type = get_uf_type_from_instruction(ir.binary);
   int idle_uf_index = -1;
   for (int i = 0; i < inst_count; i++){
-    if ((*score_board).instructions_states[i].current_state == FETCH){
-      // todo -> branchs não condicionais tá entrando em qualquer lugar
-      for (int uf_index = 0; uf_index < total_ufs; uf_index++){
-        if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[uf_index].busy){
-          idle_uf_index = uf_index;
-          (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
-          break;
-        }
-        if ((*score_board).ufs_states[uf_index].type == type && !(*score_board).ufs_states[uf_index].busy){
-          idle_uf_index = uf_index;
-          (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
-          break;
-        }
+    if ((*score_board).instructions_states[i].current_state != FETCH) continue;
+
+    // todo -> branchs não condicionais tá entrando em qualquer lugar
+    for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+      if (type == NOT_APPLIED_UF && !(*score_board).ufs_states[uf_index].busy){
+        idle_uf_index = uf_index;
+        (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
+        break;
+      }
+      if ((*score_board).ufs_states[uf_index].type == type && !(*score_board).ufs_states[uf_index].busy){
+        idle_uf_index = uf_index;
+        (*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
+        break;
       }
     }
     if (idle_uf_index != -1) break;
