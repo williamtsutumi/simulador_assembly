@@ -418,8 +418,7 @@ int main(int argc, char *argv[])
 
       printf("printando instructions binaries\n");
       for (int i=0; i<g_instruction_count; i++){
-        printf("instruction[%d]: %d\n", i, get_instruction_from_memory(i, g_memory));
-        printf("opcode: %d\n", get_opcode_from_binary(get_instruction_from_memory(i, g_memory)));
+        printf("instruction[%d]: %d, opcode: %d\n", i, get_instruction_from_memory(i, g_memory), get_opcode_from_binary(get_instruction_from_memory(i, g_memory)));
       }
 
       run_simulation(output_stream);

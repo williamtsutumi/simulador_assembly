@@ -121,6 +121,14 @@ int get_destination_register_from_instruction(int instruction){
     || op_code == ADDI_OPCODE
   ) return get_binary_subnumber(instruction, 16, 20);
 
+  else if (
+      op_code == BLT_OPCODE
+    || op_code == BGT_OPCODE
+    || op_code == BEQ_OPCODE
+    || op_code == BNE_OPCODE
+    || op_code == J_OPCODE
+  ) return 0; // Usando 0 para indicar que o destino é o PC, já que o r0 não deve ser alterado
+
   return -1;
 }
 
@@ -142,6 +150,14 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
     || op_code == ADDI_OPCODE
     || op_code == NOT_OPCODE
   ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = -1;
+
+  else if (
+      op_code == BLT_OPCODE
+    || op_code == BGT_OPCODE
+    || op_code == BEQ_OPCODE
+    || op_code == BNE_OPCODE
+    || op_code == J_OPCODE
+  ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 16, 20);
 
   else{
     *op1 = -1, *op2 = -1;
@@ -468,26 +484,33 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
 
   for(int i = 0; i < num_ufs; i++){
     char *type_index = table_format_text(functional_unit_name[funcional_unit_states[i].type], funcional_unit_states[i].type_index);
+
     char *fi = table_format_text("R", funcional_unit_states[i].fi);
+    if (funcional_unit_states[i].fi == 0){
+      free(fi);
+      fi = "PC";
+    }
+
     char *fj = table_format_text("R", funcional_unit_states[i].fj);
     char *fk = table_format_text("R", funcional_unit_states[i].fk);
 
     char *qj = table_format_number(funcional_unit_states[i].qj);
     char *qk = table_format_number(funcional_unit_states[i].qk);
+
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
       type_index,
       yesno[funcional_unit_states[i].busy],
       funcional_unit_states[i].op == -1 ? empty : instruction_names[funcional_unit_states[i].op],
-      fi,
-      fj,
-      fk,
-      qj,
-      qk,
-      yesno[funcional_unit_states[i].rj],
-      yesno[funcional_unit_states[i].rk]);
+      fi, // Destino
+      fj, // Operand1
+      fk, // Operand2
+      qj, // Uf que produzirá o operand1
+      qk, // Uf que produzirá o operand2
+      yesno[funcional_unit_states[i].rj], // Operand1 está pronto
+      yesno[funcional_unit_states[i].rk]); // Operand2 está pronto
 
     free(type_index);
-    free(fi);
+    if (strcmp(fi, "PC") != 0) free(fi);
     free(fj);
     free(fk);
     free(qj);
