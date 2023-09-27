@@ -119,6 +119,7 @@ int get_destination_register_from_instruction(int instruction){
   else if (
       op_code == SUBI_OPCODE
     || op_code == ADDI_OPCODE
+    || op_code == LW_OPCODE
   ) return get_binary_subnumber(instruction, 16, 20);
 
   else if (
@@ -144,6 +145,11 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
   || op_code == OR_OPCODE
   || op_code == NOT_OPCODE
   ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 16, 20);
+
+  if (
+    op_code == SW_OPCODE
+  || op_code == LW_OPCODE
+  ) *op1 = get_binary_subnumber(instruction, 21, 25), *op2 = get_binary_subnumber(instruction, 0, 15);
 
   else if (
       op_code == SUBI_OPCODE
@@ -467,7 +473,7 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
   }
 }
 
-void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, int num_ufs){
+void print_functional_unit_status(FunctionalUnitState* functional_unit_states, int num_ufs){
 
   printf("Status das Unidades Funcionais:\n");
   
@@ -483,31 +489,38 @@ void print_functional_unit_status(FunctionalUnitState* funcional_unit_states, in
   char *instruction_names[] = INSTRUCTION_NAMES;
 
   for(int i = 0; i < num_ufs; i++){
-    char *type_index = table_format_text(functional_unit_name[funcional_unit_states[i].type], funcional_unit_states[i].type_index);
+    char *type_index = table_format_text(functional_unit_name[functional_unit_states[i].type], functional_unit_states[i].type_index);
 
-    char *fi = table_format_text("R", funcional_unit_states[i].fi);
-    if (funcional_unit_states[i].fi == 0){
-      free(fi);
-      fi = "PC";
-    }
+    char *fi;
+    if (functional_unit_states[i].op == SW_OPCODE) fi = table_format_text("M", functional_unit_states[i].fi);
+    else if (functional_unit_states[i].fi == 0) fi = "PC";
+    else fi = table_format_text("R", functional_unit_states[i].fi);
 
-    char *fj = table_format_text("R", funcional_unit_states[i].fj);
-    char *fk = table_format_text("R", funcional_unit_states[i].fk);
+    char *fj = table_format_text("R", functional_unit_states[i].fj);
 
-    char *qj = table_format_number(funcional_unit_states[i].qj);
-    char *qk = table_format_number(funcional_unit_states[i].qk);
+    char *fk;
+    int opcode = functional_unit_states[i].op;
+    if (opcode == ADDI_OPCODE
+        || opcode == SUB_OPCODE
+        || opcode == LW_OPCODE
+        || opcode == SW_OPCODE
+    ) fk = table_format_text(" ", functional_unit_states[i].fk);
+    else fk = table_format_text("R", functional_unit_states[i].fk);
+
+    char *qj = table_format_number(functional_unit_states[i].qj);
+    char *qk = table_format_number(functional_unit_states[i].qk);
 
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
       type_index,
-      yesno[funcional_unit_states[i].busy],
-      funcional_unit_states[i].op == -1 ? empty : instruction_names[funcional_unit_states[i].op],
+      yesno[functional_unit_states[i].busy],
+      functional_unit_states[i].op == -1 ? empty : instruction_names[functional_unit_states[i].op],
       fi, // Destino
       fj, // Operand1
       fk, // Operand2
       qj, // Uf que produzirá o operand1
       qk, // Uf que produzirá o operand2
-      yesno[funcional_unit_states[i].rj], // Operand1 está pronto
-      yesno[funcional_unit_states[i].rk]); // Operand2 está pronto
+      yesno[functional_unit_states[i].rj], // Operand1 está pronto
+      yesno[functional_unit_states[i].rk]); // Operand2 está pronto
 
     free(type_index);
     if (strcmp(fi, "PC") != 0) free(fi);
