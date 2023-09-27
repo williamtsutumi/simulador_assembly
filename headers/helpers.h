@@ -201,6 +201,13 @@ bool is_branch(int opcode){
       || opcode == J_OPCODE;
 }
 
+bool is_conditional_branch(int opcode){
+  return opcode == BLT_OPCODE
+      || opcode == BGT_OPCODE
+      || opcode == BNE_OPCODE
+      || opcode == BEQ_OPCODE;
+}
+
 
 
 
@@ -279,9 +286,10 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
     if ((*score_board).instructions_states[i].current_state == EXECUTE){
       int cycles_to_complete;
       // todo -> tirar esse get from memory
-      int inst = get_instruction_from_memory(i, memory);
-      // printf("inst: %d", inst);
-      UF_TYPE inst_uf_type = get_uf_type_from_instruction(inst);
+      int binary = get_instruction_from_memory(i, memory);
+      int opcode = get_opcode_from_binary(binary);
+      // printf("binary: %d", binary);
+      UF_TYPE inst_uf_type = get_uf_type_from_instruction(binary);
       if (inst_uf_type == ADD_UF) cycles_to_complete = cpu_configs.cycles_to_complete_add;
       else if (inst_uf_type == MUL_UF) cycles_to_complete = cpu_configs.cycles_to_complete_mul;
       else if (inst_uf_type == INTEGER_UF) cycles_to_complete = cpu_configs.cycles_to_complete_integer;
@@ -293,7 +301,8 @@ void update_write_result(Bus *bus_buffer, Byte *memory, ScoreBoard *score_board,
         (*bus_buffer).ufs_state[uf_idx] = STALL;
         
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
-          // printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+          if (is_conditional_branch(opcode)) (*score_board).can_fetch = true;
+
           count_instructions_sent_to_write++;
 
           (*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;
@@ -340,8 +349,8 @@ void update_read_operands(Bus *bus_buffer, ScoreBoard *score_board, int curr_cyc
 
 // Checa se pode enviar alguma instrução para issue
 void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs, int inst_count){
-  if (get_opcode_from_binary(ir.binary) == EXIT_OPCODE)
-    return;
+  int opcode = get_opcode_from_binary(ir.binary);
+  if (opcode == EXIT_OPCODE) return;
 
   UF_TYPE type = get_uf_type_from_instruction(ir.binary);
   int idle_uf_index = -1;
@@ -364,7 +373,7 @@ void update_issue(Bus *bus_buffer, ScoreBoard *score_board, InstructionRegister 
     return;
   }
 
-  (*score_board).can_fetch = true;
+  if (!is_conditional_branch(opcode)) (*score_board).can_fetch = true;
   
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = curr_cycle;

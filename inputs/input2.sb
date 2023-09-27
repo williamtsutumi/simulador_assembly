@@ -37,10 +37,10 @@ subi r1, r0, 0
 and r1, r0, r0
 or r1, r0, r0
 not r1, r0
-blt r1, r0, 0
-bgt r1, r0, 0
-beq r1, r0, 0
-bne r1, r0, 0
+blt r1, r0, 400
+bgt r1, r0, 400
+beq r1, r0, 400
+bne r1, r0, 400
 j 400
 lw r1, 0(r2)
 sw r1, 0(r2)

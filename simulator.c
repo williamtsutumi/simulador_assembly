@@ -26,7 +26,7 @@ int g_current_cycle = 0;
 int g_program_counter = PROGRAM_FIRST_ADDRESS; // PC
 InstructionRegister g_instruction_register; // IR
 
-/* Estágios do pipeline */
+/* Execução nas unidades funcionais */
 
 void fetch_next_instruction(){
   if (g_bus.ir_binary.flag == WRITE_TO_DESTINATION)
