@@ -371,8 +371,8 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state != FETCH) continue;
   
-    // todo -> branchs não condicionais tá entrando em qualquer lugar
     for (int uf_index = 0; uf_index < total_ufs; uf_index++){
+
       FunctionalUnitState uf_state = (*score_board).ufs_states[uf_index];
       if (uf_state.type == type && !uf_state.busy){
         idle_uf_index = uf_index;
@@ -381,11 +381,9 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
         printf("Dando issue na uf de idx: %d\n", idle_uf_index);
         add_pulse(bus, 
         new_data_pulse(CONTINUE_ISSUE, &(functional_units[idle_uf_index].status), sizeof(FunctionalUnitStatus)));
-        //(*bus_buffer).ufs_state[uf_index] = CONTINUE_ISSUE;
         break;
       }
     }
-    if (idle_uf_index != -1) break;
   }
   if(idle_uf_index == -1){
     // printf("não tem unidades funcionais livres!\n");
@@ -413,8 +411,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   //(*score_board).ufs_states[idle_uf_index].qk = (*score_board).result_register_state[(*score_board).ufs_states[idle_uf_index].fk]->type;
 }
 
-
-
 // Checa se pode enviar alguma instrução para fetch
 void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRegister *ir, int pc, int curr_cycle, int total_ufs, int instruction_count){
   if ((*score_board).can_fetch){
@@ -422,7 +418,6 @@ void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRe
     int instruction_index = (pc - PROGRAM_FIRST_ADDRESS) / 4;
 
     (*score_board).can_fetch = false;
-    (*score_board).fetch_index = instruction_index;
     // printf("inst index: %d\n", instruction_index);
     // if(instruction_count <= instruction_index){
     //   assert(false && "acabou as intruções pra serem fetchadas");

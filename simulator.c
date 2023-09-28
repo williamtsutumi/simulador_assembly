@@ -29,26 +29,21 @@ InstructionRegister g_instruction_register; // IR
 /* Execução nas unidades funcionais */
 
 void fetch_next_instruction(){
-  bool has_inst_to_fetch = false;
-
   for (int i = 0; i < g_instruction_count; i++){
-    if (g_score_board.instructions_states[i].current_state == FETCH){
-      has_inst_to_fetch = true;
+    if (g_score_board.instructions_states[i].current_state != FETCH) continue;
+    
+      int inst_index = (g_program_counter - PROGRAM_FIRST_ADDRESS) / 4;
+      g_instruction_register.binary = get_instruction_from_memory(inst_index, g_memory);
+      g_instruction_register.program_counter = g_program_counter;
+      // add_pulse(&g_bus, 
+      // new_data_pulse(get_instruction_from_memory(inst_index, g_memory), &(g_instruction_register.binary), sizeof(int)));
+      // add_pulse(&g_bus, 
+      // new_data_pulse(g_program_counter, &(g_instruction_register.program_counter), sizeof(int)));
+
+      g_program_counter += 4;
+      // add_pulse(&g_bus, 
+      // new_data_pulse(g_program_counter + 4, &(g_program_counter), sizeof(int)));
       break;
-    }
-  }
-  if (has_inst_to_fetch){
-
-    int inst_index = g_score_board.fetch_index;
-
-    add_pulse(&g_bus, 
-      new_data_pulse(get_instruction_from_memory(inst_index, g_memory), &(g_instruction_register.binary), sizeof(int)));
-
-    add_pulse(&g_bus, 
-    new_data_pulse(g_program_counter, &(g_instruction_register.program_counter), sizeof(int)));
-
-    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
-    g_program_counter += 4;
   }
   return;
 }
@@ -60,14 +55,8 @@ void issue_instruction(){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
     printf("continue issue idx: %d", uf_index);
     
-    //g_bus_buffer.ufs_data[0][uf_index].data = g_instruction_register.binary;
-    //g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
-    //g_bus_buffer.ufs_data[0][uf_index].type = INSTRUCTION_BINARY;
     add_pulse(&g_bus, 
-      new_pulse(&(g_instruction_register.binary), &(g_functional_units[uf_index].instruction_binary), sizeof(int)));
-
-    
-    printf("binary no issue: %d\n", g_instruction_register.binary);
+      new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(int)));
     
   }
 }
@@ -320,10 +309,6 @@ void run_one_cycle(FILE *output){
 
   update_scoreboard();
   printf("Terminou update_scoreboard\n");
-  //send_data_to_bus();
-  //printf("Terminou send_data_to_bus\n");
-  //receive_data_from_bus();
-  //printf("Terminou receive_data_from_bus\n");
   dispatch_pulses(&g_bus);
 
   for (int i = 0; i < NUM_REGISTERS; i++){
@@ -396,7 +381,7 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
 int main(int argc, char *argv[])
 {
   memset(g_registers, 0, sizeof(g_registers));
-  g_instruction_register.program_counter = PROGRAM_FIRST_ADDRESS; 
+  g_instruction_register.program_counter = 0; 
 
   FILE* output_stream = stdout;
   char* input_file_name = "input.sb";

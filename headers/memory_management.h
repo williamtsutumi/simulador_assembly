@@ -93,7 +93,6 @@ void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, C
 
 void init_scoreboard(ScoreBoard *score_board){
   (*score_board).can_fetch = true;
-  (*score_board).fetch_index = -1;
   // (*score_board).can_issue = true;
   // (*score_board).can_read_operands = true;
   // (*score_board).can_execute = true;

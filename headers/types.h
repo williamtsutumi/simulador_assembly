@@ -173,7 +173,6 @@ typedef struct FunctionalUnitState
         FunctionalUnit* result_register_state[NUM_REGISTERS];
 
         bool can_fetch;
-        int fetch_index;
         bool has_conditional_branch;
     } ScoreBoard;
 
