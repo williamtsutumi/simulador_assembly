@@ -3,11 +3,8 @@
 
 #include "types.h"
 
-void free_memory(FILE *input, FILE *output, Bus *bus, Bus *bus_buffer, ScoreBoard *score_board, FunctionalUnit **functional_units){
+void free_memory(FILE *input, FILE *output, ScoreBoard *score_board, FunctionalUnit **functional_units){
   free(functional_units);
-
-  free(bus);
-  free(bus_buffer);
 
   free(score_board);
 
@@ -37,6 +34,7 @@ void malloc_cpu(FunctionalUnit **functional_units, CPU_Configurations cpu_config
   }
 }
 
+/*
 void malloc_bus(Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int memory_size){
   int num_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
 
@@ -50,6 +48,7 @@ void malloc_bus(Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int m
   (*bus_buffer).ufs_data[1] = (UF_DataSignal*)malloc(sizeof(UF_DataSignal) * num_ufs);
   (*bus_buffer).memory = (DataSignal*)malloc(sizeof(DataSignal) * memory_size);
 }
+*/
 
 void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_configs, FunctionalUnit *functional_units, int num_instructions){
 
@@ -86,9 +85,9 @@ void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_configs, 
   }
 }
 
-void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, Bus *bus, Bus *bus_buffer, CPU_Configurations cpu_configs, int num_instructions, int memory_size){
+void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, CPU_Configurations cpu_configs, int num_instructions, int memory_size){
   malloc_cpu(functional_units, cpu_configs);
-  malloc_bus(bus, bus_buffer, cpu_configs, memory_size);
+  //malloc_bus(bus, bus_buffer, cpu_configs, memory_size);
   malloc_scoreboard(score_board, cpu_configs, *functional_units, num_instructions);
 }
 

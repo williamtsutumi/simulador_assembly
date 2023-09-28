@@ -176,52 +176,6 @@ typedef struct FunctionalUnitState
         bool has_conditional_branch;
     } ScoreBoard;
 
-/* TYPES do barramento */
-
-// Indica se a informação no barramento deve ser lido ou não
-typedef enum SignalFlag {
-    IGNORE,
-    WRITE_TO_DESTINATION
-} SignalFlag;
-
-typedef enum UF_DataType {
-    OPERAND1,
-    OPERAND2,
-    INSTRUCTION_BINARY
-} UF_DataType;
-
-    // Indica um dado se movendo de um componente a outro, representa uma parte do barramento
-    typedef struct DataSignal {
-        int data;
-        SignalFlag flag;
-    } DataSignal;
-
-    typedef struct UF_DataSignal {
-        int data;
-        SignalFlag flag;
-        UF_DataType type;
-    } UF_DataSignal;
-
-        typedef struct Bus {
-            // Informação sendo enviada aos registradores
-            DataSignal regs[32];
-
-            // Informação sendo enviada às unidades funcionais. Tem tamanho 2 pois é possível ler os dois operandos no mesmo ciclo
-            UF_DataSignal *ufs_data[2];
-
-            // Controle do scoreboard para as unidades funcionais
-            FunctionalUnitStatus *ufs_state;
-
-            // Informação sendo enviada à memória
-            DataSignal *memory;
-
-            // Informação sendo enviada ao instruction register
-            DataSignal ir_pc;
-            DataSignal ir_binary;
-
-            DataSignal pc;
-        } Bus;
-
 
 
 /* GERAL */

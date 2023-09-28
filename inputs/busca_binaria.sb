@@ -31,7 +31,7 @@ INST:
 addi r20, r0, 2       # r20 = 2
 
 #r10 = target
-lw r10, 400(4)
+lw r10, 400(r4)
 
 #lo = 0
 addi r1, r0, 0   
@@ -62,7 +62,7 @@ bgt r5, r10, 12
 # vai até uma parte do código q trata isso
 
 #if M[mid] == target
-beq r5, r10, 
+beq r5, r10, 16
 
 subi r2, r2, 1
 j 24
