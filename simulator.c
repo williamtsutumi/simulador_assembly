@@ -29,7 +29,27 @@ InstructionRegister g_instruction_register; // IR
 /* Execução nas unidades funcionais */
 
 void fetch_next_instruction(){
-  printf("instrução para fetch: %d\n", g_instruction_register.binary);
+  bool has_inst_to_fetch = false;
+
+  for (int i = 0; i < g_instruction_count; i++){
+    if (g_score_board.instructions_states[i].current_state == FETCH){
+      has_inst_to_fetch = true;
+      break;
+    }
+  }
+  if (has_inst_to_fetch){
+
+    int inst_index = g_score_board.fetch_index;
+
+    add_pulse(&g_bus, 
+      new_data_pulse(get_instruction_from_memory(inst_index, g_memory), &(g_instruction_register.binary), sizeof(int)));
+
+    add_pulse(&g_bus, 
+    new_data_pulse(g_program_counter, &(g_instruction_register.program_counter), sizeof(int)));
+
+    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+    g_program_counter += 4;
+  }
   return;
 }
 
@@ -38,12 +58,13 @@ void issue_instruction(){
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
-
+    printf("continue issue idx: %d", uf_index);
+    
     //g_bus_buffer.ufs_data[0][uf_index].data = g_instruction_register.binary;
     //g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
     //g_bus_buffer.ufs_data[0][uf_index].type = INSTRUCTION_BINARY;
     add_pulse(&g_bus, 
-    new_pulse(&(g_instruction_register.binary), &(g_functional_units[uf_index].instruction_binary), sizeof(int)));
+      new_pulse(&(g_instruction_register.binary), &(g_functional_units[uf_index].instruction_binary), sizeof(int)));
 
     
     printf("binary no issue: %d\n", g_instruction_register.binary);
@@ -252,7 +273,7 @@ void update_scoreboard(){
       g_functional_units,
       &g_score_board,
       g_current_cycle,
-      total_ufs);
+      g_instruction_count);
   
   printf("Terminou update_read_operands\n");
       
@@ -270,7 +291,7 @@ void update_scoreboard(){
       g_memory,
       &g_score_board,
       &g_instruction_register,
-      &g_program_counter,
+      g_program_counter,
       g_current_cycle,
       total_ufs,
       g_instruction_count);
