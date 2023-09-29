@@ -31,19 +31,25 @@ InstructionRegister g_instruction_register; // IR
 void fetch_next_instruction(){
   for (int i = 0; i < g_instruction_count; i++){
     if (g_score_board.instructions_states[i].current_state != FETCH) continue;
-    
-      int inst_index = (g_program_counter - PROGRAM_FIRST_ADDRESS) / 4;
-      g_instruction_register.binary = get_instruction_from_memory(inst_index, g_memory);
-      g_instruction_register.program_counter = g_program_counter;
-      // add_pulse(&g_bus, 
-      // new_data_pulse(get_instruction_from_memory(inst_index, g_memory), &(g_instruction_register.binary), sizeof(int)));
-      // add_pulse(&g_bus, 
-      // new_data_pulse(g_program_counter, &(g_instruction_register.program_counter), sizeof(int)));
 
-      g_program_counter += 4;
-      // add_pulse(&g_bus, 
-      // new_data_pulse(g_program_counter + 4, &(g_program_counter), sizeof(int)));
-      break;
+    int curr_inst_index = (g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4;
+    printf("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\n");
+    printf("i: %d\n", i);
+    printf("curr inst index: %d\n", curr_inst_index);
+    if (i == curr_inst_index) continue; // A instrução já foi fetchada
+    
+    int inst_index = i;
+    g_instruction_register.binary = get_instruction_from_memory(inst_index, g_memory);
+    g_instruction_register.program_counter = g_program_counter;
+    // add_pulse(&g_bus, 
+    // new_data_pulse(get_instruction_from_memory(inst_index, g_memory), &(g_instruction_register.binary), sizeof(int)));
+    // add_pulse(&g_bus, 
+    // new_data_pulse(g_program_counter, &(g_instruction_register.program_counter), sizeof(int)));
+
+    g_program_counter += 4;
+    // add_pulse(&g_bus, 
+    // new_data_pulse(g_program_counter + 4, &(g_program_counter), sizeof(int)));
+    break;
   }
   return;
 }
@@ -53,10 +59,11 @@ void issue_instruction(){
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
-    printf("continue issue idx: %d", uf_index);
     
     add_pulse(&g_bus, 
       new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
+
+    break;
     
   }
 }
@@ -70,7 +77,7 @@ void read_operands(){
     int opcode = get_opcode_from_binary(binary);
 
     InstructionFormat format = get_inst_format_from_opcode(opcode);
-    printf("index que entrou no continue read op: %d\n", uf_index);
+    printf("uf idx que entrou no continue read op: %d\n", uf_index);
     printf("binary: %u\n", binary);
     printf("opcode: %d\n", opcode);
     printf("format: %d\n", format);
@@ -163,7 +170,8 @@ void execute(){
 
   for (int i = 0; i < total_ufs; i++){
     if (g_functional_units[i].status != CONTINUE_EXECUTE) continue;
-      
+
+  
     UF_TYPE type = g_functional_units[i].type;
     int cycles_to_complete;
     if (type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
@@ -171,8 +179,9 @@ void execute(){
     if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
 
     g_functional_units[i].current_cycle++;
-    // printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
-    // printf("cycles to complete: %d\n", cycles_to_complete);
+    printf("Continuando a execução da uf de idx %d\n", i);
+    printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
+    printf("cycles to complete: %d\n", cycles_to_complete);
     if (g_functional_units[i].current_cycle == cycles_to_complete){
       g_functional_units[i].current_cycle = 0;
 
@@ -180,7 +189,11 @@ void execute(){
       int opcode = get_opcode_from_binary(binary);
       int operand1 = g_functional_units[i].operand1;
       int operand2 = g_functional_units[i].operand2;
+      printf("opcode: %d\n", opcode);
+      printf("operand1: %d\n", operand1);
+      printf("operand2: %d\n", operand2);
       int result = actually_execute(opcode, operand1, operand2);
+      printf("op result: %d\n", g_functional_units[i].operation_result);
 
       if (!is_branch(opcode))
         g_functional_units[i].operation_result = result;

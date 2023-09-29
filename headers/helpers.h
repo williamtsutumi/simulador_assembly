@@ -426,7 +426,6 @@ void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRe
     (*score_board).instructions_states[instruction_index].current_state = FETCH;
     (*score_board).instructions_states[instruction_index].fetch = curr_cycle;
 
-
     // printf("instruction index no update fetch: %d\n", instruction_index);
     // printf("ir binary no update fetch: %d\n", (*bus_buffer).ir_binary.data);
   }
