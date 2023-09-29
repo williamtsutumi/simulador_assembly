@@ -33,9 +33,8 @@ void fetch_next_instruction(){
     if (g_score_board.instructions_states[i].current_state != FETCH) continue;
 
     int curr_inst_index = (g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4;
-    printf("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\n");
-    printf("i: %d\n", i);
-    printf("curr inst index: %d\n", curr_inst_index);
+    // printf("i: %d\n", i);
+    // printf("curr inst index: %d\n", curr_inst_index);
     if (i == curr_inst_index) continue; // A instrução já foi fetchada
     
     int inst_index = i;
@@ -59,7 +58,9 @@ void issue_instruction(){
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
-    
+    yellow();
+    printf("Efetivamente dando issue na uf de idx %d\n", uf_index);
+    reset();
     add_pulse(&g_bus, 
       new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
 

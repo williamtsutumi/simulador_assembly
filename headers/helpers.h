@@ -356,8 +356,10 @@ void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard
 
     (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
     (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
+
+    int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
     add_pulse(bus, 
-    new_data_pulse(CONTINUE_READ_OPERAND, &(functional_units[inst_idx].status), sizeof(FunctionalUnitStatus)));
+    new_data_pulse(CONTINUE_READ_OPERAND, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
   }
 }
 
@@ -378,7 +380,9 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
         idle_uf_index = uf_index;
         printf("type: %d\n", type);
         printf("uf type: %d\n", uf_state.type);
+        yellow();
         printf("Dando issue na uf de idx: %d\n", idle_uf_index);
+        reset();
         add_pulse(bus, 
         new_data_pulse(CONTINUE_ISSUE, &(functional_units[idle_uf_index].status), sizeof(FunctionalUnitStatus)));
         break;
