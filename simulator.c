@@ -171,8 +171,8 @@ void execute(){
     if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
 
     g_functional_units[i].current_cycle++;
-    printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
-    printf("cycles to complete: %d\n", cycles_to_complete);
+    // printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
+    // printf("cycles to complete: %d\n", cycles_to_complete);
     if (g_functional_units[i].current_cycle == cycles_to_complete){
       g_functional_units[i].current_cycle = 0;
 
@@ -194,7 +194,6 @@ void execute(){
       // printf("operand1: %d\n", operand1);
       // printf("operand2: %d\n", operand2);
       // printf("op result: %d\n", g_functional_units[i].operation_result);
-      // printf("deu actually execute\n");
     }
   }
 }
@@ -381,7 +380,6 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
 int main(int argc, char *argv[])
 {
   memset(g_registers, 0, sizeof(g_registers));
-  g_instruction_register.program_counter = 0; 
 
   FILE* output_stream = stdout;
   char* input_file_name = "input.sb";
