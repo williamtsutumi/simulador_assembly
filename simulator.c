@@ -115,8 +115,8 @@ void read_operands(){
     }
     else{
       if (format == FORMAT_R){
-        operand1_index = get_rt_from_instruction_binary(binary);
-        operand2_index = get_rd_from_instruction_binary(binary);
+        operand1_index = get_rs_from_instruction_binary(binary);
+        operand2_index = get_rt_from_instruction_binary(binary);
         printf("operan1 index: %d\n", operand1_index);
         printf("operan2 index: %d\n", operand2_index);
 
@@ -214,20 +214,19 @@ void execute(){
 void write_result(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
-    FunctionalUnit uf = g_functional_units[uf_index];
+    if (g_functional_units[uf_index].status != CONTINUE_WRITE_RESULT) continue;
 
-    if (uf.status != CONTINUE_WRITE_RESULT) continue;
+    g_functional_units[uf_index].status = STALL; // Aqui stall indica que não está em uso
 
-    printf("Deu continue write result\n");
-    uf.status = STALL; // Aqui stall indica que não está em uso
-
-    InstructionBinary binary = uf.instruction_binary;
+    InstructionBinary binary = g_functional_units[uf_index].instruction_binary;
     int opcode = get_opcode_from_binary(binary);
-
+    printf("ALAALALAL\n");
+    printf("opcode: %d\n", opcode);
     if (is_branch(opcode)){
-      if (uf.operation_result != 0){
+      if (g_functional_units[uf_index].operation_result != 0){
+        printf("EITA\n");
         add_pulse(&g_bus, 
-        new_pulse(&uf.operation_result, &g_program_counter, sizeof(int)));
+        new_pulse(&g_functional_units[uf_index].operation_result, &g_program_counter, sizeof(int)));
       }
     }
     else if(is_memory(opcode)){
@@ -237,9 +236,8 @@ void write_result(){
       int result = get_destination_register_from_instruction(binary);
 
       add_pulse(&g_bus, 
-      new_pulse(&uf.operation_result, &g_registers[result], sizeof(int)));
+      new_pulse(&g_functional_units[uf_index].operation_result, &g_registers[result], sizeof(int)));
     }
-    // todo -> também tem que lidar com load e store
   }
 }
 

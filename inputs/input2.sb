@@ -33,7 +33,7 @@ add r1, r1, r1
 sub r1, r0, r0
 subi r1, r0, 0
 mul r4, r1, r1
-div r1, r0, r0
+div r1, r0, r1
 and r1, r0, r0
 or r1, r0, r0
 not r1, r0
