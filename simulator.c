@@ -56,7 +56,7 @@ void issue_instruction(){
     printf("continue issue idx: %d", uf_index);
     
     add_pulse(&g_bus, 
-      new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(int)));
+      new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
     
   }
 }
@@ -66,12 +66,12 @@ void read_operands(){
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_READ_OPERAND) continue;
 
-    int binary = g_functional_units[uf_index].instruction_binary;
+    InstructionBinary binary = g_functional_units[uf_index].instruction_binary;
     int opcode = get_opcode_from_binary(binary);
 
     InstructionFormat format = get_inst_format_from_opcode(opcode);
     printf("index que entrou no continue read op: %d\n", uf_index);
-    printf("binary: %d\n", binary);
+    printf("binary: %u\n", binary);
     printf("opcode: %d\n", opcode);
     printf("format: %d\n", format);
     int operand1_index, operand2_index, operand2, imm;
@@ -176,7 +176,7 @@ void execute(){
     if (g_functional_units[i].current_cycle == cycles_to_complete){
       g_functional_units[i].current_cycle = 0;
 
-      int binary = g_functional_units[i].instruction_binary;
+      InstructionBinary binary = g_functional_units[i].instruction_binary;
       int opcode = get_opcode_from_binary(binary);
       int operand1 = g_functional_units[i].operand1;
       int operand2 = g_functional_units[i].operand2;
@@ -208,7 +208,7 @@ void write_result(){
     printf("Deu continue write result\n");
     uf.status = STALL; // Aqui stall indica que não está em uso
 
-    int binary = uf.instruction_binary;
+    InstructionBinary binary = uf.instruction_binary;
     int opcode = get_opcode_from_binary(binary);
 
     if (is_branch(opcode)){
@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
 
       printf("printando instructions binaries\n");
       for (int i=0; i<g_instruction_count; i++){
-        printf("instruction[%d]: %d, opcode: %d\n", i, get_instruction_from_memory(i, g_memory), get_opcode_from_binary(get_instruction_from_memory(i, g_memory)));
+        printf("instruction[%u]: %d, opcode: %d\n", i, get_instruction_from_memory(i, g_memory), get_opcode_from_binary(get_instruction_from_memory(i, g_memory)));
       }
 
       run_simulation(output_stream);

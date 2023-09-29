@@ -7,7 +7,7 @@ char* empty = "";
 
 /* Utilidades */
 
-int get_opcode_from_binary(int instruction){
+int get_opcode_from_binary(InstructionBinary instruction){
   return instruction >> 26;
 }
 
@@ -91,20 +91,20 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
 }
 
 // [start_bit, end_bit]
-int get_binary_subnumber(int instruction, int start_bit, int end_bit){
+int get_binary_subnumber(InstructionBinary instruction, int start_bit, int end_bit){
   instruction >>= start_bit;
   int bitmask = (1ll << (end_bit - start_bit + 1))-1;
 
   return instruction & bitmask;
 }
 
-UF_TYPE get_uf_type_from_instruction(int instruction){
+UF_TYPE get_uf_type_from_instruction(InstructionBinary instruction){
   int op_code = get_binary_subnumber(instruction, 26, 31);
   return get_uf_type_from_opcode(op_code);
 }
 
 // Retorna o índice (no array de registradores) do registrador de destino
-int get_destination_register_from_instruction(int instruction){
+int get_destination_register_from_instruction(InstructionBinary instruction){
   int op_code = get_binary_subnumber(instruction, 26, 31);
 
   if (
@@ -134,7 +134,7 @@ int get_destination_register_from_instruction(int instruction){
   return -1;
 }
 
-void get_operands_register_from_instruction(int instruction, int* op1, int* op2){
+void get_operands_register_from_instruction(InstructionBinary instruction, int* op1, int* op2){
   int op_code = get_binary_subnumber(instruction, 26, 31);
 
   if (
@@ -172,25 +172,25 @@ void get_operands_register_from_instruction(int instruction, int* op1, int* op2)
 
 // instruction_index se refere à i-ésima instrução - 1
 // primeira instrução => instruction_index 0
-int get_instruction_from_memory(int instruction_index, Byte *mem){
+InstructionBinary get_instruction_from_memory(int instruction_index, Byte *mem){
   int mem_address = instruction_index*4 + PROGRAM_FIRST_ADDRESS;
 
-  return (mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
+  return ((unsigned)mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
 }
 
-int get_rt_from_instruction_binary(int binary){
+int get_rt_from_instruction_binary(InstructionBinary binary){
   return get_binary_subnumber(binary, 16, 20);
 }
 
-int get_rs_from_instruction_binary(int binary){
+int get_rs_from_instruction_binary(InstructionBinary binary){
   return get_binary_subnumber(binary, 21, 25);
 }
 
-int get_rd_from_instruction_binary(int binary){
+int get_rd_from_instruction_binary(InstructionBinary binary){
   return get_binary_subnumber(binary, 11, 15);
 }
 
-int get_imm_from_instruction_binary(int binary){
+int get_imm_from_instruction_binary(InstructionBinary binary){
   return get_binary_subnumber(binary, 0, 15);
 }
 
@@ -220,7 +220,7 @@ bool is_memory(int opcode){
 /* Debug */
 
 void print_uf(FunctionalUnit uf){
-  printf("uf.instruction_binary: %d, opcode: %d\n", uf.instruction_binary, get_opcode_from_binary(uf.instruction_binary));
+  printf("uf.instruction_binary: %u, opcode: %d\n", uf.instruction_binary, get_opcode_from_binary(uf.instruction_binary));
   printf("uf.operand1: %d\n", uf.operand1);
   printf("uf.operand2: %d\n", uf.operand2);
   printf("uf.operation_result: %d\n", uf.operation_result);
@@ -291,7 +291,7 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
     if ((*score_board).instructions_states[i].current_state == EXECUTE){
       int cycles_to_complete;
       // todo -> tirar esse get from memory
-      int binary = get_instruction_from_memory(i, memory);
+      InstructionBinary binary = get_instruction_from_memory(i, memory);
       int opcode = get_opcode_from_binary(binary);
       // printf("binary: %d", binary);
       UF_TYPE inst_uf_type = get_uf_type_from_instruction(binary);

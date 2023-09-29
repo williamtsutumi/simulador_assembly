@@ -68,6 +68,8 @@
 /* Representação de Byte para a memória simulada */
 typedef unsigned char Byte;
 
+typedef unsigned InstructionBinary;
+
 typedef enum InstructionFormat {
     FORMAT_R,
     FORMAT_I,
@@ -112,7 +114,7 @@ typedef enum FunctionalUnitStatus {
         int current_cycle;
 
         // Coisas que eu acho que vai ter que botar
-        int instruction_binary;
+        InstructionBinary instruction_binary;
         int operand1;
         int operand2;
 
@@ -181,7 +183,7 @@ typedef struct FunctionalUnitState
 /* GERAL */
 
 typedef struct InstructionRegister{
-    int binary;
+    InstructionBinary binary;
     int program_counter;
 } InstructionRegister;
 
