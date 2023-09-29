@@ -261,7 +261,7 @@ int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == BLT_OPCODE) return operand1 < operand2;
   if (opcode == BGT_OPCODE) return operand1 > operand2;
   if (opcode == BEQ_OPCODE) return operand1 == operand2;
-  if (opcode == BNE_OPCODE) return operand1 != operand2;
+  if (opcode == BNE_OPCODE) return operand1 != operand2 ? 1 : 0;
   if (opcode == J_OPCODE)   return true;
   // todo -> ainda n sei oq fazer com esses
   // if (opcode == LW_OPCODE)  
