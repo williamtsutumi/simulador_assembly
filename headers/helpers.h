@@ -237,8 +237,8 @@ void clear_uf_state(FunctionalUnitState *uf_state){
   (*uf_state).fi = -1;
   (*uf_state).fj = -1;
   (*uf_state).fk = -1;
-  (*uf_state).qj = NULL;
-  (*uf_state).qk = NULL;
+  (*uf_state).qj = -1;
+  (*uf_state).qk = -1;
   (*uf_state).op = -1;
   (*uf_state).busy = false;
   (*uf_state).rj = false;
@@ -527,31 +527,6 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
   
   char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
   char* yesno[] = {"No", "Yes"};
-    /*
-    Table table t;
-
-    table_init(&t, FUNCTIONAL_UNIT_STATUS);
-
-    for(int i = 0; i < num_ufs; i++){
-      table_add(
-        &t,
-        functional_unit_states[i].type, functional_unit_states[i].type_index,
-        functional_unit_states[i].busy,
-        functional_unit_states[i].op,
-        functional_unit_states[i].fi,
-        functional_unit_states[i].fj,
-        functional_unit_states[i].fk,
-        functional_unit_states[i].qj->type, functional_unit_states[i]->type_index 
-        functional_unit_states[i].qk->type, functional_unit_states[i]->type_index,
-        functional_unit_states[i].rj,
-        functional_unit_states[i].rk
-      )
-    }
-
-    print_table(&t);
-
-    free_table(&t);
-    */
 
 
 
@@ -584,13 +559,8 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
     ) fk = table_format_text(" ", functional_unit_states[i].fk);
     else fk = table_format_text("R", functional_unit_states[i].fk);
 
-    char *qj;
-    if (functional_unit_states[i].qj != NULL)
-      qj = table_format_text(functional_unit_name[functional_unit_states[i].qj->type], functional_unit_states[i].qj->type_index);
-
-    char *qk;
-    if (functional_unit_states[i].qk != NULL)
-      qk = table_format_text(functional_unit_name[functional_unit_states[i].qk->type], functional_unit_states[i].qk->type_index);
+    char *qj = table_format_number(functional_unit_states[i].qj);
+    char *qk = table_format_number(functional_unit_states[i].qk);
 
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
       type_index,
@@ -599,8 +569,8 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
       fi, // Destino
       fj, // Operand1
       fk, // Operand2
-      (functional_unit_states[i].qj == NULL) ? empty : qj, // Uf que produzirá o operand1
-      (functional_unit_states[i].qk == NULL) ? empty : qk, // Uf que produzirá o operand2
+      qj, // Uf que produzirá o operand1
+      qk, // Uf que produzirá o operand2
       yesno[functional_unit_states[i].rj], // Operand1 está pronto
       yesno[functional_unit_states[i].rk]); // Operand2 está pronto
 
