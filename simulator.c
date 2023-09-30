@@ -99,7 +99,7 @@ void read_operands(){
         //g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
 
         add_pulse(&g_bus, 
-        new_pulse(&(g_registers[operand1_index]), &(g_functional_units[uf_index].operand2), sizeof(int)));
+        new_pulse(&(g_registers[operand2_index]), &(g_functional_units[uf_index].operand2), sizeof(int)));
 
         //g_bus_buffer.ufs_data[1][uf_index].data = g_registers[operand2_index];
         //g_bus_buffer.ufs_data[1][uf_index].flag = WRITE_TO_DESTINATION;
@@ -422,7 +422,7 @@ int main(int argc, char *argv[])
   }
 
   printf("A\n");
-  free_memory(input_file, output_stream, &g_score_board, &g_functional_units);
+  // free_memory(input_file, output_stream, &g_score_board, &g_functional_units);
 
   return 0;
 

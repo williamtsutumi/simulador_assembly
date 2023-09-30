@@ -14,8 +14,10 @@ INST:
 1
 
 .text
-beq r1, r2, 1
-beq r1, r2, 1
-beq r1, r2, 1
-beq r1, r2, 1
+addi r1, r1, 1
+addi r1, r1, 1
+addi r1, r1, 1
+addi r1, r1, 1
+bne r1, r2, 1
+add r1, r1, r1
 exit
