@@ -1,22 +1,14 @@
-
-# algum comentario qualquer
- /*
-      UF   :
-    integer: 5
-    mul:3
-    add:   2 
+/*
+UF:
+    add: 2
+    mul: 3
+    integer: 1
 
 INST:
-
     add: 2
-    integer    :   1
-    mul         :15
-
-
-*/ 
-
-
-# mais um comentario
+    mul: 15
+    integer: 1
+*/
 
 .data
 1
@@ -37,31 +29,21 @@ INST:
 16
 17
 
-
-# olha outro aqui
-
 .text
-
-addi r1,      r10, 5
-mul r3,      r7,  r15
-and r2,   r2, r5
-add      r1, r1, r2
-add r3,      r7,  r15
-
-#Comentario
-sub r15 #Comentario
-    ,   #Comentario
-    r15 #Comentario
-    ,   #Comentario
-    r2  #Comentario
-subi r2, r12,       1000
-mul r1, r2       ,   r5
-div r5, r1, r1
-or r1, r2, r5
-not r1, r20
-blt r1, r20, 5
-bgt r1, r20   , 55
-beq r1, r20   , 555
-bne r1, r20, 555
+addi r1, r10, 5
+mul r2, r7, r15
+and r3, r2, r5
+add r4, r1, r2
+add r5, r7, r15
+sub r6, r2, r2  
+subi r7, r12, 1000
+mul r8, r2, r5
+div r9, r1, r1
+or r10, r2, r5
+not r11, r20
+blt r12, r20, 0
+bgt r13, r20, 0
+beq r14, r20, 0
+bne r15, r20, 0
 j 10
 exit

@@ -93,10 +93,9 @@ void malloc_memory(FunctionalUnit **functional_units, ScoreBoard *score_board, C
 
 void init_scoreboard(ScoreBoard *score_board){
   (*score_board).can_fetch = true;
-  // (*score_board).can_issue = true;
-  // (*score_board).can_read_operands = true;
-  // (*score_board).can_execute = true;
-  // (*score_board).can_write_result = true;
+  
+  for (int register_idx = 0; register_idx < NUM_REGISTERS; register_idx++)
+    (*score_board).result_register_state[register_idx] = NULL;
 }
 
 void init_functional_units(FunctionalUnit *functional_units, CPU_Configurations cpu_configs){

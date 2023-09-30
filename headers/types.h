@@ -159,10 +159,6 @@ typedef struct FunctionalUnitState
     int type_index;
     int op, fi, fj, fk, qj, qk;
     bool busy, rj, rk;
-
-
-    // Não gostei de ter esse cara aqui
-    int inst_program_counter;
 } FunctionalUnitState;
 
     typedef struct ScoreBoard

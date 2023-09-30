@@ -51,15 +51,14 @@ void fetch_next_instruction(){
     break;
   }
 }
-
 void issue_instruction(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
-    yellow();
-    printf("Efetivamente dando issue na uf de idx %d\n", uf_index);
-    reset();
+    // yellow();
+    // printf("Efetivamente dando issue na uf de idx %d\n", uf_index);
+    // reset();
     add_pulse(&g_bus, 
       new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
 
@@ -87,33 +86,18 @@ void read_operands(){
       if (format == FORMAT_I){
         operand1_index = get_rs_from_instruction_binary(binary);
         operand2_index = get_rt_from_instruction_binary(binary);
-        red();
-        printf("operan1 index: %d\n", operand1_index);
-        printf("operan2 index: %d\n", operand2_index);
-        reset();
+
         add_pulse(&g_bus, 
         new_pulse(&(g_registers[operand1_index]), &(g_functional_units[uf_index].operand1), sizeof(int)));
 
-        //g_bus_buffer.ufs_data[0][uf_index].data = g_registers[operand1_index];
-        //g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
-        //g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
-
         add_pulse(&g_bus, 
         new_pulse(&(g_registers[operand2_index]), &(g_functional_units[uf_index].operand2), sizeof(int)));
-
-        //g_bus_buffer.ufs_data[1][uf_index].data = g_registers[operand2_index];
-        //g_bus_buffer.ufs_data[1][uf_index].flag = WRITE_TO_DESTINATION;
-        //g_bus_buffer.ufs_data[1][uf_index].type = OPERAND2;
       }
       else if (format == FORMAT_J){
         imm = get_imm_from_instruction_binary(binary);
 
         add_pulse(&g_bus, 
         new_data_pulse(imm, &(g_functional_units[uf_index].operand1), sizeof(int)));
-        
-        //g_bus_buffer.ufs_data[0][uf_index].data = imm;
-        //g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
-        //g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
       }
     }
     else{
@@ -127,16 +111,6 @@ void read_operands(){
         
         add_pulse(&g_bus, 
         new_pulse(&(g_registers[operand2_index]), &(g_functional_units[uf_index].operand2), sizeof(int)));
-
-        /*
-        g_bus_buffer.ufs_data[0][uf_index].data = g_registers[operand1_index];
-        g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
-        g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
-
-        g_bus_buffer.ufs_data[1][uf_index].data = g_registers[operand2_index];
-        g_bus_buffer.ufs_data[1][uf_index].flag = WRITE_TO_DESTINATION;
-        g_bus_buffer.ufs_data[1][uf_index].type = OPERAND2;
-        */
       }
       else if (format == FORMAT_I){
         operand1_index = get_rt_from_instruction_binary(binary);
@@ -147,18 +121,6 @@ void read_operands(){
         
         add_pulse(&g_bus, 
         new_data_pulse(operand2, &(g_functional_units[uf_index].operand2), sizeof(int)));
-
-        printf("operand2: %d\n", operand2);
-
-        /*
-        g_bus_buffer.ufs_data[0][uf_index].data = g_registers[operand1_index];
-        g_bus_buffer.ufs_data[0][uf_index].flag = WRITE_TO_DESTINATION;
-        g_bus_buffer.ufs_data[0][uf_index].type = OPERAND1;
-
-        g_bus_buffer.ufs_data[1][uf_index].data = operand2;
-        g_bus_buffer.ufs_data[1][uf_index].flag = WRITE_TO_DESTINATION;
-        g_bus_buffer.ufs_data[1][uf_index].type = OPERAND2;
-        */
       }
       else if (format == FORMAT_J){ // tem dois if FORMAT_J ?
         // Não sei quão certo isso está
@@ -243,8 +205,7 @@ void write_result(){
   }
 }
 
-/************************/
-
+// Controle do scoreboard
 void update_scoreboard(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
@@ -301,6 +262,9 @@ void update_scoreboard(){
   
   printf("Terminou update_fetch\n");
 }
+
+/************************************/
+
 
 
 void run_one_cycle(FILE *output){
@@ -369,6 +333,10 @@ void run_simulation(FILE *output){
 
   printf("Program Exited.\n");
 }
+
+
+
+// Main e leitura da entrada
 
 bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file, FILE **output_stream){
   for(int i = 1; i < argc; i+=2){
