@@ -178,6 +178,12 @@ InstructionBinary get_instruction_from_memory(int instruction_index, Byte *mem){
   return ((unsigned)mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
 }
 
+unsigned int get_data_from_memory(int data_index, Byte *mem){
+  int mem_address = data_index*4;
+
+  return ((unsigned)mem[mem_address] << 24) | (mem[mem_address + 1] << 16) | (mem[mem_address + 2] << 8) | (mem[mem_address + 3]);
+}
+
 int get_rt_from_instruction_binary(InstructionBinary binary){
   return get_binary_subnumber(binary, 16, 20);
 }
@@ -191,7 +197,6 @@ int get_rd_from_instruction_binary(InstructionBinary binary){
 }
 
 int get_imm_from_instruction_binary(InstructionBinary binary){
-  // int mask = 0b00000000000000000111111111111111;
   int negative_mask = 0b00000000000000000100000000000000;
   if (negative_mask & binary) return -get_binary_subnumber(binary, 0, 13);
   else return get_binary_subnumber(binary, 0, 13);
@@ -265,8 +270,8 @@ int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == BEQ_OPCODE) return operand1 == operand2;
   if (opcode == BNE_OPCODE) return operand1 != operand2 ? 1 : 0;
   if (opcode == J_OPCODE)   return true;
-  // todo -> ainda n sei oq fazer com esses
-  // if (opcode == LW_OPCODE)  
+  if (opcode == LW_OPCODE)  return operand1;
+  
   // if (opcode == SW_OPCODE) 
   
   // Não é um retorno inválido, mas, com a execução correta, nunca deve chegar nesta linha
@@ -490,9 +495,9 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
   printf("Status das Instruções:\n");
   char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Execution", "Write result"};
 
-  yellow();
+  // yellow();
   printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
-  reset();
+  // reset();
 
   for(int i = 0; i < num_instructions; i++){
     char *exec = table_format_number((*instruction_states)[i].start_execute);
@@ -533,10 +538,10 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
 
 
 
-  yellow();
+  // yellow();
   printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
    labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
-  reset();
+  // reset();
 
   char* functional_unit_name[] = {"Int", "Mul", "Add"};
   char *instruction_names[] = INSTRUCTION_NAMES;
@@ -592,7 +597,7 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
   
   for(int k = 0; k < 2; k++){
     
-    yellow();
+    // yellow();
     printf("|");
     for(int i = k*16; i < (k+1)*16; i++){
       char *text = table_format_text("R", i);
@@ -602,7 +607,7 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
     }
     printf("\n");
     printf("|");
-    reset();
+    // reset();
 
     for(int i = k*16; i < (k+1)*16; i++){
       if(result_register_state[i] == NULL){

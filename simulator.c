@@ -81,7 +81,7 @@ void read_operands(){
     // printf("opcode: %d\n", opcode);
     // printf("format: %d\n", format);
     // printf("is branch: %d\n", is_branch(opcode));
-    int operand1_index, operand2_index, operand2, imm;
+    int operand1_index, operand2_index, operand1, operand2, imm;
     if (is_branch(opcode)){
       if (format == FORMAT_I){
         operand1_index = get_rs_from_instruction_binary(binary);
@@ -99,6 +99,20 @@ void read_operands(){
         add_pulse(&g_bus, 
         new_data_pulse(imm, &(g_functional_units[uf_index].operand1), sizeof(int)));
       }
+    }
+    else if (opcode == SW_OPCODE){
+
+    }
+    else if (opcode == LW_OPCODE){
+      int rs = get_rs_from_instruction_binary(binary);
+      imm = get_imm_from_instruction_binary(binary);
+
+      int mem_address = g_registers[rs] + imm;
+      red(); printf("mem address: %d\n", mem_address); reset();
+      operand1 = get_data_from_memory(mem_address, g_memory);
+      red(); printf("lw operand: %d\n", operand1); reset();
+      add_pulse(&g_bus, 
+      new_data_pulse(operand1, &(g_functional_units[uf_index].operand1), sizeof(int)));
     }
     else{
       if (format == FORMAT_R){
@@ -192,9 +206,6 @@ void write_result(){
         // add_pulse(&g_bus, 
         // new_pulse(&g_functional_units[uf_index].operation_result, &g_program_counter, sizeof(int)));
       }
-    }
-    else if(is_memory(opcode)){
-      // TODO
     }
     else{
       int result = get_destination_register_from_instruction(binary);
@@ -355,7 +366,6 @@ bool read_args(int argc, char *argv[], char **input_file_name, FILE **input_file
     }
   }
 
-  g_memory = (Byte*)(malloc(sizeof(Byte)* (PROGRAM_FIRST_ADDRESS + g_memory_size*4)));
   *input_file = fopen(*input_file_name, "r");
   return *input_file != NULL;
 }
@@ -369,10 +379,11 @@ int main(int argc, char *argv[])
   FILE* input_file;
   
   if (read_args(argc, argv, &input_file_name, &input_file, &output_stream)){
-    
+    g_memory = (Byte*)(malloc(sizeof(Byte)* (PROGRAM_FIRST_ADDRESS + g_memory_size*4)));
+
     fprintf(output_stream, "Lendo arquivo %s ...\n", input_file_name);
 
-    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, &g_memory, g_memory_size)){
+    if (parse_assembly(input_file, output_stream, &g_cpu_configs, &g_instruction_count, g_memory, g_memory_size)){
       malloc_memory(&g_functional_units, &g_score_board, g_cpu_configs, g_instruction_count, g_memory_size);
       init_scoreboard(&g_score_board);
       init_functional_units(g_functional_units, g_cpu_configs);

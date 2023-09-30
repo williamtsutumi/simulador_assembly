@@ -9,6 +9,7 @@
 #include <assert.h>
 
 #include "types.h"
+#include "helpers.h"
 
 //****************Declarações das funções**************//
 
@@ -41,9 +42,9 @@ bool read_uf(FILE *, FILE *, CPU_Configurations *);
 bool read_inst(FILE *, FILE *, CPU_Configurations *);
 bool read_config(FILE *, FILE *, CPU_Configurations *);
 
-bool read_data_section(FILE *, Byte **, int);
+bool read_data_section(FILE *, Byte *, int);
 
-bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int *, Byte **, int);
+bool parse_assembly(FILE *, FILE *, CPU_Configurations *, int *, Byte *, int);
 
 //*****************************************************//
 
@@ -280,7 +281,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
 }
 
 // Lê as informações da seção .data, que está no SEEK_CUR
-bool read_data_section(FILE *arq, Byte **memory, int memory_size){
+bool read_data_section(FILE *arq, Byte *memory, int memory_size){
   if (!read_next_token(arq, ".data", true)){
     return false;
   }
@@ -295,11 +296,13 @@ bool read_data_section(FILE *arq, Byte **memory, int memory_size){
     fseek(arq, -1, SEEK_CUR);
     if (isdigit(c)){
       int num = read_number(arq, true);
-      (*memory)[i + 3] = (num >> 24) & 0b11111111;
-      (*memory)[i + 2] = (num >> 16) & 0b11111111;
-      (*memory)[i + 1] = (num >> 8) & 0b11111111;
-      (*memory)[i] = (num >> 0) & 0b11111111;
-      // printf("%d\n", (*memory)[i] | (*memory)[i + 1] << 8 | (*memory)[i + 2] << 16 | (*memory)[i + 3] << 24);
+      memory[i + 0] = (num >> 24) & 0b11111111;
+      memory[i + 1] = (num >> 16) & 0b11111111;
+      memory[i + 2] = (num >> 8) & 0b11111111;
+      memory[i + 3] = (num >> 0) & 0b11111111;
+      // printf("num: %d\n", num);
+      // printf("Data index %d: %d\n", i, get_instruction_from_memory(i, memory));
+      // printf("%d\n", memory[i] | memory[i + 1] << 8 | memory[i + 2] << 16 | memory[i + 3] << 24);
     }
   }
   return true;
@@ -641,7 +644,7 @@ bool read_config(FILE *input, FILE *output, CPU_Configurations *cpu_configs)
   return read_next_token(input, "*/", false);
 }
 
-bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int *instruction_count, Byte **memory, int memory_size){
+bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, int *instruction_count, Byte *memory, int memory_size){
   fprintf(output, "Lendo configs\n");
   if (!read_config(input, output, cpu_configs)){
     fprintf(output, "Erro ao ler as configuracoes\n");
@@ -668,10 +671,10 @@ bool parse_assembly(FILE *input, FILE *output, CPU_Configurations *cpu_configs, 
     last_ftell = ftell(input);
 
 
-    (*memory)[i + PROGRAM_FIRST_ADDRESS + 0] = (instruction_code >> 24) & 0b11111111;
-    (*memory)[i + PROGRAM_FIRST_ADDRESS + 1] = (instruction_code >> 16) & 0b11111111;
-    (*memory)[i + PROGRAM_FIRST_ADDRESS + 2] = (instruction_code >> 8) & 0b11111111;
-    (*memory)[i + PROGRAM_FIRST_ADDRESS + 3] = (instruction_code >> 0) & 0b11111111;
+    memory[i + PROGRAM_FIRST_ADDRESS + 0] = (instruction_code >> 24) & 0b11111111;
+    memory[i + PROGRAM_FIRST_ADDRESS + 1] = (instruction_code >> 16) & 0b11111111;
+    memory[i + PROGRAM_FIRST_ADDRESS + 2] = (instruction_code >> 8) & 0b11111111;
+    memory[i + PROGRAM_FIRST_ADDRESS + 3] = (instruction_code >> 0) & 0b11111111;
     (*instruction_count)++;
   }
 
