@@ -1,0 +1,61 @@
+/*
+UF:
+    add: 1
+    integer: 1
+    mul: 3
+
+INST:
+    add: 2
+    integer: 1
+    mul: 10
+*/
+
+.data   
+
+#resposta no registrador r3
+9 #num elementos
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+
+.text
+#for (int i=0; i<size(); i++){
+#    for (int j=i; j<size() - 1;j++){
+#        if (arr[j] > arr[j+1]) swap(j, j+1);
+#    }
+#}
+
+lw r31, 0(r0)       # r31 = num elementos
+addi r31, r31, 1    # r31 += 1
+lw r30, 0(r0)       # r30 = num elementos
+
+# início for externo
+# loop do for externo retorna aqui
+addi r1, r1, 1      # r1 += 1
+addi r2, r1, 0      # r2 = r1
+sub r15, r30, r1    # r15 = r30 - r1
+
+# início for interno
+addi r2, r2, 1      # r2 += 1
+lw r12, 0(r2)       # r12 = M[r2]
+
+# loop do for interno retorna aqui
+addi r3, r2, 1      # r3 = r2 + 1
+lw r13, 0(r3)       # r13 = M[r3]
+bgt r13, r12, 4     # if r13 > r12 goto armazenar r13 em r12
+blt r3, r15, -3     # voltar ao início do for interno
+sw r13, r31(r1)     # armazena o valor nas próximas posições da memória
+blt r1, r30, -10    # voltar ao início do for externo
+exit
+
+#armazena o valor de r13 em r12
+sub r12, r12, r12
+addi r12, r13, 0
+j -5
