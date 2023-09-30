@@ -194,7 +194,10 @@ int get_rd_from_instruction_binary(InstructionBinary binary){
 }
 
 int get_imm_from_instruction_binary(InstructionBinary binary){
-  return get_binary_subnumber(binary, 0, 15);
+  // int mask = 0b00000000000000000111111111111111;
+  int negative_mask = 0b00000000000000000100000000000000;
+  if (negative_mask & binary) return -get_binary_subnumber(binary, 0, 13);
+  else return get_binary_subnumber(binary, 0, 13);
 }
 
 bool is_branch(int opcode){
@@ -240,8 +243,8 @@ void clear_uf_state(FunctionalUnitState *uf_state){
   (*uf_state).fi = -1;
   (*uf_state).fj = -1;
   (*uf_state).fk = -1;
-  (*uf_state).qj = NULL;
-  (*uf_state).qk = NULL;
+  (*uf_state).qj = -1;
+  (*uf_state).qk = -1;
   (*uf_state).op = -1;
   (*uf_state).busy = false;
   (*uf_state).rj = false;
@@ -605,13 +608,8 @@ char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"
     ) fk = table_format_text(" ", functional_unit_states[i].fk);
     else fk = table_format_text("R", functional_unit_states[i].fk);
 
-    char *qj;
-    if (functional_unit_states[i].qj != NULL)
-      qj = table_format_text(functional_unit_name[functional_unit_states[i].qj->type], functional_unit_states[i].qj->type_index);
-
-    char *qk;
-    if (functional_unit_states[i].qk != NULL)
-      qk = table_format_text(functional_unit_name[functional_unit_states[i].qk->type], functional_unit_states[i].qk->type_index);
+    char *qj = table_format_number(functional_unit_states[i].qj);
+    char *qk = table_format_number(functional_unit_states[i].qk);
 
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
       type_index,
@@ -620,8 +618,8 @@ char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"
       fi, // Destino
       fj, // Operand1
       fk, // Operand2
-      (functional_unit_states[i].qj == NULL) ? empty : qj, // Uf que produzirá o operand1
-      (functional_unit_states[i].qk == NULL) ? empty : qk, // Uf que produzirá o operand2
+      qj, // Uf que produzirá o operand1
+      qk, // Uf que produzirá o operand2
       yesno[functional_unit_states[i].rj], // Operand1 está pronto
       yesno[functional_unit_states[i].rk]); // Operand2 está pronto
 
