@@ -526,63 +526,7 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
     table_print(&t);
 
     free_table(&t);
-    
 
-   /*
-char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
-  char* yesno[] = {"No", "Yes"};
-  yellow();
-  printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
-   labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
-  // reset();
-
-  char* functional_unit_name[] = {"Int", "Mul", "Add"};
-  char *instruction_names[] = INSTRUCTION_NAMES;
-
-  for(int i = 0; i < num_ufs; i++){
-    char *type_index = table_format_text(functional_unit_name[functional_unit_states[i].type], functional_unit_states[i].type_index);
-
-    char *fi;
-    if (functional_unit_states[i].op == SW_OPCODE) fi = table_format_text("M", functional_unit_states[i].fi);
-    else if (functional_unit_states[i].fi == 0) fi = "PC";
-    else {
-      fi = table_format_text("R", functional_unit_states[i].fi);
-    }
-    
-    char *fj = table_format_text("R", functional_unit_states[i].fj);
-
-    char *fk;
-    int opcode = functional_unit_states[i].op;
-    if (opcode == ADDI_OPCODE
-        || opcode == SUBI_OPCODE
-        || opcode == LW_OPCODE
-        || opcode == SW_OPCODE
-    ) fk = table_format_text(" ", functional_unit_states[i].fk);
-    else fk = table_format_text("R", functional_unit_states[i].fk);
-
-    char *qj = table_format_number(functional_unit_states[i].qj);
-    char *qk = table_format_number(functional_unit_states[i].qk);
-
-    printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
-      type_index,
-      yesno[functional_unit_states[i].busy],
-      functional_unit_states[i].op == -1 ? empty : instruction_names[functional_unit_states[i].op],
-      fi, // Destino
-      fj, // Operand1
-      fk, // Operand2
-      qj, // Uf que produzirá o operand1
-      qk, // Uf que produzirá o operand2
-      yesno[functional_unit_states[i].rj], // Operand1 está pronto
-      yesno[functional_unit_states[i].rk]); // Operand2 está pronto
-
-    free(type_index);
-    if (strcmp(fi, "PC") != 0) free(fi);
-    free(fj);
-    free(fk);
-    free(qj);
-    free(qk);
-  }
-  */
 }
 
 void print_result_register_status(FunctionalUnit* result_register_state[]){
@@ -596,46 +540,6 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
 
   free_table(&t);
 
-  /*
-  printf("Status dos Resultados dos Registradores:\n");
-  char* functional_unit_name[] = {"Int", "Mul", "Add"};
-  
-  for(int k = 0; k < 2; k++){
-    
-    // yellow();
-    printf("|");
-    for(int i = k*16; i < (k+1)*16; i++){
-      char *text = table_format_text("R", i);
-      printf("%-7s|", text);
-
-      free(text);
-    }
-    printf("\n");
-    printf("|");
-    // reset();
-
-    for(int i = k*16; i < (k+1)*16; i++){
-      if(result_register_state[i] == NULL){
-        printf("%-7s|", "\0");
-        continue;
-      }
-      
-      int binary = result_register_state[i]->instruction_binary;
-      int opcode = get_opcode_from_binary(binary);
-      if (!is_branch(opcode)){
-        char *text = table_format_text(functional_unit_name[result_register_state[i]->type], result_register_state[i]->type_index);
-        printf("%-7s|", text);
-
-        free(text);
-      }
-      else{
-        printf("%-7s|", "\0");
-      }
-    }
-    printf("\n");
-
-  }
-  */
 }
 
 void print_registers(int* registers){
