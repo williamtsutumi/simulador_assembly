@@ -49,7 +49,7 @@ addi r3, r3, 1      # r3 += 1
 lw r13, 0(r3)       # r13 = M[r3]
 bgt r13, r12, 4     # if r13 > r12 goto armazenar r13 em r12
 blt r3, r15, -3     # voltar ao início do for interno
-sw r13, r31(r1)     # armazena o valor nas próximas posições da memória
+sw r13, 2(r31)     # armazena o valor nas próximas posições da memória
 blt r1, r30, -10    # voltar ao início do for externo
 exit
 

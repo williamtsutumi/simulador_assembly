@@ -241,7 +241,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
       imm = read_operand(arq, IMM, false);
       if (!read_next_token(arq, "(", false)) break;
       if (!read_next_token(arq, "r", false)) break; 
-      rs = read_number(arq, true);
+      rs = read_number(arq, false);
       if (!read_next_token(arq, ")", false)) break;
 
       return read_instructionI(opcode, rs, rt, imm);
@@ -250,11 +250,12 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
       rt = read_operand(arq, REGISTER, true);
 
       imm = read_operand(arq, IMM, false);
+
       if (!read_next_token(arq, "(", false)) break;
       if (!read_next_token(arq, "r", false)) break;
-      rs = read_number(arq, true);
+      rs = read_number(arq, false);
       if (!read_next_token(arq, ")", false)) break;
-
+      
       return read_instructionI(opcode, rs, rt, imm);
 
     case EXIT_OPCODE:
@@ -496,18 +497,16 @@ bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
 int read_number(FILE *arq, bool expect_spaces){
   char c = fgetc(arq);
   if (expect_spaces){
-    while (c != EOF && isspace(c)){
-      c = fgetc(arq);
-    }
+    while (c != EOF && isspace(c)) c = fgetc(arq);
   }
 
   char buffer[10];
   int index = 0;
-  // bool is_negative = false;
-  // if (c == '-') {
-  //   is_negative = true;
-  //   c = fgetc(arq);
-  // }
+  bool is_negative = false;
+  if (c == '-') {
+    is_negative = true;
+    c = fgetc(arq);
+  }
   
   while (isdigit(c)){
     buffer[index++] = c;
@@ -517,8 +516,7 @@ int read_number(FILE *arq, bool expect_spaces){
 
   if(!isdigit(c)) fseek(arq, -1, SEEK_CUR);
 
-  // return is_negative ? (-1)*atoi(buffer) : atoi(buffer);
-  return atoi(buffer);
+  return is_negative ? -atoi(buffer) : atoi(buffer);
 }
 
 bool read_uf(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
