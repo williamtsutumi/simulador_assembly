@@ -331,6 +331,7 @@ void run_simulation(FILE *output){
     run_one_cycle(output);
   }
 
+  print_registers(g_registers);
   printf("Program Exited.\n");
 }
 

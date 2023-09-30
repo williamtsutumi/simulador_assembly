@@ -81,6 +81,15 @@ void yellow() {
 void reset() {
   printf("\033[0m");
 }
+void green_background() {
+    printf("\033[42m");  // Set green background
+}
+void reset_background() {
+    printf("\033[49m");  // Reset background color to default
+}
+void blue_background() {
+    printf("\033[44m");  // Set blue background
+}
 void print_str_int(char *string, FILE *output){
   fprintf(output, "String:");
   for(int i=0; i<strlen(string)-1; i++){
