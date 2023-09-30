@@ -271,9 +271,13 @@ bool read_data_section(FILE *arq, Byte **memory, int memory_size){
   if (!read_next_token(arq, ".data", true)){
     return false;
   }
+  
   for (int i = 0; i < memory_size; i += 4){
     char c = getc(arq);
     while (isspace(c)) c = fgetc(arq);
+    if (c == '#'){
+      while (c != '\n') c = fgetc(arq);
+    }
 
     fseek(arq, -1, SEEK_CUR);
     if (isdigit(c)){
@@ -467,8 +471,13 @@ bool read_next_token(FILE *arq, char *expected_token, bool expect_comment){
   skip_spaces(arq);
 
   char c = fgetc(arq);
-  if (expect_comment && c == '#')
-    while (c != EOF && c != '\n') c = fgetc(arq);
+  if (expect_comment && c == '#'){
+    while (1){
+      while (c != EOF && c != '\n') c = fgetc(arq);
+      while (c != EOF && isspace(c)) c= fgetc(arq);
+      if (c != '#') break;
+    }
+  }
 
   fseek(arq, -1, SEEK_CUR);
 
