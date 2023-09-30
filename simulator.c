@@ -389,7 +389,6 @@ int main(int argc, char *argv[])
     fprintf(output_stream, "Falha na leitura da linha de comando.\n");
   }
 
-  printf("A\n");
   // free_memory(input_file, output_stream, &g_score_board, &g_functional_units);
 
   return 0;

@@ -481,7 +481,10 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
     char *exec = table_format_number((*instruction_states)[i].start_execute);
     if (exec != NULL && exec[0] != '\0'){
       strcat(exec, " - ");
-      strcat(exec, table_format_number((*instruction_states)[i].finish_execute));
+
+      char *final = table_format_number((*instruction_states)[i].finish_execute);
+      strcat(exec, final);
+      free(final);
     }
 
     char *fetch = table_format_number((*instruction_states)[i].fetch);
@@ -573,24 +576,28 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
     yellow();
     printf("|");
     for(int i = k*16; i < (k+1)*16; i++){
-      printf("%-7s|", table_format_text("R", i));
+      char *text = table_format_text("R", i);
+      printf("%-7s|", text);
+
+      free(text);
     }
     printf("\n");
     printf("|");
     reset();
 
     for(int i = k*16; i < (k+1)*16; i++){
-      if(result_register_state[i] != NULL){
-        int binary = result_register_state[i]->instruction_binary;
-        int opcode = get_opcode_from_binary(binary);
+      if(result_register_state[i] == NULL){
+        printf("%-7s|", "\0");
+        continue;
+      }
+      
+      int binary = result_register_state[i]->instruction_binary;
+      int opcode = get_opcode_from_binary(binary);
+      if (!is_branch(opcode)){
+        char *text = table_format_text(functional_unit_name[result_register_state[i]->type], result_register_state[i]->type_index);
+        printf("%-7s|", text);
 
-        if (!is_branch(opcode)){
-          printf("%-7s|", table_format_text(functional_unit_name[result_register_state[i]->type],
-              result_register_state[i]->type_index));
-        }
-        else{
-          printf("%-7s|", "\0");
-        }
+        free(text);
       }
       else{
         printf("%-7s|", "\0");
