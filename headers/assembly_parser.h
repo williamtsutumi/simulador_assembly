@@ -10,12 +10,9 @@
 
 #include "types.h"
 #include "helpers.h"
-
 //****************Declarações das funções**************//
 
-void red();
-void yellow();
-void reset();
+
 void print_str_int(char *, FILE *);
 void print_str_char(char *, FILE *);
 
@@ -83,24 +80,7 @@ int read_instructionJ(int opcode, short address)
   return op | address;
 }
 
-void red() {
-  printf("\033[1;31m");
-}
-void yellow() {
-  printf("\033[1;33m");
-}
-void reset() {
-  printf("\033[0m");
-}
-void green_background() {
-    printf("\033[42m");  // Set green background
-}
-void reset_background() {
-    printf("\033[49m");  // Reset background color to default
-}
-void blue_background() {
-    printf("\033[44m");  // Set blue background
-}
+
 void print_str_int(char *string, FILE *output){
   fprintf(output, "String:");
   for(int i=0; i<strlen(string)-1; i++){

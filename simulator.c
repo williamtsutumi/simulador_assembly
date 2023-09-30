@@ -316,6 +316,7 @@ void run_one_cycle(FILE *output){
     int inst = get_instruction_from_memory(i, g_memory);
     int opcode = get_opcode_from_binary(inst);
     inst_opcodes[i] = opcode;
+    printf("inst %d: %d\n", i, inst_opcodes[i]);
   }
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
   // ****************************************

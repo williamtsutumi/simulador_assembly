@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include "types.h"
-#include "assembly_parser.h" // para ter yellow(). Tem q tirar de lá
+#include "colors.h"
 
 #define NUM_COLS_INSTRUCTION_STATUS 6
 #define NUM_COLS_FUNCTIONAL_UNIT_STATUS 10
@@ -19,7 +19,6 @@ typedef enum TABLE_CELL_TYPE{
     T_REGISTER_WRITE,
     T_INSTRUCTION,
     T_NUM,
-    T_UF_NAME_POINTER,
     T_EXECUTION,
 } TABLE_CELL_TYPE;
 
@@ -211,6 +210,7 @@ static void format_num(char* result, int num){
 static void format_instruction(char* result, InstructionBinary instruction){
     // temporario
     int op = instruction >> 26;
+    
 
     char* instruction_names[] = INSTRUCTION_NAMES;
     sprintf(result, "%s", instruction_names[op]);
@@ -230,8 +230,8 @@ void add_row(Table* table, ...){
     // RESULT_REGISTER_STATUS,
     // REGISTER_RESULT
     int expected_cell_type[][10] = {
-        {T_INSTRUCTION, T_NUM,  T_NUM, T_NUM,      T_EXECUTION,      T_NUM,      -1,        -1,        -1,     -1},
-        {T_UF_NAME,     T_BOOL, T_OP,  T_REGISTER_WRITE, T_REGISTER_READ, T_REGISTER_READ, T_UF_NAME_POINTER, T_UF_NAME_POINTER, T_BOOL, T_BOOL},     
+        {T_OP, T_NUM,  T_NUM, T_NUM,      T_EXECUTION,      T_NUM,      -1,        -1,        -1,     -1},
+        {T_UF_NAME,     T_BOOL, T_OP,  T_REGISTER_WRITE, T_REGISTER_READ, T_REGISTER_READ, T_UF_NAME, T_UF_NAME, T_BOOL, T_BOOL},     
     };
 
     table->data = (char***)realloc(table->data, sizeof(char**) * (table->num_rows));
@@ -279,15 +279,6 @@ void add_row(Table* table, ...){
                     int instruction = va_arg(args, InstructionBinary);
 
                     format_instruction(result, instruction);
-                    break;
-                case T_UF_NAME_POINTER:
-                    FunctionalUnit* uf = va_arg(args, FunctionalUnit*);
-                    if(uf == NULL){
-                        format_num(result, -1);
-                    }
-                    else{
-                        format_uf_name(result, uf->type, uf->type_index);
-                    }
                     break;
                 case T_EXECUTION:
                     int start_time = va_arg(args, int);

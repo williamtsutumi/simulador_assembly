@@ -468,33 +468,6 @@ void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRe
 
 
 
-
-/* Print table helpers 
-
-char* table_format_text(char* pfx, int number) {
-
-    char* result = (char*)malloc(sizeof(char) * 30);
-    result[0] = '\0';
-    
-    if(number == -1) return result;
-
-    snprintf(result, sizeof(result), "%s%d", pfx, number);
-    return result;
-}
-
-char* table_format_number(int number) {
-  char* result = (char*)malloc(sizeof(char) * 30);
-  result[0] = '\0';
-
-  if(number == -1){
-    return result;
-  }
-  // memset(result, '\0', sizeof(result));
-  snprintf(result, sizeof(result), "%d", number);
-  return result;
-}
-*/
-
 void print_instruction_status(InstructionState** instruction_states, Byte inst_opcodes[], int num_instructions){
   Table t;
 
@@ -515,43 +488,6 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
   table_print(&t);
 
   free_table(&t);
-  /*
-  printf("Status das Instruções:\n");
-  char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Execution", "Write result"};
-
-  // yellow();
-  printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n", labels[0], labels[1], labels[2], labels[3], labels[4], labels[5]);
-  // reset();
-
-  for(int i = 0; i < num_instructions; i++){
-    char *exec = table_format_number((*instruction_states)[i].start_execute);
-    if (exec != NULL && exec[0] != '\0'){
-      strcat(exec, " - ");
-
-      char *final = table_format_number((*instruction_states)[i].finish_execute);
-      strcat(exec, final);
-      free(final);
-    }
-
-    char *fetch = table_format_number((*instruction_states)[i].fetch);
-    char *issue = table_format_number((*instruction_states)[i].issue);
-    char *read_operands = table_format_number((*instruction_states)[i].read_operands);
-    char *write_result = table_format_number((*instruction_states)[i].write_result);
-    printf("|%-20s|%-15s|%-15s|%-15s|%-15s|%-15s|\n",
-      get_inst_name_from_opcode(inst_opcodes[i]),
-      fetch,
-      issue,
-      read_operands,
-      exec,
-      write_result);
-
-    free(exec);
-    free(fetch);
-    free(issue);
-    free(read_operands);
-    free(write_result);
-  }
-  */
 }
 
 void print_functional_unit_status(FunctionalUnitState* functional_unit_states, int num_ufs){
@@ -560,7 +496,18 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
 
   table_init(&t, FUNCTIONAL_UNIT_STATUS);
 
+  
+
+
   for(int i = 0; i < num_ufs; i++){
+    int qj = functional_unit_states[i].qj;
+    int qj_type = qj != -1 ? functional_unit_states[qj].type : -1;
+    int qj_type_index = qj != -1 ? functional_unit_states[qj].type_index : -1;
+
+    int qk = functional_unit_states[i].qk;
+    int qk_type = qk != -1 ? functional_unit_states[qk].type : -1;
+    int qk_type_index = qk != -1 ? functional_unit_states[qk].type_index : -1;
+
     add_row(
       &t,
       functional_unit_states[i].type, functional_unit_states[i].type_index,
@@ -569,8 +516,8 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
       functional_unit_states[i].fi,
       functional_unit_states[i].fj,
       functional_unit_states[i].fk,
-      functional_unit_states[i].qj,
-      functional_unit_states[i].qk,
+      qj_type, qj_type_index,
+      qk_type, qk_type_index,
       functional_unit_states[i].rj,
       functional_unit_states[i].rk
     );
