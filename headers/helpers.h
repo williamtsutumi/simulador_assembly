@@ -1,8 +1,11 @@
 #ifndef HELPERS
 #define HELPERS
 
+
 #include "types.h"
 #include "bus.h"
+#include "table.h"
+
 char* empty = "";
 
 /* Utilidades */
@@ -466,7 +469,7 @@ void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRe
 
 
 
-/* Print table helpers */
+/* Print table helpers 
 
 char* table_format_text(char* pfx, int number) {
 
@@ -490,8 +493,29 @@ char* table_format_number(int number) {
   snprintf(result, sizeof(result), "%d", number);
   return result;
 }
+*/
 
 void print_instruction_status(InstructionState** instruction_states, Byte inst_opcodes[], int num_instructions){
+  Table t;
+
+  table_init(&t, INSTRUCTION_STATUS);
+
+  for(int i = 0; i < num_instructions; i++){
+    add_row(
+      &t,
+      inst_opcodes[i],
+      (*(instruction_states))[i].fetch,
+      (*(instruction_states))[i].issue,
+      (*(instruction_states))[i].read_operands,
+      (*(instruction_states))[i].start_execute, (*(instruction_states))[i].finish_execute,
+      (*(instruction_states))[i].write_result
+    );
+  }
+
+  table_print(&t);
+
+  free_table(&t);
+  /*
   printf("Status das Instruções:\n");
   char* labels[] = {"Instruction", "Fetch", "Issue", "Read operands", "Execution", "Write result"};
 
@@ -527,18 +551,40 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
     free(read_operands);
     free(write_result);
   }
+  */
 }
 
 void print_functional_unit_status(FunctionalUnitState* functional_unit_states, int num_ufs){
 
-  printf("Status das Unidades Funcionais:\n");
-  
-  char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
+  Table t;
+
+  table_init(&t, FUNCTIONAL_UNIT_STATUS);
+
+  for(int i = 0; i < num_ufs; i++){
+    add_row(
+      &t,
+      functional_unit_states[i].type, functional_unit_states[i].type_index,
+      functional_unit_states[i].busy,
+      functional_unit_states[i].op,
+      functional_unit_states[i].fi,
+      functional_unit_states[i].fj,
+      functional_unit_states[i].fk,
+      functional_unit_states[i].qj,
+      functional_unit_states[i].qk,
+      functional_unit_states[i].rj,
+      functional_unit_states[i].rk
+    );
+  }
+
+    table_print(&t);
+
+    free_table(&t);
+    
+
+   /*
+char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
   char* yesno[] = {"No", "Yes"};
-
-
-
-  // yellow();
+  yellow();
   printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
    labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
   // reset();
@@ -589,9 +635,21 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
     free(qj);
     free(qk);
   }
+  */
 }
 
 void print_result_register_status(FunctionalUnit* result_register_state[]){
+
+  Table t;
+  table_init(&t, RESULT_REGISTER_STATUS);
+
+  add_row(&t, result_register_state);
+
+  table_print(&t);
+
+  free_table(&t);
+
+  /*
   printf("Status dos Resultados dos Registradores:\n");
   char* functional_unit_name[] = {"Int", "Mul", "Add"};
   
@@ -630,6 +688,18 @@ void print_result_register_status(FunctionalUnit* result_register_state[]){
     printf("\n");
 
   }
+  */
+}
+
+void print_registers(int* registers){
+  Table t;
+  table_init(&t, REGISTER_RESULT);
+
+  add_row(&t, registers);
+
+  table_print(&t);
+
+  free_table(&t);
 }
 
 void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs){

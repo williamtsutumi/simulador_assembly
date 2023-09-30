@@ -50,7 +50,7 @@ div r3, r3, r20
 #r5 = M[mid]
 mul r4, r3, r20
 mul r4, r4, r20
-lw r5, 400(r4)
+lw r5, 100(r4)
 
 
 #if M[mid] < target
