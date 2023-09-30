@@ -191,7 +191,10 @@ int get_rd_from_instruction_binary(InstructionBinary binary){
 }
 
 int get_imm_from_instruction_binary(InstructionBinary binary){
-  return get_binary_subnumber(binary, 0, 15);
+  // int mask = 0b00000000000000000111111111111111;
+  int negative_mask = 0b00000000000000000100000000000000;
+  if (negative_mask & binary) return -get_binary_subnumber(binary, 0, 13);
+  else return get_binary_subnumber(binary, 0, 13);
 }
 
 bool is_branch(int opcode){

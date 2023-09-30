@@ -27,8 +27,8 @@ void fpeek(FILE *, char *, int);
 bool read_next_token(FILE *, char *, bool);
 
 int read_instructionR(int, int, int, int, int);
-int read_instructionI(int, int, int, int);
-int read_instructionJ(int, int);
+int read_instructionI(int, int, int, short);
+int read_instructionJ(int, short);
 
 int get_opcode(char *);
 int read_instruction_given_opcode(int, FILE *);
@@ -57,19 +57,29 @@ int read_instructionR(int opcode, int rd, int rs, int rt, int extra)
 
     return op | s | t | d | e;
 }
-int read_instructionI(int opcode, int rs, int rt, int imm)
+int read_instructionI(int opcode, int rs, int rt, short imm)
 {
-    int op = opcode << 26;
-    int s = rs << 21;
-    int r = rt << 16;
+  // Aplicando sinal magnitude
+  if (imm < 0){
+    imm = -imm;
+    imm = imm | 0b100000000000000;
+  }
+  int op = opcode << 26;
+  int s = rs << 21;
+  int r = rt << 16;
 
-    return op | s | r | imm;
+  return op | s | r | imm;
 }
-int read_instructionJ(int opcode, int address)
+int read_instructionJ(int opcode, short address)
 {
-    int op = opcode << 26;
+  // Aplicando sinal magnitude
+  if (address < 0){
+    address = -address;
+    address = address | 0b100000000000000;
+  }
+  int op = opcode << 26;
 
-    return op | address;
+  return op | address;
 }
 
 void red() {
@@ -148,7 +158,8 @@ int get_opcode(char* str){
 
 int read_instruction_given_opcode(int opcode, FILE* arq){
 
-  int rd=0, rs=0, rt=0, imm=0, extra=0;
+  int rd=0, rs=0, rt=0, extra=0;
+  short imm=0;
 
   switch(opcode){
 
@@ -211,6 +222,7 @@ int read_instruction_given_opcode(int opcode, FILE* arq){
       rs = read_operand(arq, REGISTER, true);
       rt = read_operand(arq, REGISTER, true);
       imm = read_operand(arq, IMM, false);
+      printf("imm: %d\n", imm);
       return read_instructionI(opcode, rs, rt, imm);
 
     case BGT_OPCODE:
