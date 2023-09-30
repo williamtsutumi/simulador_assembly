@@ -271,9 +271,14 @@ int actually_execute(int opcode, int operand1, int operand2){
   return -1;
 }
 
-void update_finished_instructions(ScoreBoard *score_board, int inst_count){
+void update_finished_instructions(ScoreBoard *score_board, Byte *memory, int inst_count){
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == WRITE_RESULT){
+      // todo -> tirar esse get from memory
+      int inst = get_instruction_from_memory(i, memory);
+      int opcode = get_opcode_from_binary(inst);
+      if (is_conditional_branch(opcode)) (*score_board).can_fetch = true;
+
       (*score_board).instructions_states[i].current_state = FINISHED;
       
       int uf_idx = (*score_board).instructions_states[i].uf_index;
@@ -308,8 +313,6 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
         new_data_pulse(STALL, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
         
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
-          if (is_conditional_branch(opcode)) (*score_board).can_fetch = true;
-
           count_instructions_sent_to_write++;
 
           //(*bus_buffer).ufs_state[uf_idx] = CONTINUE_WRITE_RESULT;

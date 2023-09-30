@@ -50,7 +50,6 @@ void fetch_next_instruction(){
     // new_data_pulse(g_program_counter + 4, &(g_program_counter), sizeof(int)));
     break;
   }
-  return;
 }
 
 void issue_instruction(){
@@ -225,13 +224,11 @@ void write_result(){
 
     InstructionBinary binary = g_functional_units[uf_index].instruction_binary;
     int opcode = get_opcode_from_binary(binary);
-    printf("ALAALALAL\n");
-    printf("opcode: %d\n", opcode);
     if (is_branch(opcode)){
       if (g_functional_units[uf_index].operation_result != 0){
-        printf("EITA\n");
-        add_pulse(&g_bus, 
-        new_pulse(&g_functional_units[uf_index].operation_result, &g_program_counter, sizeof(int)));
+        g_program_counter = g_functional_units[uf_index].operation_result;
+        // add_pulse(&g_bus, 
+        // new_pulse(&g_functional_units[uf_index].operation_result, &g_program_counter, sizeof(int)));
       }
     }
     else if(is_memory(opcode)){
@@ -252,6 +249,7 @@ void update_scoreboard(){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
   update_finished_instructions(&g_score_board,
+      g_memory,
       g_instruction_count);
   
   printf("Terminou update_finished_instructions\n");
