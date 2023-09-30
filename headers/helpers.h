@@ -572,8 +572,8 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
       fi, // Destino
       fj, // Operand1
       fk, // Operand2
-      (functional_unit_states[i].qj != NULL) ? qj : "", // Uf que produzirá o operand1
-      (functional_unit_states[i].qk != NULL) ? qk : "", // Uf que produzirá o operand2
+      (functional_unit_states[i].qj == NULL) ? empty : qj, // Uf que produzirá o operand1
+      (functional_unit_states[i].qk == NULL) ? empty : qk, // Uf que produzirá o operand2
       yesno[functional_unit_states[i].rj], // Operand1 está pronto
       yesno[functional_unit_states[i].rk]); // Operand2 está pronto
 
