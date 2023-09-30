@@ -494,6 +494,12 @@ int read_number(FILE *arq, bool expect_spaces){
 
   char buffer[10];
   int index = 0;
+  // bool is_negative = false;
+  // if (c == '-') {
+  //   is_negative = true;
+  //   c = fgetc(arq);
+  // }
+  
   while (isdigit(c)){
     buffer[index++] = c;
     c = fgetc(arq);
@@ -502,6 +508,7 @@ int read_number(FILE *arq, bool expect_spaces){
 
   if(!isdigit(c)) fseek(arq, -1, SEEK_CUR);
 
+  // return is_negative ? (-1)*atoi(buffer) : atoi(buffer);
   return atoi(buffer);
 }
 

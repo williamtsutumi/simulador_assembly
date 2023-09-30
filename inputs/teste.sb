@@ -1,0 +1,21 @@
+
+/*
+UF:
+    add: 2 
+    mul: 3
+    integer: 5
+INST:
+    add: 2
+    mul: 15
+    integer: 1
+*/ 
+
+.data
+1
+
+.text
+beq r1, r2, 1
+beq r1, r2, 1
+beq r1, r2, 1
+beq r1, r2, 1
+exit

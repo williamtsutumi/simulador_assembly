@@ -78,16 +78,20 @@ void read_operands(){
     int opcode = get_opcode_from_binary(binary);
 
     InstructionFormat format = get_inst_format_from_opcode(opcode);
-    printf("uf idx que entrou no continue read op: %d\n", uf_index);
-    printf("binary: %u\n", binary);
-    printf("opcode: %d\n", opcode);
-    printf("format: %d\n", format);
+    // printf("uf idx que entrou no continue read op: %d\n", uf_index);
+    // printf("binary: %u\n", binary);
+    // printf("opcode: %d\n", opcode);
+    // printf("format: %d\n", format);
+    // printf("is branch: %d\n", is_branch(opcode));
     int operand1_index, operand2_index, operand2, imm;
     if (is_branch(opcode)){
       if (format == FORMAT_I){
         operand1_index = get_rs_from_instruction_binary(binary);
         operand2_index = get_rt_from_instruction_binary(binary);
-
+        red();
+        printf("operan1 index: %d\n", operand1_index);
+        printf("operan2 index: %d\n", operand2_index);
+        reset();
         add_pulse(&g_bus, 
         new_pulse(&(g_registers[operand1_index]), &(g_functional_units[uf_index].operand1), sizeof(int)));
 
@@ -117,8 +121,7 @@ void read_operands(){
       if (format == FORMAT_R){
         operand1_index = get_rs_from_instruction_binary(binary);
         operand2_index = get_rt_from_instruction_binary(binary);
-        printf("operan1 index: %d\n", operand1_index);
-        printf("operan2 index: %d\n", operand2_index);
+        
 
         add_pulse(&g_bus, 
         new_pulse(&(g_registers[operand1_index]), &(g_functional_units[uf_index].operand1), sizeof(int)));
@@ -164,6 +167,8 @@ void read_operands(){
         assert(false);
       }
     }
+    // printf("operan1 index: %d\n", operand1_index);
+    // printf("operan2 index: %d\n", operand2_index);
   }
 }
 void execute(){
