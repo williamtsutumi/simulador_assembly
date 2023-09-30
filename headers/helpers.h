@@ -320,8 +320,8 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
           (*score_board).instructions_states[inst_idx].current_state = WRITE_RESULT;
           (*score_board).instructions_states[inst_idx].write_result = curr_cycle;
 
-          int uf_idx_of_instruction = (*score_board).instructions_states[inst_idx].uf_index;
-          (*score_board).result_register_state[uf_idx_of_instruction] = NULL;
+          int destination = get_destination_register_from_instruction(binary);
+          (*score_board).result_register_state[destination] = NULL;
         }
       }
       else{
