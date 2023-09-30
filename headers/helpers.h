@@ -527,6 +527,33 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
   
   char* labels[] = {"Name", "Busy", "Op", "Fi", "Fj", "Fk", "Qj", "Qk", "Rj", "Rk"};
   char* yesno[] = {"No", "Yes"};
+    /*
+    Table table t;
+
+    table_init(&t, FUNCTIONAL_UNIT_STATUS);
+
+    for(int i = 0; i < num_ufs; i++){
+      table_add(
+        &t,
+        functional_unit_states[i].type, functional_unit_states[i].type_index,
+        functional_unit_states[i].busy,
+        functional_unit_states[i].op,
+        functional_unit_states[i].fi,
+        functional_unit_states[i].fj,
+        functional_unit_states[i].fk,
+        functional_unit_states[i].qj->type, functional_unit_states[i]->type_index 
+        functional_unit_states[i].qk->type, functional_unit_states[i]->type_index,
+        functional_unit_states[i].rj,
+        functional_unit_states[i].rk
+      )
+    }
+
+    print_table(&t);
+
+    free_table(&t);
+    */
+
+
 
   yellow();
   printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
