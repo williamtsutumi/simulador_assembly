@@ -305,7 +305,7 @@ void add_row(Table* table, ...){
         FunctionalUnit** result_register_state = va_arg(args, FunctionalUnit**);
         
         for(int i = 0; i < NUM_REGISTERS; i++){
-            if(result_register_state[i] == NULL){
+            if(result_register_state[i] == NULL || i == 0){
                 format_num(result, -1);
             }
             else{
