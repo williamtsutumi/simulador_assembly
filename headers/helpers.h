@@ -237,8 +237,8 @@ void clear_uf_state(FunctionalUnitState *uf_state){
   (*uf_state).fi = -1;
   (*uf_state).fj = -1;
   (*uf_state).fk = -1;
-  (*uf_state).qj = -1;
-  (*uf_state).qk = -1;
+  (*uf_state).qj = NULL;
+  (*uf_state).qk = NULL;
   (*uf_state).op = -1;
   (*uf_state).busy = false;
   (*uf_state).rj = false;
@@ -419,9 +419,16 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   if (format == FORMAT_R || is_conditional_branch(opcode)){
     (*score_board).ufs_states[idle_uf_index].rk = (*score_board).result_register_state[op2] == NULL;
   }
-  else{
-    (*score_board).ufs_states[idle_uf_index].rk = true;
-  }
+  // Operando2 é um número fixo
+  else (*score_board).ufs_states[idle_uf_index].rk = true;
+
+  // if ((*score_board).ufs_states[idle_uf_index].rj == false){
+  //   int uf_idx = get_uf_idx_from_name((*score_board).result_register_state[op1]);
+  //   (*score_board).ufs_states[idle_uf_index].qj = &(functional_units[uf_idx]);
+  // }
+  // if ((*score_board).ufs_states[idle_uf_index].rk == false){
+    
+  // }
   
 
   int destination = get_destination_register_from_instruction(ir.binary);
@@ -526,7 +533,7 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
    labels[0], labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9]);
   reset();
 
-  char* functional_unit_name[]= {"Int", "Mul", "Add"};
+  char* functional_unit_name[] = {"Int", "Mul", "Add"};
   char *instruction_names[] = INSTRUCTION_NAMES;
 
   for(int i = 0; i < num_ufs; i++){
@@ -550,8 +557,13 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
     ) fk = table_format_text(" ", functional_unit_states[i].fk);
     else fk = table_format_text("R", functional_unit_states[i].fk);
 
-    char *qj = table_format_number(functional_unit_states[i].qj);
-    char *qk = table_format_number(functional_unit_states[i].qk);
+    char *qj;
+    if (functional_unit_states[i].qj != NULL)
+      qj = table_format_text(functional_unit_name[functional_unit_states[i].qj->type], functional_unit_states[i].qj->type_index);
+
+    char *qk;
+    if (functional_unit_states[i].qk != NULL)
+      qk = table_format_text(functional_unit_name[functional_unit_states[i].qk->type], functional_unit_states[i].qk->type_index);
 
     printf("|%-15s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|%-10s|\n",
       type_index,
@@ -560,8 +572,8 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
       fi, // Destino
       fj, // Operand1
       fk, // Operand2
-      qj, // Uf que produzirá o operand1
-      qk, // Uf que produzirá o operand2
+      (functional_unit_states[i].qj != NULL) ? qj : "", // Uf que produzirá o operand1
+      (functional_unit_states[i].qk != NULL) ? qk : "", // Uf que produzirá o operand2
       yesno[functional_unit_states[i].rj], // Operand1 está pronto
       yesno[functional_unit_states[i].rk]); // Operand2 está pronto
 
@@ -576,7 +588,7 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
 
 void print_result_register_status(FunctionalUnit* result_register_state[]){
   printf("Status dos Resultados dos Registradores:\n");
-  char* functional_unit_name[]= {"Int", "Mul", "Add"};
+  char* functional_unit_name[] = {"Int", "Mul", "Add"};
   
   for(int k = 0; k < 2; k++){
     

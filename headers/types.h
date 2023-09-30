@@ -157,7 +157,9 @@ typedef struct FunctionalUnitState
     UF_TYPE type;
     // se tem vários do mesmo tipo, type_index é o índice q diferencia elas
     int type_index;
-    int op, fi, fj, fk, qj, qk;
+    int op, fi, fj, fk;
+    FunctionalUnit *qj;
+    FunctionalUnit *qk;
     bool busy, rj, rk;
 } FunctionalUnitState;
 
