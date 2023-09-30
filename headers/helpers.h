@@ -310,7 +310,7 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
 
         // add_pulse(bus, 
         // new_data_pulse(STALL, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
-        
+        int destination = get_destination_register_from_instruction(binary);
         if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
           count_instructions_sent_to_write++;
 
@@ -319,8 +319,7 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
 
           (*score_board).instructions_states[inst_idx].current_state = WRITE_RESULT;
           (*score_board).instructions_states[inst_idx].write_result = curr_cycle;
-
-          int destination = get_destination_register_from_instruction(binary);
+          
           (*score_board).result_register_state[destination] = NULL;
         }
       }
@@ -406,18 +405,26 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
 
 
   (*score_board).ufs_states[idle_uf_index].busy = true;
-  // (*score_board).ufs_states[idle_uf_index].inst_program_counter = ir.binary;
   (*score_board).ufs_states[idle_uf_index].fi = get_destination_register_from_instruction(ir.binary);
   int op1, op2;
   get_operands_register_from_instruction(ir.binary, &op1, &op2);
   (*score_board).ufs_states[idle_uf_index].fj = op1;
   (*score_board).ufs_states[idle_uf_index].fk = op2;
   (*score_board).ufs_states[idle_uf_index].op = get_binary_subnumber(ir.binary, 26, 31);
-  //(*score_board).ufs_states[idle_uf_index].qj = (*score_board).result_register_state[(*score_board).ufs_states[idle_uf_index].fj]->type;
-  //(*score_board).ufs_states[idle_uf_index].qk = (*score_board).result_register_state[(*score_board).ufs_states[idle_uf_index].fk]->type;
+
+  InstructionFormat format = get_inst_format_from_opcode(opcode);
+  if (opcode == J_OPCODE) (*score_board).ufs_states[idle_uf_index].rj = true; // J tem apenas um operando e é um número fixo
+  else (*score_board).ufs_states[idle_uf_index].rj = (*score_board).result_register_state[op1] == NULL;
+
+  if (format == FORMAT_R || is_conditional_branch(opcode)){
+    (*score_board).ufs_states[idle_uf_index].rk = (*score_board).result_register_state[op2] == NULL;
+  }
+  else{
+    (*score_board).ufs_states[idle_uf_index].rk = true;
+  }
+  
 
   int destination = get_destination_register_from_instruction(ir.binary);
-  red(); printf("Destination: %d\n", destination); reset();
   (*score_board).result_register_state[destination] = &functional_units[idle_uf_index];
 }
 

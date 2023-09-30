@@ -2,7 +2,7 @@
 UF:
     add: 2
     mul: 3
-    integer: 1
+    integer: 5
 
 INST:
     add: 2
