@@ -423,6 +423,7 @@ static bool read_data_section(FILE *arq, Byte *memory, int memory_size){
     return false;
   }
   
+  int count_numbers_read = 0;
   for (int i = 0; i < memory_size; i += 4){
     char c = getc(arq);
     while (isspace(c)) c = fgetc(arq);
@@ -433,10 +434,12 @@ static bool read_data_section(FILE *arq, Byte *memory, int memory_size){
     fseek(arq, -1, SEEK_CUR);
     if (isdigit(c)){
       int num = read_number(arq, true);
-      memory[i + 0] = (num >> 24) & 0b11111111;
-      memory[i + 1] = (num >> 16) & 0b11111111;
-      memory[i + 2] = (num >> 8) & 0b11111111;
-      memory[i + 3] = (num >> 0) & 0b11111111;
+      memory[count_numbers_read + 0] = (num >> 24) & 0b11111111;
+      memory[count_numbers_read + 1] = (num >> 16) & 0b11111111;
+      memory[count_numbers_read + 2] = (num >> 8) & 0b11111111;
+      memory[count_numbers_read + 3] = (num >> 0) & 0b11111111;
+
+      count_numbers_read += 4;
       // printf("num: %d\n", num);
       // printf("Data index %d: %d\n", i, get_instruction_from_memory(i, memory));
       // printf("%d\n", memory[i] | memory[i + 1] << 8 | memory[i + 2] << 16 | memory[i + 3] << 24);
