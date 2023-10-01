@@ -27,9 +27,9 @@ INST:
 # Tem mais um aqui
 
 addi r1, r2, 1      #r1 = 1
-lw r10, 100(r0)      #r10 = n, deve ser calculado n!
+lw r10, 0(r0)      #r10 = n, deve ser calculado n!
 mul r1, r1, r10     #r1 = r1 * r10
 subi r10, r10, 1    #r10 = r10 - 1
-beq r0, r10, 1      #if (r0 == r10) pc = 2
+beq r0, r10, -3      #if (r0 == r10) pc = 2
 sw r1, 1(r0)         #Memoria[0+1] = r1
 exit

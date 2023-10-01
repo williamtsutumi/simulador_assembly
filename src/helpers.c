@@ -356,6 +356,8 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
 
     bool can_write = true;
     for (int i = 0; i < total_ufs; i++){
+      if (i == uf_idx) continue;
+      
       if ((*score_board).ufs_states[i].fj == (*score_board).ufs_states[uf_idx].fi
         && (*score_board).ufs_states[i].rj) can_write = false;
 
@@ -365,11 +367,6 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
         && (*score_board).ufs_states[i].rk) can_write = false;
     }
 
-
-    int cycles_to_complete;
-    // todo -> tirar esse get from memory
-    
-    
     
     if (scoreboard_finished_executing((*score_board).instructions_states[inst_idx], binary, cpu_configs)){
 
@@ -387,18 +384,13 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
         
         (*score_board).result_register_state[destination] = NULL;
 
-        red();
-        printf("Destination: %d\n", destination);
         for (int i = 0; i < total_ufs; i++){
-          printf("qj: %d\n", (*score_board).ufs_states[i].qj);
-          printf("qk: %d\n", (*score_board).ufs_states[i].qk);
-          if ((*score_board).ufs_states[i].qj == destination)
+          if ((*score_board).ufs_states[i].qj == uf_idx)
             (*score_board).ufs_states[i].rj = true;
 
-          if ((*score_board).ufs_states[i].qk == destination)
+          if ((*score_board).ufs_states[i].qk == uf_idx)
             (*score_board).ufs_states[i].rk = true;
         }
-        reset();
       }
     }
     else{
@@ -514,13 +506,13 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
     (*score_board).ufs_states[idle_uf_index].qk = uf_idx;
   }
   
-  red();
-  printf("Tá no update issue\n");
-  printf("op1: %d\n", op1);
-  printf("op2: %d\n", op2);
-  printf("qj: %d\n", (*score_board).ufs_states[idle_uf_index].qj);
-  printf("qk: %d\n", (*score_board).ufs_states[idle_uf_index].qk);
-  reset();
+  // red();
+  // printf("Tá no update issue\n");
+  // printf("op1: %d\n", op1);
+  // printf("op2: %d\n", op2);
+  // printf("qj: %d\n", (*score_board).ufs_states[idle_uf_index].qj);
+  // printf("qk: %d\n", (*score_board).ufs_states[idle_uf_index].qk);
+  // reset();
 
   int destination = get_destination_register_from_instruction(ir.binary);
   (*score_board).result_register_state[destination] = &functional_units[idle_uf_index];

@@ -11,17 +11,12 @@ INST:
 */
 
 .data
-9 #num elementos
-3
-4
-5
-6
-7
-8
-9
+5 #num elementos
+20
 10
-11
-12
+30
+50
+9
 
 .text
 #for (int i=0; i<size(); i++){
@@ -48,11 +43,11 @@ addi r3, r2, 0      # r3 = r2
 addi r3, r3, 1      # r3 += 1
 lw r13, 0(r3)       # r13 = M[r3]
 bgt r13, r12, 4     # if r13 > r12 goto armazenar r13 em r12
-blt r3, r15, -3     # voltar ao início do for interno
+blt r3, r15, -4     # voltar ao início do for interno
 sw r13, 2(r31)     # armazena o valor nas próximas posições da memória
-blt r1, r30, -10    # voltar ao início do for externo
+blt r1, r30, -11    # voltar ao início do for externo
 exit
 
 #armazena o valor de r13 em r12
 addi r12, r13, 0
-j -5
+j 448
