@@ -5,6 +5,7 @@
 #include "types.h"
 #include "bus.h"
 #include "table.h"
+#include "colors.h"
 
 char* empty = "";
 

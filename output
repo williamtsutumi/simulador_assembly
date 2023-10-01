@@ -1,9 +1,0 @@
-Lendo arquivo input.sb ...
-Lendo configs
-Lendo Uf
-ADD ufs: 2
-MUL ufs: 3
-INTEGER ufs: 2
-Lendo inst
-Fim da leitura das configs
-se n tiver -o vai na saída padrão, senao vai no arquivo...

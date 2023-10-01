@@ -1,16 +1,32 @@
-CC=gcc
-DBG_FLAGS=-O2 -fsanitize=address -fsanitize=undefined -fno-sanitize-recover -fstack-protector -D_FORTIFY_SOURCE=2 -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -Wcast-align -Wlogical-op -Wshadow -Wno-unused-result -Wformat=2
-OPT_FLAGS=-O3
+CC = gcc
+CFLAGS = -Iheaders -O3
+DEBUG_CFLAGS = -O2 -Wall -fsanitize=address -fsanitize=undefined -fno-sanitize-recover -fstack-protector -D_FORTIFY_SOURCE=2 -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -Wunused-variable -Wcast-align -Wlogical-op -Wshadow -Wno-unused-result -Wformat=2 
+SRC_DIR = src
+OBJ_DIR = obj
 
-.PHONY: all clean
+# List all source files in the src directory
+SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 
-all: clean simulator
+# Generate object file names based on source file names
+OBJ_FILES := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
 
-simulator: simulator.c
-	$(CC) $(OPT_FLAGS) $^ -o $@
+# Main target
+all: simulator
 
-debug: simulator.c
-	$(CC) $(DBG_FLAGS) $^ -o simulator
+# Rule to compile source files into object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
+# Rule to build the simulator using object files
+simulator: $(OBJ_FILES) simulator.c
+	$(CC) $(CFLAGS) $^ -o $@
+
+# Debug target to build with debug flags
+debug: CFLAGS += $(DEBUG_CFLAGS)
+debug: all
+
+# Clean rule to remove object files and the simulator executable
 clean:
-	rm -f simulator
+	rm -f $(OBJ_DIR)/*.o simulator
+
+.PHONY: all debug clean
