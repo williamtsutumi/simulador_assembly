@@ -251,7 +251,7 @@ void add_row(Table* table, ...){
                 int start_time = va_arg(args, int);
                 int end_time = va_arg(args, int);
 
-                format_uf_name(result, start_time, end_time);
+                format_execution(result, start_time, end_time);
             }
             table->data[table->num_rows-1][i] = (char*)malloc(sizeof(char)*strlen(result)+1);
             strcpy(table->data[table->num_rows-1][i], result);
