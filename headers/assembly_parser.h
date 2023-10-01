@@ -553,15 +553,6 @@ bool read_uf(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
   fprintf(output, "MUL ufs: %d\n", cpu_configs->size_mul_ufs);
   fprintf(output, "INTEGER ufs: %d\n", cpu_configs->size_integer_ufs);
   reset();
-  // todo ->
-  // cpu->add_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_add_ufs);
-  // for (int i=0; i<cpu->size_add_ufs; i++) cpu->add_ufs[i].current_cycle = 0;
-
-  // cpu->mul_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_mul_ufs);
-  // for (int i=0; i<cpu->size_mul_ufs; i++) cpu->mul_ufs[i].current_cycle = 0;
-
-  // cpu->integer_ufs = malloc(sizeof(FunctionalUnit) * cpu->size_integer_ufs);
-  // for (int i=0; i<cpu->size_integer_ufs; i++) cpu->integer_ufs[i].current_cycle = 0;
 
   return true;
 }

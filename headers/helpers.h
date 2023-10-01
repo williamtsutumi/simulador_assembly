@@ -382,7 +382,6 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
 
 // Checa se pode enviar alguma instrução para execute
 void update_execute(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_board, int curr_cycle, int inst_count){
-  // todo -> enviar para execução se possível ao invés de sempre enviar
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state == READ_OPERANDS){
 
