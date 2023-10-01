@@ -101,16 +101,22 @@ void read_operands(){
       }
     }
     else if (opcode == SW_OPCODE){
+      operand1_index = get_rt_from_instruction_binary(binary);
+      operand2_index = get_rs_from_instruction_binary(binary);
 
+      add_pulse(&g_bus, 
+      new_pulse(&g_registers[operand1_index], &(g_functional_units[uf_index].operand1), sizeof(int)));
+
+      add_pulse(&g_bus, 
+      new_pulse(&g_registers[operand2_index], &(g_functional_units[uf_index].operand2), sizeof(int)));
     }
     else if (opcode == LW_OPCODE){
       int rs = get_rs_from_instruction_binary(binary);
       imm = get_imm_from_instruction_binary(binary);
 
       int mem_address = g_registers[rs] + imm;
-      red(); printf("mem address: %d\n", mem_address); reset();
       operand1 = get_data_from_memory(mem_address, g_memory);
-      red(); printf("lw operand: %d\n", operand1); reset();
+
       add_pulse(&g_bus, 
       new_data_pulse(operand1, &(g_functional_units[uf_index].operand1), sizeof(int)));
     }
@@ -160,9 +166,6 @@ void execute(){
     if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
 
     g_functional_units[i].current_cycle++;
-    printf("Continuando a execução da uf de idx %d\n", i);
-    printf("current cycle dentro a uf: %d\n", g_functional_units[i].current_cycle);
-    printf("cycles to complete: %d\n", cycles_to_complete);
     if (g_functional_units[i].current_cycle == cycles_to_complete){
       g_functional_units[i].current_cycle = 0;
 
@@ -170,11 +173,7 @@ void execute(){
       int opcode = get_opcode_from_binary(binary);
       int operand1 = g_functional_units[i].operand1;
       int operand2 = g_functional_units[i].operand2;
-      printf("opcode: %d\n", opcode);
-      printf("operand1: %d\n", operand1);
-      printf("operand2: %d\n", operand2);
       int result = actually_execute(opcode, operand1, operand2);
-      printf("op result: %d\n", g_functional_units[i].operation_result);
 
       if (!is_branch(opcode))
         g_functional_units[i].operation_result = result;
@@ -182,7 +181,9 @@ void execute(){
         g_functional_units[i].operation_result = g_program_counter + 4*get_imm_from_instruction_binary(binary);
       }
       else{
-        g_functional_units[i].operation_result = 0; // Atribuindo 0 pois, para essa simulação, 0 não é um valor válido para o PC
+        // Atribuindo 0 pois, para essa simulação, 0 não é um valor válido para o PC
+        // Então, representa não atualizar o PC
+        g_functional_units[i].operation_result = 0;
       }
       // printf("opcode: %d\n", opcode);
       // printf("operand1: %d\n", operand1);
@@ -200,7 +201,28 @@ void write_result(){
 
     InstructionBinary binary = g_functional_units[uf_index].instruction_binary;
     int opcode = get_opcode_from_binary(binary);
-    if (is_branch(opcode)){
+    if (opcode == SW_OPCODE){
+      int mem_address = g_functional_units[uf_index].operand2 + get_imm_from_instruction_binary(binary);
+
+      int op_result = g_functional_units[uf_index].operation_result;
+      int byte0 = (op_result >> 24) & 0b11111111;
+      int byte1 = (op_result >> 16) & 0b11111111;
+      int byte2 = (op_result >> 8) & 0b11111111;
+      int byte3 = (op_result >> 0) & 0b11111111;
+
+      add_pulse(&g_bus, 
+      new_data_pulse(byte0, &g_memory[mem_address + 0], sizeof(Byte)));
+
+      add_pulse(&g_bus, 
+      new_data_pulse(byte1, &g_memory[mem_address + 1], sizeof(Byte)));
+
+      add_pulse(&g_bus, 
+      new_data_pulse(byte2, &g_memory[mem_address + 2], sizeof(Byte)));
+
+      add_pulse(&g_bus,
+      new_data_pulse(byte3, &g_memory[mem_address + 3], sizeof(Byte)));
+    }
+    else if (is_branch(opcode)){
       if (g_functional_units[uf_index].operation_result != 0){
         g_program_counter = g_functional_units[uf_index].operation_result;
         // add_pulse(&g_bus, 
@@ -319,6 +341,7 @@ void run_one_cycle(FILE *output){
     printf("inst %d: %d\n", i, inst_opcodes[i]);
   }
   print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
+  print_registers(g_registers);
   // ****************************************
 
 }
@@ -342,8 +365,6 @@ void run_simulation(FILE *output){
     getchar();
     run_one_cycle(output);
   }
-
-  print_registers(g_registers);
   printf("Program Exited.\n");
 }
 

@@ -85,8 +85,6 @@ UF_TYPE get_uf_type_from_opcode(int op_code){
     || op_code == BEQ_OPCODE
     || op_code == BNE_OPCODE
     || op_code == J_OPCODE
-    || op_code == LW_OPCODE // Não sei se é aqui
-    || op_code == SW_OPCODE // Não sei se é aqui
   ) return INTEGER_UF;
 
   // exit
@@ -124,6 +122,7 @@ int get_destination_register_from_instruction(InstructionBinary instruction){
       op_code == SUBI_OPCODE
     || op_code == ADDI_OPCODE
     || op_code == LW_OPCODE
+    || op_code == SW_OPCODE
   ) return get_binary_subnumber(instruction, 16, 20);
 
   else if (
@@ -274,8 +273,8 @@ int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == BNE_OPCODE) return operand1 != operand2 ? 1 : 0;
   if (opcode == J_OPCODE)   return true;
   if (opcode == LW_OPCODE)  return operand1;
+  if (opcode == SW_OPCODE)  return operand1;
   
-  // if (opcode == SW_OPCODE) 
   
   // Não é um retorno inválido, mas, com a execução correta, nunca deve chegar nesta linha
   return -1;
@@ -308,7 +307,7 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
       // todo -> tirar esse get from memory
       InstructionBinary binary = get_instruction_from_memory(inst_idx, memory);
       int opcode = get_opcode_from_binary(binary);
-      // printf("binary: %d", binary);
+      
       UF_TYPE inst_uf_type = get_uf_type_from_instruction(binary);
       if (inst_uf_type == ADD_UF) cycles_to_complete = cpu_configs.cycles_to_complete_add;
       else if (inst_uf_type == MUL_UF) cycles_to_complete = cpu_configs.cycles_to_complete_mul;
@@ -367,10 +366,13 @@ void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard
   for (int inst_idx = 0; inst_idx < count_instructions; inst_idx++){
     if ((*score_board).instructions_states[inst_idx].current_state != ISSUE) continue;
 
+    int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
+    // if ((*score_board).ufs_states[uf_idx].rj == false
+    //     || (*score_board).ufs_states[uf_idx].rk == false) continue;
+
     (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
     (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
 
-    int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
     add_pulse(bus, 
     new_data_pulse(CONTINUE_READ_OPERAND, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
   }
@@ -422,7 +424,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   (*score_board).ufs_states[idle_uf_index].fj = op1;
   (*score_board).ufs_states[idle_uf_index].fk = op2;
   (*score_board).ufs_states[idle_uf_index].op = get_binary_subnumber(ir.binary, 26, 31);
-
   InstructionFormat format = get_inst_format_from_opcode(opcode);
   if (opcode == J_OPCODE) (*score_board).ufs_states[idle_uf_index].rj = true; // J tem apenas um operando e é um número fixo
   else (*score_board).ufs_states[idle_uf_index].rj = (*score_board).result_register_state[op1] == NULL;
@@ -440,6 +441,9 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   // if ((*score_board).ufs_states[idle_uf_index].rk == false){
     
   // }
+  red();
+  printf("chegou aqui\n");
+  reset();
   
 
   int destination = get_destination_register_from_instruction(ir.binary);
