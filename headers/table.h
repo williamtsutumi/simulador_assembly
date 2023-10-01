@@ -229,7 +229,7 @@ void add_row(Table* table, ...){
     // FUNCTIONAL_UNIT_STATUS,
     // RESULT_REGISTER_STATUS,
     // REGISTER_RESULT
-    int expected_cell_type[][10] = {
+    TABLE_CELL_TYPE expected_cell_type[][10] = {
         {T_OP, T_NUM,  T_NUM, T_NUM,      T_EXECUTION,      T_NUM,      -1,        -1,        -1,     -1},
         {T_UF_NAME,     T_BOOL, T_OP,  T_REGISTER_WRITE, T_REGISTER_READ, T_REGISTER_READ, T_UF_NAME, T_UF_NAME, T_BOOL, T_BOOL},     
     };
@@ -242,51 +242,47 @@ void add_row(Table* table, ...){
     if(table->type == INSTRUCTION_STATUS || table->type == FUNCTIONAL_UNIT_STATUS){
         
         for(int i = 0; i < table->num_columns; i++){
-            switch(expected_cell_type[table->type][i]){
-                case T_UF_NAME:
-                    UF_TYPE uf_type = va_arg(args, UF_TYPE);
-                    int uf_index = va_arg(args, int);
-                    
-                    format_uf_name(result, uf_type, uf_index);
+            if (expected_cell_type[table->type][i] == T_UF_NAME){
+                UF_TYPE uf_type = va_arg(args, UF_TYPE);
+                int uf_index = va_arg(args, int);
+                
+                format_uf_name(result, uf_type, uf_index);
+            }
+            else if (expected_cell_type[table->type][i] == T_BOOL){
+                int boolean = va_arg(args, int);
 
-                    break;
-                case T_BOOL:
-                    int boolean = va_arg(args, int);
+                format_bool(result, boolean);
+            }
+            else if (expected_cell_type[table->type][i] == T_OP){
+                int opcode = va_arg(args, int);
 
-                    format_bool(result, boolean);
-                    break;
-                case T_OP:
-                    int opcode = va_arg(args, int);
+                format_op(result, opcode);
+            }
+            else if (expected_cell_type[table->type][i] == T_REGISTER_WRITE){
+                int register_idx = va_arg(args, int);
 
-                    format_op(result, opcode);
-                    break;
-                case T_REGISTER_WRITE:
-                    int register_idx = va_arg(args, int);
+                format_register_write(result, register_idx);
+            }
+            else if (expected_cell_type[table->type][i] == T_REGISTER_READ){
+                int register_idxx = va_arg(args, int);
 
-                    format_register_write(result, register_idx);
-                    break;
-                case T_REGISTER_READ:
-                    int register_idxx = va_arg(args, int);
+                format_register_read(result, register_idxx);
+            }
+            else if (expected_cell_type[table->type][i] == T_NUM){
+                int num = va_arg(args, int);
 
-                    format_register_read(result, register_idxx);
-                    break;
-                case T_NUM:
-                    int num = va_arg(args, int);
+                format_num(result, num);
+            }
+            else if (expected_cell_type[table->type][i] == T_INSTRUCTION){
+                int instruction = va_arg(args, InstructionBinary);
 
-                    format_num(result, num);
-                    break;
-                case T_INSTRUCTION:
-                    int instruction = va_arg(args, InstructionBinary);
+                format_instruction(result, instruction);
+            }
+            else if (expected_cell_type[table->type][i] == T_EXECUTION){
+                int start_time = va_arg(args, int);
+                int end_time = va_arg(args, int);
 
-                    format_instruction(result, instruction);
-                    break;
-                case T_EXECUTION:
-                    int start_time = va_arg(args, int);
-                    int end_time = va_arg(args, int);
-
-                    format_uf_name(result, start_time, end_time);
-                case -1:
-                    break;
+                format_uf_name(result, start_time, end_time);
             }
             table->data[table->num_rows-1][i] = (char*)malloc(sizeof(char)*strlen(result)+1);
             strcpy(table->data[table->num_rows-1][i], result);

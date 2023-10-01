@@ -59,6 +59,7 @@
 #define PROGRAM_FIRST_ADDRESS 400
 
 // Acho que essas capacities não vão ser usadas por causa do funcionamento dessa cpu
+
 // #define FETCH_CAPACITY 1
 // #define ISSUE_CAPACITY 1
 // #define READ_OPERANDS_CAPACITY 1
