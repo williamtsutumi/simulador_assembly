@@ -243,7 +243,19 @@ void print_uf(FunctionalUnit uf){
 
 /* Utilidades Scoreboard */
 
-bool uf_finished_executing(InstructionState state, InstructionBinary binary, CPU_Configurations cpu_configs){
+// Retorna true se a unidade funcional fornecida terminou o estágio de execução
+bool uf_finished_executing(FunctionalUnit *uf, CPU_Configurations cpu_configs){
+  UF_TYPE type = (*uf).type;
+  int cycles_to_complete;
+  if (type == ADD_UF) cycles_to_complete = cpu_configs.cycles_to_complete_add;
+  if (type == MUL_UF) cycles_to_complete = cpu_configs.cycles_to_complete_mul;
+  if (type == INTEGER_UF) cycles_to_complete = cpu_configs.cycles_to_complete_integer;
+
+  return (*uf).current_cycle == cycles_to_complete;
+}
+
+// Retorna true se o estado da instrução fornecido terminou o estágio de execução
+bool scoreboard_finished_executing(InstructionState state, InstructionBinary binary, CPU_Configurations cpu_configs){
   UF_TYPE inst_uf_type = get_uf_type_from_instruction(binary);
 
   int cycles_to_complete;
@@ -338,7 +350,7 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
       int opcode = get_opcode_from_binary(binary);
       int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
       
-      if (uf_finished_executing((*score_board).instructions_states[inst_idx], binary, cpu_configs)){
+      if (scoreboard_finished_executing((*score_board).instructions_states[inst_idx], binary, cpu_configs)){
 
         // add_pulse(bus, 
         // new_data_pulse(STALL, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));

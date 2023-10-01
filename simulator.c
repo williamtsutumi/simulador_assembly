@@ -155,15 +155,9 @@ void execute(){
   for (int i = 0; i < total_ufs; i++){
     if (g_functional_units[i].status != CONTINUE_EXECUTE) continue;
 
-  
-    UF_TYPE type = g_functional_units[i].type;
-    int cycles_to_complete;
-    if (type == ADD_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_add;
-    if (type == MUL_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_mul;
-    if (type == INTEGER_UF) cycles_to_complete = g_cpu_configs.cycles_to_complete_integer;
-
     g_functional_units[i].current_cycle++;
-    if (g_functional_units[i].current_cycle == cycles_to_complete){
+  
+    if (uf_finished_executing(&g_functional_units[i], g_cpu_configs)){
       g_functional_units[i].current_cycle = 0;
 
       InstructionBinary binary = g_functional_units[i].instruction_binary;
