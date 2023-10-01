@@ -243,6 +243,34 @@ void print_uf(FunctionalUnit uf){
 
 /* Utilidades Scoreboard */
 
+bool uf_finished_executing(InstructionState state, InstructionBinary binary, CPU_Configurations cpu_configs){
+  UF_TYPE inst_uf_type = get_uf_type_from_instruction(binary);
+
+  int cycles_to_complete;
+  if (inst_uf_type == ADD_UF) cycles_to_complete = cpu_configs.cycles_to_complete_add;
+  else if (inst_uf_type == MUL_UF) cycles_to_complete = cpu_configs.cycles_to_complete_mul;
+  else if (inst_uf_type == INTEGER_UF) cycles_to_complete = cpu_configs.cycles_to_complete_integer;
+
+  int start = state.start_execute;
+  int finish = state.finish_execute;
+  int uf_idx = state.uf_index;
+  return finish - start + 1 == cycles_to_complete;
+}
+
+void update_rj_and_rk(int opcode, FunctionalUnitState *state, FunctionalUnit *register_status[]){
+  InstructionFormat format = get_inst_format_from_opcode(opcode);
+  int op1 = (*state).fj;
+  int op2 = (*state).fk;
+  if (opcode == J_OPCODE) (*state).rj = true; // J tem apenas um operando e é um número fixo
+  else (*state).rj = register_status[op1] == NULL;
+
+  if (format == FORMAT_R || is_conditional_branch(opcode)){
+    (*state).rk = register_status[op2] == NULL;
+  }
+  // Operando2 é um número fixo
+  else (*state).rk = true;
+}
+
 void clear_uf_state(FunctionalUnitState *uf_state){
   (*uf_state).fi = -1;
   (*uf_state).fj = -1;
@@ -270,7 +298,7 @@ int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == BLT_OPCODE) return operand1 < operand2;
   if (opcode == BGT_OPCODE) return operand1 > operand2;
   if (opcode == BEQ_OPCODE) return operand1 == operand2;
-  if (opcode == BNE_OPCODE) return operand1 != operand2 ? 1 : 0;
+  if (opcode == BNE_OPCODE) return operand1 != operand2;
   if (opcode == J_OPCODE)   return true;
   if (opcode == LW_OPCODE)  return operand1;
   if (opcode == SW_OPCODE)  return operand1;
@@ -286,7 +314,7 @@ void update_finished_instructions(ScoreBoard *score_board, Byte *memory, int ins
       // todo -> tirar esse get from memory
       int inst = get_instruction_from_memory(i, memory);
       int opcode = get_opcode_from_binary(inst);
-      if (is_conditional_branch(opcode)) (*score_board).can_fetch = true;
+      if (is_branch(opcode)) (*score_board).can_fetch = true;
 
       (*score_board).instructions_states[i].current_state = FINISHED;
       
@@ -299,7 +327,8 @@ void update_finished_instructions(ScoreBoard *score_board, Byte *memory, int ins
 // Checa se pode enviar alguma instrução para write result
 // Senão, continua a executar
 void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, FunctionalUnit *functional_units, CPU_Configurations cpu_configs, int curr_cycle, int inst_count){
-  // todo -> enviar para write result se possível ao invés de sempre enviar
+  int total_ufs = cpu_configs.size_add_ufs + cpu_configs.size_mul_ufs + cpu_configs.size_integer_ufs;
+
   int count_instructions_sent_to_write = 0;
   for (int inst_idx = 0; inst_idx < inst_count; inst_idx++){
     if ((*score_board).instructions_states[inst_idx].current_state == EXECUTE){
@@ -307,16 +336,9 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
       // todo -> tirar esse get from memory
       InstructionBinary binary = get_instruction_from_memory(inst_idx, memory);
       int opcode = get_opcode_from_binary(binary);
-      
-      UF_TYPE inst_uf_type = get_uf_type_from_instruction(binary);
-      if (inst_uf_type == ADD_UF) cycles_to_complete = cpu_configs.cycles_to_complete_add;
-      else if (inst_uf_type == MUL_UF) cycles_to_complete = cpu_configs.cycles_to_complete_mul;
-      else if (inst_uf_type == INTEGER_UF) cycles_to_complete = cpu_configs.cycles_to_complete_integer;
-      
-      int start = (*score_board).instructions_states[inst_idx].start_execute;
-      int finish = (*score_board).instructions_states[inst_idx].finish_execute;
       int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
-      if (finish - start + 1 == cycles_to_complete){
+      
+      if (uf_finished_executing((*score_board).instructions_states[inst_idx], binary, cpu_configs)){
 
         // add_pulse(bus, 
         // new_data_pulse(STALL, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
@@ -331,6 +353,9 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
           (*score_board).instructions_states[inst_idx].write_result = curr_cycle;
           
           (*score_board).result_register_state[destination] = NULL;
+
+          for (int i = 0; i < total_ufs; i++)
+            update_rj_and_rk(opcode, &(*score_board).ufs_states[i], (*score_board).result_register_state);
         }
       }
       else{
@@ -367,8 +392,9 @@ void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard
     if ((*score_board).instructions_states[inst_idx].current_state != ISSUE) continue;
 
     int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
-    // if ((*score_board).ufs_states[uf_idx].rj == false
-    //     || (*score_board).ufs_states[uf_idx].rk == false) continue;
+    // Condição para controle de dependencias
+    if ((*score_board).ufs_states[uf_idx].rj == false
+        || (*score_board).ufs_states[uf_idx].rk == false) continue;
 
     (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
     (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
@@ -388,6 +414,10 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state != FETCH) continue;
   
+    // Condição para controle de dependencias
+    int destination = get_destination_register_from_instruction(ir.binary);
+    if ((*score_board).result_register_state[destination] != NULL) continue;
+
     for (int uf_index = 0; uf_index < total_ufs; uf_index++){
 
       FunctionalUnitState uf_state = (*score_board).ufs_states[uf_index];
@@ -409,7 +439,11 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
     return;
   }
 
-  if (!is_conditional_branch(opcode)) (*score_board).can_fetch = true;
+  red();
+  printf("Issueando uf idx: %d\n", idle_uf_index);
+  printf("binary que ta dando issue: %d\n", ir.binary);
+  reset();
+  if (!is_branch(opcode)) (*score_board).can_fetch = true;
   
   
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
@@ -424,15 +458,8 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   (*score_board).ufs_states[idle_uf_index].fj = op1;
   (*score_board).ufs_states[idle_uf_index].fk = op2;
   (*score_board).ufs_states[idle_uf_index].op = get_binary_subnumber(ir.binary, 26, 31);
-  InstructionFormat format = get_inst_format_from_opcode(opcode);
-  if (opcode == J_OPCODE) (*score_board).ufs_states[idle_uf_index].rj = true; // J tem apenas um operando e é um número fixo
-  else (*score_board).ufs_states[idle_uf_index].rj = (*score_board).result_register_state[op1] == NULL;
 
-  if (format == FORMAT_R || is_conditional_branch(opcode)){
-    (*score_board).ufs_states[idle_uf_index].rk = (*score_board).result_register_state[op2] == NULL;
-  }
-  // Operando2 é um número fixo
-  else (*score_board).ufs_states[idle_uf_index].rk = true;
+  update_rj_and_rk(opcode, &(*score_board).ufs_states[idle_uf_index], (*score_board).result_register_state);
 
   // if ((*score_board).ufs_states[idle_uf_index].rj == false){
   //   int uf_idx = get_uf_idx_from_name((*score_board).result_register_state[op1]);
@@ -441,9 +468,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   // if ((*score_board).ufs_states[idle_uf_index].rk == false){
     
   // }
-  red();
-  printf("chegou aqui\n");
-  reset();
   
 
   int destination = get_destination_register_from_instruction(ir.binary);

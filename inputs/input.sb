@@ -30,20 +30,20 @@ INST:
 17
 
 .text
-addi r1, r10, 5
-mul r2, r7, r15
-and r3, r2, r5
-add r4, r1, r2
-add r5, r7, r15
-sub r6, r2, r2  
-subi r7, r12, 1000
-mul r8, r2, r5
-div r9, r1, r1
-or r10, r2, r5
-not r11, r20
-blt r12, r20, 0
-bgt r13, r20, 0
-beq r14, r20, 0
-bne r15, r20, 0
-j 10
+addi r1, r11, 1
+mul r2, r12, r12
+and r3, r13, r13
+add r4, r14, r14
+add r5, r15, r15
+sub r6, r16, r16
+subi r7, r17, 17
+mul r8, r18, r18
+div r9, r19, r1
+or r10, r20, r20
+not r11, r21
+blt r12, r22, 0
+bgt r13, r23, 0
+beq r14, r24, 0
+bne r15, r25, 0
+j 400
 exit

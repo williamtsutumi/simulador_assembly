@@ -56,14 +56,11 @@ void issue_instruction(){
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
-    // yellow();
-    // printf("Efetivamente dando issue na uf de idx %d\n", uf_index);
-    // reset();
+    
     add_pulse(&g_bus, 
       new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
 
     break;
-    
   }
 }
 void read_operands(){
@@ -177,13 +174,16 @@ void execute(){
 
       if (!is_branch(opcode))
         g_functional_units[i].operation_result = result;
-      else if (result){
-        g_functional_units[i].operation_result = g_program_counter + 4*get_imm_from_instruction_binary(binary);
-      }
       else{
-        // Atribuindo 0 pois, para essa simulação, 0 não é um valor válido para o PC
-        // Então, representa não atualizar o PC
-        g_functional_units[i].operation_result = 0;
+        if (result){
+          if (opcode == J_OPCODE) g_functional_units[i].operation_result = operand1;
+          else g_functional_units[i].operation_result = g_program_counter + 4*get_imm_from_instruction_binary(binary);
+        }
+        else{
+          // Atribuindo 0 pois, para essa simulação, 0 não é um valor válido para o PC
+          // Então, representa não atualizar o PC
+          g_functional_units[i].operation_result = 0;
+        }
       }
       // printf("opcode: %d\n", opcode);
       // printf("operand1: %d\n", operand1);
