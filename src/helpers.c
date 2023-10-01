@@ -356,7 +356,7 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
 
     bool can_write = true;
     for (int i = 0; i < total_ufs; i++){
-      if (i == uf_idx) continue;
+      if (i == uf_idx) continue; // Ignorar se é ele mesmo alterando o registrador
       
       if ((*score_board).ufs_states[i].fj == (*score_board).ufs_states[uf_idx].fi
         && (*score_board).ufs_states[i].rj) can_write = false;
@@ -523,6 +523,12 @@ void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRe
   if ((*score_board).can_fetch){
 
     int instruction_index = (pc - PROGRAM_FIRST_ADDRESS) / 4;
+    if ((*score_board).instructions_states[instruction_index].current_state == READ_OPERANDS
+      || (*score_board).instructions_states[instruction_index].current_state == ISSUE
+      || (*score_board).instructions_states[instruction_index].current_state == EXECUTE
+      || (*score_board).instructions_states[instruction_index].current_state == WRITE_RESULT
+    )
+      return;
 
     (*score_board).can_fetch = false;
     // printf("inst index: %d\n", instruction_index);
