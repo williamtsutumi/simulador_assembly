@@ -111,17 +111,13 @@ typedef enum FunctionalUnitStatus {
         UF_TYPE type;
         int type_index;
 
-        // Nao sei direito a utilidade disso
-        int current_cycle;
+        FunctionalUnitStatus status;
 
-        // Coisas que eu acho que vai ter que botar
         InstructionBinary instruction_binary;
+        int current_cycle;
         int operand1;
         int operand2;
-
-
         int operation_result;
-        FunctionalUnitStatus status;
     } FunctionalUnit;
 
 /* TYPES do scoreboarding */

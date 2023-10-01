@@ -240,6 +240,14 @@ void print_uf(FunctionalUnit uf){
 
 /* Utilidades Scoreboard */
 
+int get_uf_idx_from_name(FunctionalUnit *uf, FunctionalUnit *all_ufs, int total_ufs){
+  for (int i = 0; i < total_ufs; i++){
+    if ((*uf).type == all_ufs[i].type && (*uf).type_index == all_ufs[i].type_index) return i;
+  }
+
+  return -1;
+}
+
 // Retorna true se a unidade funcional fornecida terminou o estágio de execução
 bool uf_finished_executing(FunctionalUnit *uf, CPU_Configurations cpu_configs){
   UF_TYPE type = (*uf).type;
@@ -340,39 +348,64 @@ void update_write_result(Bus *bus, Byte *memory, ScoreBoard *score_board, Functi
 
   int count_instructions_sent_to_write = 0;
   for (int inst_idx = 0; inst_idx < inst_count; inst_idx++){
-    if ((*score_board).instructions_states[inst_idx].current_state == EXECUTE){
-      int cycles_to_complete;
-      // todo -> tirar esse get from memory
-      InstructionBinary binary = get_instruction_from_memory(inst_idx, memory);
-      int opcode = get_opcode_from_binary(binary);
-      int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
-      
-      if (scoreboard_finished_executing((*score_board).instructions_states[inst_idx], binary, cpu_configs)){
+    if ((*score_board).instructions_states[inst_idx].current_state != EXECUTE) continue;
 
-        // add_pulse(bus, 
-        // new_data_pulse(STALL, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
-        int destination = get_destination_register_from_instruction(binary);
-        if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY){
-          count_instructions_sent_to_write++;
+    int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
+    InstructionBinary binary = get_instruction_from_memory(inst_idx, memory);
+    int opcode = get_opcode_from_binary(binary);
 
-          add_pulse(bus, 
-          new_data_pulse(CONTINUE_WRITE_RESULT, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+    bool can_write = true;
+    for (int i = 0; i < total_ufs; i++){
+      if ((*score_board).ufs_states[i].fj == (*score_board).ufs_states[uf_idx].fi
+        && (*score_board).ufs_states[i].rj) can_write = false;
 
-          (*score_board).instructions_states[inst_idx].current_state = WRITE_RESULT;
-          (*score_board).instructions_states[inst_idx].write_result = curr_cycle;
-          
-          (*score_board).result_register_state[destination] = NULL;
+      if (opcode == ADDI_OPCODE || opcode == SUBI_OPCODE) continue;
 
-          for (int i = 0; i < total_ufs; i++)
-            update_rj_and_rk(opcode, &(*score_board).ufs_states[i], (*score_board).result_register_state);
-        }
-      }
-      else{
+      if ((*score_board).ufs_states[i].fk == (*score_board).ufs_states[uf_idx].fi
+        && (*score_board).ufs_states[i].rk) can_write = false;
+    }
+
+
+    int cycles_to_complete;
+    // todo -> tirar esse get from memory
+    
+    
+    
+    if (scoreboard_finished_executing((*score_board).instructions_states[inst_idx], binary, cpu_configs)){
+
+      // add_pulse(bus, 
+      // new_data_pulse(STALL, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+      int destination = get_destination_register_from_instruction(binary);
+      if (count_instructions_sent_to_write < WRITE_RESULT_CAPACITY && can_write){
+        count_instructions_sent_to_write++;
+
         add_pulse(bus, 
-        new_data_pulse(CONTINUE_EXECUTE, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+        new_data_pulse(CONTINUE_WRITE_RESULT, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+
+        (*score_board).instructions_states[inst_idx].current_state = WRITE_RESULT;
+        (*score_board).instructions_states[inst_idx].write_result = curr_cycle;
         
-        (*score_board).instructions_states[inst_idx].finish_execute++;
+        (*score_board).result_register_state[destination] = NULL;
+
+        red();
+        printf("Destination: %d\n", destination);
+        for (int i = 0; i < total_ufs; i++){
+          printf("qj: %d\n", (*score_board).ufs_states[i].qj);
+          printf("qk: %d\n", (*score_board).ufs_states[i].qk);
+          if ((*score_board).ufs_states[i].qj == destination)
+            (*score_board).ufs_states[i].rj = true;
+
+          if ((*score_board).ufs_states[i].qk == destination)
+            (*score_board).ufs_states[i].rk = true;
+        }
+        reset();
       }
+    }
+    else{
+      add_pulse(bus, 
+      new_data_pulse(CONTINUE_EXECUTE, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+      
+      (*score_board).instructions_states[inst_idx].finish_execute++;
     }
   }
 }
@@ -413,7 +446,7 @@ void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard
 }
 
 // Checa se pode enviar alguma instrução para issue
-void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_board, InstructionRegister ir, int curr_cycle, int total_ufs, int inst_count){
+void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_board, InstructionRegister ir, CPU_Configurations cpu_configs, int curr_cycle, int total_ufs, int inst_count){
   int opcode = get_opcode_from_binary(ir.binary);
   if (opcode == EXIT_OPCODE) return;
 
@@ -447,10 +480,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
     return;
   }
 
-  red();
-  printf("Issueando uf idx: %d\n", idle_uf_index);
-  printf("binary que ta dando issue: %d\n", ir.binary);
-  reset();
   if (!is_branch(opcode)) (*score_board).can_fetch = true;
   
   
@@ -469,14 +498,29 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
 
   update_rj_and_rk(opcode, &(*score_board).ufs_states[idle_uf_index], (*score_board).result_register_state);
 
-  // if ((*score_board).ufs_states[idle_uf_index].rj == false){
-  //   int uf_idx = get_uf_idx_from_name((*score_board).result_register_state[op1]);
-  //   (*score_board).ufs_states[idle_uf_index].qj = &(functional_units[uf_idx]);
-  // }
-  // if ((*score_board).ufs_states[idle_uf_index].rk == false){
-    
-  // }
+  if ((*score_board).ufs_states[idle_uf_index].rj){
+    (*score_board).ufs_states[idle_uf_index].qj = -1;
+  }
+  else{
+    int uf_idx = get_uf_idx_from_name((*score_board).result_register_state[op1], functional_units, total_ufs);
+    (*score_board).ufs_states[idle_uf_index].qj = uf_idx;
+  }
+
+  if ((*score_board).ufs_states[idle_uf_index].rk){
+    (*score_board).ufs_states[idle_uf_index].qk = -1;
+  }
+  else{
+    int uf_idx = get_uf_idx_from_name((*score_board).result_register_state[op2], functional_units, total_ufs);
+    (*score_board).ufs_states[idle_uf_index].qk = uf_idx;
+  }
   
+  red();
+  printf("Tá no update issue\n");
+  printf("op1: %d\n", op1);
+  printf("op2: %d\n", op2);
+  printf("qj: %d\n", (*score_board).ufs_states[idle_uf_index].qj);
+  printf("qk: %d\n", (*score_board).ufs_states[idle_uf_index].qk);
+  reset();
 
   int destination = get_destination_register_from_instruction(ir.binary);
   (*score_board).result_register_state[destination] = &functional_units[idle_uf_index];
@@ -533,7 +577,6 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
   table_init(&t, FUNCTIONAL_UNIT_STATUS);
 
   
-
 
   for(int i = 0; i < num_ufs; i++){
     int qj = functional_unit_states[i].qj;

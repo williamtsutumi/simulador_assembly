@@ -92,6 +92,7 @@ void update_issue(Bus *bus,
                   FunctionalUnit *functional_units, 
                   ScoreBoard *score_board, 
                   InstructionRegister ir, 
+                  CPU_Configurations cpu_configs,
                   int curr_cycle, 
                   int total_ufs, 
                   int inst_count);

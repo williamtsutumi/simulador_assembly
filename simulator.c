@@ -272,6 +272,7 @@ void update_scoreboard(){
       g_functional_units,
       &g_score_board,
       g_instruction_register,
+      g_cpu_configs,
       g_current_cycle,
       total_ufs,
       g_instruction_count);

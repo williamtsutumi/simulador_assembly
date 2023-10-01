@@ -1,9 +1,0 @@
-imprimir o conteudo de todos os registrador ao encerrar a simulação
-
-
-
-A unidade funcional armazena o binário da instrução que ela está excutando?
-Ou é armazenado no scoreboard uf states?
-
-
-E o resultado a operação é armazenado onde?

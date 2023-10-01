@@ -98,6 +98,10 @@ void table_init(Table *table, TABLE_TYPE type){
 }
 
 static void format_uf_name(char* result, UF_TYPE uf_type, int uf_index){
+    if (uf_type == -1){
+        result[0] = '\0';
+        return;
+    }
     switch(uf_type){
         case INTEGER_UF:
             sprintf(result, "Integer%d", uf_index);
@@ -157,6 +161,7 @@ static void format_register_write(char* result, int register_idx){
     }
 
 }
+
 static void format_register_read(char* result, int register_idx){
     if(register_idx != -1){
         sprintf(result, "R%d", register_idx);
