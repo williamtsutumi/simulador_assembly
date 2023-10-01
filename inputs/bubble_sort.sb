@@ -16,7 +16,7 @@ INST:
 10
 30
 50
-9
+9   
 
 .text
 #for (int i=0; i<size(); i++){
@@ -44,7 +44,7 @@ addi r3, r3, 1      # r3 += 1
 lw r13, 0(r3)       # r13 = M[r3]
 bgt r13, r12, 4     # if r13 > r12 goto armazenar r13 em r12
 blt r3, r15, -4     # voltar ao início do for interno
-sw r13, 2(r31)     # armazena o valor nas próximas posições da memória
+sw r13, 2(r31)      # armazena o valor nas próximas posições da memória
 blt r1, r30, -11    # voltar ao início do for externo
 exit
 
