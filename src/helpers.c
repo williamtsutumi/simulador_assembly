@@ -185,7 +185,7 @@ void get_operands_register_from_instruction(InstructionBinary instruction, int* 
   || op_code == BGT_OPCODE
   || op_code == BEQ_OPCODE
   || op_code == BNE_OPCODE
-  ) *op1 = get_rt_from_instruction_binary(instruction), *op2 = -1;
+  ) *op1 = get_rs_from_instruction_binary(instruction), *op2 = get_rt_from_instruction_binary(instruction);
 
   if (
     op_code == SW_OPCODE
@@ -485,6 +485,7 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
 
 }
 
+
 void print_result_register_status(FunctionalUnit* result_register_state[]){
 
   Table t;
@@ -566,30 +567,30 @@ void execute_instruction(FunctionalUnit* uf, int op, int program_counter, Byte* 
   else if (op == OR_OPCODE)   uf->operation_result = uf->operand1 | uf->operand2;
   else if (op == NOT_OPCODE)  uf->operation_result = ~uf->operand1;
   else if (op == BLT_OPCODE){
-    uf->operation_result = program_counter + 4;
+    uf->operation_result = program_counter;
 
     if(uf->operand1 < uf->operand2){
       uf->operation_result += uf->imm;
     }
   }  
   else if (op == BGT_OPCODE){
-    uf->operation_result = program_counter + 4;
-
+    uf->operation_result = program_counter;
+    printf("OP1 OP2 BGT %d %d\n",uf->operand1, uf->operand2);
     if(uf->operand1 > uf->operand2){
       uf->operation_result += uf->imm;
     }
   } 
   else if (op == BEQ_OPCODE){
-    uf->operation_result = program_counter + 4;
+    uf->operation_result = program_counter;
 
     if(uf->operand1 == uf->operand2){
       uf->operation_result += uf->imm;
     }
   } 
   else if (op == BNE_OPCODE){
-    uf->operation_result = program_counter + 4;
+    uf->operation_result = program_counter;
 
-    printf("BNE = %d %d\n", uf->operand1, uf->operand2);
+    printf("BNE = %d %d, imm = %d\n", uf->operand1, uf->operand2, uf->imm);
     if(uf->operand1 != uf->operand2){
       uf->operation_result += uf->imm;
     }
