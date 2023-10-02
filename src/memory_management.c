@@ -51,16 +51,17 @@ static void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_co
   (*score_board).ufs_states = (FunctionalUnitState*)malloc(total_ufs * sizeof(FunctionalUnitState));
   for(int i = 0; i < total_ufs; i++){
 
-    (*score_board).ufs_states[i].type = functional_units[i].type;
+    (*score_board).ufs_states[i].type = functional_units[i].type; 
     (*score_board).ufs_states[i].type_index = functional_units[i].type_index;
     (*score_board).ufs_states[i].fi = -1;
     (*score_board).ufs_states[i].fj = -1;
     (*score_board).ufs_states[i].fk = -1;
-    (*score_board).ufs_states[i].qj = -1;
-    (*score_board).ufs_states[i].qk = -1;
+    (*score_board).ufs_states[i].qj = NULL;
+    (*score_board).ufs_states[i].qk = NULL;
     (*score_board).ufs_states[i].op = -1;
     (*score_board).ufs_states[i].rj = 0;
     (*score_board).ufs_states[i].rk = 0;
+    (*score_board).ufs_states[i].inst_program_counter = -1;
 
     (*score_board).ufs_states[i].busy = false;
   }

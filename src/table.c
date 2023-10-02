@@ -205,7 +205,7 @@ void add_row(Table* table, ...){
     // REGISTER_RESULT
     TABLE_CELL_TYPE expected_cell_type[][10] = {
         {T_OP, T_NUM,  T_NUM, T_NUM,      T_EXECUTION,      T_NUM,      -1,        -1,        -1,     -1},
-        {T_UF_NAME,     T_BOOL, T_OP,  T_REGISTER_WRITE, T_REGISTER_READ, T_REGISTER_READ, T_UF_NAME, T_UF_NAME, T_BOOL, T_BOOL},     
+        {T_UF_NAME,     T_BOOL, T_OP,  T_REGISTER_WRITE, T_REGISTER_READ, T_REGISTER_READ, T_UF_NAME_POINTER, T_UF_NAME_POINTER, T_BOOL, T_BOOL},     
     };
 
     table->data = (char***)realloc(table->data, sizeof(char**) * (table->num_rows));
@@ -257,6 +257,17 @@ void add_row(Table* table, ...){
                 int end_time = va_arg(args, int);
 
                 format_execution(result, start_time, end_time);
+            }
+            else if(expected_cell_type[table->type][i] == T_UF_NAME_POINTER){
+                FunctionalUnit* state = va_arg(args, FunctionalUnit*);
+                
+                if(state == NULL){
+                    format_uf_name(result, -1, -1);
+                }
+                else{
+                    printf("%d %d\n", state->type, state->type_index);
+                    format_uf_name(result, state->type, state->type_index);
+                }
             }
             table->data[table->num_rows-1][i] = (char*)malloc(sizeof(char)*strlen(result)+1);
             strcpy(table->data[table->num_rows-1][i], result);

@@ -1,13 +1,13 @@
 
 /*
 UF:
-    add: 2 
-    mul: 3
-    integer: 5
+    add: 1
+    mul: 1
+    integer: 1
 INST:
     add: 2
     mul: 15
-    integer: 1
+    integer: 2
 */ 
 
 .data

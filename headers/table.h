@@ -16,6 +16,7 @@ typedef enum TABLE_CELL_TYPE{
     T_INSTRUCTION,
     T_NUM,
     T_EXECUTION,
+    T_UF_NAME_POINTER
 } TABLE_CELL_TYPE;
 
 typedef enum TABLE_TYPE{

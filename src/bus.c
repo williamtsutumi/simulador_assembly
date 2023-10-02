@@ -10,6 +10,7 @@
 void add_pulse(Bus* bus, Pulse pulse){
   bus->pulse_queue[bus->pulse_count++] = pulse;
 }
+
 void dispatch_pulses(Bus* bus){
     printf("dispachando %d pulsos\n", bus->pulse_count);
 
@@ -30,7 +31,8 @@ void dispatch_pulses(Bus* bus){
 
         bus->current_pulse++;
     }
-    bus->pulse_count = bus->current_pulse = 0;
+    bus->pulse_count = 0;
+    bus->current_pulse = 0;
 }
 
 Pulse new_pulse(void* from, void* to, size_t size){

@@ -89,7 +89,7 @@ typedef enum OPERAND_TYPE
 
 /* TYPES da representação das unidades funcionais */
 
-typedef enum {
+typedef enum UF_TYPE {
     INTEGER_UF,
     MUL_UF,
     ADD_UF,
@@ -117,6 +117,7 @@ typedef enum FunctionalUnitStatus {
         int current_cycle;
         int operand1;
         int operand2;
+        int imm;
         int operation_result;
     } FunctionalUnit;
 
@@ -154,8 +155,15 @@ typedef struct FunctionalUnitState
     UF_TYPE type;
     // se tem vários do mesmo tipo, type_index é o índice q diferencia elas
     int type_index;
-    int op, fi, fj, fk, qj, qk;
+    int op, fi, fj, fk;
+
+    FunctionalUnit* qj;
+    FunctionalUnit* qk;
+
+
     bool busy, rj, rk;
+    // program counter da instrução sendo realizada pela UF
+    int inst_program_counter;
 } FunctionalUnitState;
 
     typedef struct ScoreBoard

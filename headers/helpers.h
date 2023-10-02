@@ -37,6 +37,10 @@ bool is_conditional_branch(int opcode);
 
 bool is_memory(int opcode);
 
+void get_operands_register_from_instruction(InstructionBinary instruction, int* op1, int* op2);
+
+bool can_uf_execute_instruction(UF_TYPE type, int opcode);
+
 
 /* Debug */
 
@@ -62,6 +66,15 @@ void clear_uf_state(FunctionalUnitState *uf_state);
 int actually_execute(int opcode, int operand1, int operand2);
 
 void update_finished_instructions(ScoreBoard *score_board, Byte *memory, int inst_count);
+
+UF_TYPE get_uf_type_from_index(int uf_index, CPU_Configurations cpu_configs);
+
+void actually_read_operands(int fj, int fk, int* registers, FunctionalUnit* uf, Bus* bus);
+
+void write_instruction_result(int destination, FunctionalUnit* uf, int* registers, Bus* bus);
+
+void execute_instruction(FunctionalUnit* uf, int op, int program_counter, Byte* memory);
+
 
 // Checa se pode enviar alguma instrução para write result
 // Senão, continua a executar
