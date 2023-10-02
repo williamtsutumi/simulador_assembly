@@ -511,7 +511,6 @@ void print_registers(int* registers){
 
 void write_instruction_result(int destination, FunctionalUnit* uf, int* registers, Bus* bus, int* program_counter){
   // write to PC
-
   if(destination == 0){
     add_pulse(
       bus,
@@ -590,6 +589,7 @@ void execute_instruction(FunctionalUnit* uf, int op, int program_counter, Byte* 
   else if (op == BNE_OPCODE){
     uf->operation_result = program_counter + 4;
 
+    printf("BNE = %d %d\n", uf->operand1, uf->operand2);
     if(uf->operand1 != uf->operand2){
       uf->operation_result += uf->imm;
     }

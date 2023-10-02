@@ -247,16 +247,20 @@ void write_result(){
 
         int destination = g_score_board.ufs_states[uf_index].fi;
 
-        write_instruction_result(destination, &g_functional_units[uf_index], g_registers, &g_bus);
+        write_instruction_result(destination, &g_functional_units[uf_index], g_registers, &g_bus, &g_program_counter);
 
-        
         
         for(int i = 0; i < g_total_ufs; i++){
           if(g_score_board.ufs_states[i].qj == &g_functional_units[uf_index]){
             g_score_board.ufs_states[i].rj = true;
+            
+          }
+          if(g_score_board.ufs_states[i].qk == &g_functional_units[uf_index]){
             g_score_board.ufs_states[i].rk = true;
           }
         }
+        g_score_board.result_register_state[g_score_board.ufs_states[uf_index].fi] = NULL;
+        
         clear_uf_state(&g_score_board.ufs_states[uf_index]);
                 
     }

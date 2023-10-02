@@ -21,7 +21,6 @@ mul r1, r2, r6
 sub r8, r6, r2
 div r10, r0, r6
 add r6, r8, r2
-
 add r6, r8, r2
 addi r6, r8, 2  
 

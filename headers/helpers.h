@@ -71,7 +71,7 @@ UF_TYPE get_uf_type_from_index(int uf_index, CPU_Configurations cpu_configs);
 
 void actually_read_operands(int fj, int fk, int* registers, FunctionalUnit* uf, Bus* bus);
 
-void write_instruction_result(int destination, FunctionalUnit* uf, int* registers, Bus* bus);
+void write_instruction_result(int destination, FunctionalUnit* uf, int* registers, Bus* bus, int* program_counter);
 
 void execute_instruction(FunctionalUnit* uf, int op, int program_counter, Byte* memory);
 
