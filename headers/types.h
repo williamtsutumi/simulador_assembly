@@ -101,6 +101,7 @@ typedef enum {
 typedef enum FunctionalUnitStatus {
     STALL,
     CONTINUE_ISSUE,
+    STALL_ISSUE,
     CONTINUE_READ_OPERAND,
     CONTINUE_EXECUTE,
     CONTINUE_WRITE_RESULT,

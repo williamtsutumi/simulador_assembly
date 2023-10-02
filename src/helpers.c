@@ -427,13 +427,21 @@ void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard
     int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
     // Condição para controle de dependencias
     if ((*score_board).ufs_states[uf_idx].rj == false
-        || (*score_board).ufs_states[uf_idx].rk == false) continue;
+        || (*score_board).ufs_states[uf_idx].rk == false){
+
+      add_pulse(bus, 
+      new_data_pulse(STALL_ISSUE, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+
+      continue;;
+    }
 
     (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
     (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
 
     add_pulse(bus, 
     new_data_pulse(CONTINUE_READ_OPERAND, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+
+    break;
   }
 }
 
