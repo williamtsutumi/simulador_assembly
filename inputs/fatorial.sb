@@ -26,21 +26,21 @@ INST:
 
 # Tem mais um aqui
 
-#addi r1, r2, 1       #r1 = 1
-#lw r10, 0(r0)        #r10 = n, deve ser calculado n!
-#mul r1, r1, r10      #r1 = r1 * r10
-#subi r10, r10, 1     #r10 = r10 - 1
-#bne r0, r10, -3      #if (r0 == r10)
-#sw r1, 1(r0)         #Memoria[0+1] = r1
-#exit
-
-addi r1, r0, 1      #r1 = 1
-addi r20, r20, 1
-addi r20, r20, 1    #r20 = 2
-mul r2, r1, r20
-mul r3, r2, r20
-mul r4, r3, r20
-mul r5, r4, r20
-mul r6, r5, r20
-sw r6, 1(r0)         #Memoria[0+1] = r6
+addi r1, r2, 1       #r1 = 1
+lw r10, 0(r0)        #r10 = n, deve ser calculado n!
+mul r1, r1, r10      #r1 = r1 * r10
+subi r10, r10, 1     #r10 = r10 - 1
+bne r0, r10, -3      #if (r0 == r10)
+sw r1, 1(r0)         #Memoria[0+1] = r1
 exit
+
+#addi r1, r0, 1      #r1 = 1
+#addi r20, r20, 1
+#addi r20, r20, 1    #r20 = 2
+#mul r2, r1, r20
+#mul r3, r2, r20
+#mul r4, r3, r20
+#mul r5, r4, r20
+#mul r6, r5, r20
+#sw r6, 1(r0)         #Memoria[0+1] = r6
+#exit

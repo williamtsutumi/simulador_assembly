@@ -110,14 +110,14 @@ void read_operands(){
       new_pulse(&g_registers[operand2_index], &(g_functional_units[uf_index].operand2), sizeof(int)));
     }
     else if (opcode == LW_OPCODE){
-      int rs = get_rs_from_instruction_binary(binary);
-      imm = get_imm_from_instruction_binary(binary);
-
-      int mem_address = g_registers[rs] + imm;
-      operand1 = get_data_from_memory(mem_address, g_memory);
+      operand1_index = get_rs_from_instruction_binary(binary);
+      operand2 = get_imm_from_instruction_binary(binary);
 
       add_pulse(&g_bus, 
-      new_data_pulse(operand1, &(g_functional_units[uf_index].operand1), sizeof(int)));
+      new_pulse(&(g_registers[operand1_index]), &(g_functional_units[uf_index].operand1), sizeof(int)));
+      
+      add_pulse(&g_bus, 
+      new_data_pulse(operand2, &(g_functional_units[uf_index].operand2), sizeof(int)));
     }
     else{
       if (format == FORMAT_R){
@@ -137,7 +137,7 @@ void read_operands(){
         new_pulse(&(g_registers[operand2_index]), &(g_functional_units[uf_index].operand2), sizeof(int)));
       }
       else if (format == FORMAT_I){
-        operand1_index = get_rt_from_instruction_binary(binary);
+        operand1_index = get_rs_from_instruction_binary(binary);
         operand2 = get_imm_from_instruction_binary(binary);
 
         add_pulse(&g_bus, 
@@ -173,7 +173,10 @@ void execute(){
       int operand2 = g_functional_units[i].operand2;
       int result = actually_execute(opcode, operand1, operand2);
 
-      if (!is_branch(opcode))
+      if (opcode == LW_OPCODE){
+        g_functional_units[i].operation_result = get_data_from_memory(operand1 + operand2, g_memory);
+      }
+      else if (!is_branch(opcode))
         g_functional_units[i].operation_result = result;
       else{
         if (result){
@@ -357,7 +360,14 @@ bool program_has_exited(){
     }
   }
   // Se a exit foi fetchada
-  if (g_score_board.instructions_states[g_instruction_count - 1].current_state != FETCH) output = false;
+  for (int i = 0; i < g_instruction_count; i++){
+    int binary = get_instruction_from_memory(i, g_memory);
+    if (get_opcode_from_binary(binary) == EXIT_OPCODE){
+      if (g_score_board.instructions_states[i].current_state != FETCH){
+        output = false;
+      }
+    }
+  }
 
   return output;
 }
@@ -366,8 +376,12 @@ void run_simulation(FILE *output){
   while (!program_has_exited()){
     getchar();
     run_one_cycle(output);
+    for (int i=0; i<6; i++){
+      printf("M[%d]: %d\n", i, get_data_from_memory(i, g_memory));
+    }
   }
   printf("Program Exited.\n");
+
 }
 
 

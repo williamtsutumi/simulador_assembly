@@ -317,7 +317,7 @@ int actually_execute(int opcode, int operand1, int operand2){
   if (opcode == BEQ_OPCODE) return operand1 == operand2;
   if (opcode == BNE_OPCODE) return operand1 != operand2;
   if (opcode == J_OPCODE)   return true;
-  if (opcode == LW_OPCODE)  return operand1;
+  // if (opcode == LW_OPCODE)  return operand1; LW não usa essa função
   if (opcode == SW_OPCODE)  return operand1;
   
   
@@ -443,7 +443,7 @@ void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard
 
     if (count_inst_sent_to_read_operands < READ_OPERANDS_CAPACITY){
       count_inst_sent_to_read_operands++;
-      
+
       (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
       (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
 
