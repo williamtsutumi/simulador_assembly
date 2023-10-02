@@ -75,11 +75,7 @@ void read_operands(){
     int opcode = get_opcode_from_binary(binary);
 
     InstructionFormat format = get_inst_format_from_opcode(opcode);
-    // printf("uf idx que entrou no continue read op: %d\n", uf_index);
-    // printf("binary: %u\n", binary);
-    // printf("opcode: %d\n", opcode);
-    // printf("format: %d\n", format);
-    // printf("is branch: %d\n", is_branch(opcode));
+
     int operand1_index, operand2_index, operand1, operand2, imm;
     if (is_branch(opcode)){
       if (format == FORMAT_I){
@@ -102,7 +98,10 @@ void read_operands(){
     else if (opcode == SW_OPCODE){
       operand1_index = get_rt_from_instruction_binary(binary);
       operand2_index = get_rs_from_instruction_binary(binary);
-
+      red();
+      printf("operand1 index: %d\n", operand1_index);
+      printf("operand2 index: %d\n", operand2_index);
+      reset();
       add_pulse(&g_bus, 
       new_pulse(&g_registers[operand1_index], &(g_functional_units[uf_index].operand1), sizeof(int)));
 
@@ -152,8 +151,8 @@ void read_operands(){
         assert(false);
       }
     }
-    // printf("operan1 index: %d\n", operand1_index);
-    // printf("operan2 index: %d\n", operand2_index);
+    // printf("operand1 index: %d\n", operand1_index);
+    // printf("operand2 index: %d\n", operand2_index);
   }
 }
 void execute(){
@@ -176,11 +175,11 @@ void execute(){
       if (opcode == LW_OPCODE){
         g_functional_units[i].operation_result = get_data_from_memory(operand1 + operand2, g_memory);
       }
-      else if (!is_branch(opcode))
-        g_functional_units[i].operation_result = result;
-      else{
-        if (result){
+      else if (is_branch(opcode)){
+        if (result){ // Se o desvio é tomado
+          // Desvio com PC fixo
           if (opcode == J_OPCODE) g_functional_units[i].operation_result = operand1;
+          // Desvio com PC calculado
           else g_functional_units[i].operation_result = g_program_counter + 4*get_imm_from_instruction_binary(binary);
         }
         else{
@@ -188,6 +187,10 @@ void execute(){
           // Então, representa não atualizar o PC
           g_functional_units[i].operation_result = 0;
         }
+      }
+      // Caso geral: add, addi, sub, subi, mul, div, and, or, not
+      else{
+        g_functional_units[i].operation_result = result;
       }
       // printf("opcode: %d\n", opcode);
       // printf("operand1: %d\n", operand1);
@@ -206,7 +209,7 @@ void write_result(){
     InstructionBinary binary = g_functional_units[uf_index].instruction_binary;
     int opcode = get_opcode_from_binary(binary);
     if (opcode == SW_OPCODE){
-      int mem_address = g_functional_units[uf_index].operand2 + get_imm_from_instruction_binary(binary);
+      int mem_address = 4*(g_functional_units[uf_index].operand2 + get_imm_from_instruction_binary(binary));
 
       int op_result = g_functional_units[uf_index].operation_result;
       int byte0 = (op_result >> 24) & 0b11111111;

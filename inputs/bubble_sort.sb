@@ -44,7 +44,7 @@ lw r13, 0(r3)       # r13 = M[r3]
 bgt r13, r12, 4     # if r13 > r12 goto swap(r12, r13)
 addi r2, r2, 1      # r12++
 blt r3, r15, -6     # voltar ao início do for interno
-beq r15, r1, -9    # voltar ao início do for externo
+bgt r15, r1, -9     # voltar ao início do for externo
 exit
 
 #swap(r12, r13)
