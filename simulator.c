@@ -57,9 +57,6 @@ void issue_instruction(){
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
 
-    // red();
-    // printf("Chegou no issue efetivo o idx %d\n", uf_index);
-    // reset();
     add_pulse(&g_bus,
     new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
 
@@ -98,10 +95,7 @@ void read_operands(){
     else if (opcode == SW_OPCODE){
       operand1_index = get_rt_from_instruction_binary(binary);
       operand2_index = get_rs_from_instruction_binary(binary);
-      red();
-      printf("operand1 index: %d\n", operand1_index);
-      printf("operand2 index: %d\n", operand2_index);
-      reset();
+      
       add_pulse(&g_bus, 
       new_pulse(&g_registers[operand1_index], &(g_functional_units[uf_index].operand1), sizeof(int)));
 
@@ -145,14 +139,7 @@ void read_operands(){
         add_pulse(&g_bus, 
         new_data_pulse(operand2, &(g_functional_units[uf_index].operand2), sizeof(int)));
       }
-      else if (format == FORMAT_J){ // tem dois if FORMAT_J ?
-        // Não sei quão certo isso está
-        g_functional_units[uf_index].operand1 = get_imm_from_instruction_binary(binary);
-        assert(false);
-      }
     }
-    // printf("operand1 index: %d\n", operand1_index);
-    // printf("operand2 index: %d\n", operand2_index);
   }
 }
 void execute(){
@@ -379,9 +366,8 @@ void run_simulation(FILE *output){
   while (!program_has_exited()){
     getchar();
     run_one_cycle(output);
-    for (int i=0; i<6; i++){
-      printf("M[%d]: %d\n", i, get_data_from_memory(i, g_memory));
-    }
+
+    for (int i=0; i<6; i++) printf("M[%d]: %d\n", i, get_data_from_memory(i, g_memory));
   }
   printf("Program Exited.\n");
 

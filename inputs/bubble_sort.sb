@@ -1,8 +1,8 @@
 /*
 UF:
-    add: 1
-    integer: 1
-    mul: 1
+    add: 5
+    integer: 5
+    mul: 0
 
 INST:
     add: 2
@@ -12,11 +12,11 @@ INST:
 
 .data
 5 #num elementos
-20
+9   
 10
+20
 30
 50
-9   
 
 .text
 #for (int i=0; i<size(); i++){

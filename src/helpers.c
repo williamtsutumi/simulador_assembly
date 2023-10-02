@@ -477,8 +477,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
         // yellow();
         // printf("Dando issue na uf de idx: %d\n", idle_uf_index);
         // reset();
-        add_pulse(bus, 
-        new_data_pulse(CONTINUE_ISSUE, &(functional_units[idle_uf_index].status), sizeof(FunctionalUnitStatus)));
         break;
       }
     }
@@ -486,8 +484,10 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   }
   if(idle_uf_index == -1) return;
 
+  add_pulse(bus,
+  new_data_pulse(CONTINUE_ISSUE, &(functional_units[idle_uf_index].status), sizeof(FunctionalUnitStatus)));
+
   if (!is_branch(opcode)) (*score_board).can_fetch = true;
-  
   
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = curr_cycle;
