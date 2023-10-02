@@ -124,6 +124,8 @@ void read_operands(){
         operand1_index = get_rs_from_instruction_binary(binary);
         operand2_index = get_rt_from_instruction_binary(binary);
         red();
+        printf("Dando read operands na uf de idx %d\n", uf_index);
+        printf("binary: %d\n", binary);
         printf("operand1 index: %d\n", operand1_index);
         printf("operand2 index: %d\n", operand2_index);
         reset();

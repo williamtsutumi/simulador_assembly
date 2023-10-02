@@ -421,27 +421,35 @@ void update_execute(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *scor
 
 // Checa se pode enviar alguma instrução para read operands
 void update_read_operands(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_board, int curr_cycle, int count_instructions){
+  int count_inst_sent_to_read_operands = 0;
+
   for (int inst_idx = 0; inst_idx < count_instructions; inst_idx++){
-    if ((*score_board).instructions_states[inst_idx].current_state != ISSUE) continue;
+    if ((*score_board).instructions_states[inst_idx].current_state != ISSUE
+        && (*score_board).instructions_states[inst_idx].current_state != STAY_ISSUE) continue;
 
     int uf_idx = (*score_board).instructions_states[inst_idx].uf_index;
+    
     // Condição para controle de dependencias
     if ((*score_board).ufs_states[uf_idx].rj == false
         || (*score_board).ufs_states[uf_idx].rk == false){
 
-      add_pulse(bus, 
+      (*score_board).instructions_states[inst_idx].current_state = STAY_ISSUE;
+
+      add_pulse(bus,
       new_data_pulse(STALL_ISSUE, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
 
-      continue;;
+      continue;
     }
 
-    (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
-    (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
+    if (count_inst_sent_to_read_operands < READ_OPERANDS_CAPACITY){
+      count_inst_sent_to_read_operands++;
+      
+      (*score_board).instructions_states[inst_idx].current_state = READ_OPERANDS;
+      (*score_board).instructions_states[inst_idx].read_operands = curr_cycle;
 
-    add_pulse(bus, 
-    new_data_pulse(CONTINUE_READ_OPERAND, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
-
-    break;
+      add_pulse(bus, 
+      new_data_pulse(CONTINUE_READ_OPERAND, &(functional_units[uf_idx].status), sizeof(FunctionalUnitStatus)));
+    }
   }
 }
 
@@ -474,11 +482,9 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
         break;
       }
     }
+    if (idle_uf_index != -1) break;
   }
-  if(idle_uf_index == -1){
-    // printf("não tem unidades funcionais livres!\n");
-    return;
-  }
+  if(idle_uf_index == -1) return;
 
   if (!is_branch(opcode)) (*score_board).can_fetch = true;
   
@@ -486,9 +492,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = curr_cycle;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].uf_index = idle_uf_index;
-  red();
-  printf("Issueando uf index %d\n", idle_uf_index);
-  reset();
 
 
   (*score_board).ufs_states[idle_uf_index].busy = true;

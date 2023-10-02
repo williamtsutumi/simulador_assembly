@@ -62,7 +62,7 @@
 
 // #define FETCH_CAPACITY 1
 // #define ISSUE_CAPACITY 1
-// #define READ_OPERANDS_CAPACITY 1
+#define READ_OPERANDS_CAPACITY 1
 // #define EXECUTE_CAPACITY 1 
 #define WRITE_RESULT_CAPACITY 1
 
@@ -127,6 +127,7 @@ typedef enum FunctionalUnitStatus {
 typedef enum InstructionStateType {
     FETCH,
     ISSUE,
+    STAY_ISSUE,
     READ_OPERANDS,
     EXECUTE,
     WRITE_RESULT,
