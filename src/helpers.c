@@ -446,7 +446,7 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   int idle_uf_index = -1;
   for (int i = 0; i < inst_count; i++){
     if ((*score_board).instructions_states[i].current_state != FETCH) continue;
-  
+
     // Condição para controle de dependencias
     int destination = get_destination_register_from_instruction(ir.binary);
     if ((*score_board).result_register_state[destination] != NULL) continue;
@@ -478,6 +478,9 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].current_state = ISSUE;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].issue = curr_cycle;
   (*score_board).instructions_states[(ir.program_counter - PROGRAM_FIRST_ADDRESS) / 4].uf_index = idle_uf_index;
+  red();
+  printf("Issueando uf index %d\n", idle_uf_index);
+  reset();
 
 
   (*score_board).ufs_states[idle_uf_index].busy = true;

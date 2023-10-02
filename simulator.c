@@ -56,11 +56,16 @@ void issue_instruction(){
 
   for (int uf_index = 0; uf_index < total_ufs; uf_index++){
     if (g_functional_units[uf_index].status != CONTINUE_ISSUE) continue;
-    
+
+    // Instrução já foi issueada
+    if (g_functional_units[uf_index].instruction_binary == g_instruction_register.binary) continue;
+
+    // red();
+    // printf("Chegou no issue efetivo o idx %d\n", uf_index);
+    // reset();
     add_pulse(&g_bus, 
       new_data_pulse(g_instruction_register.binary, &(g_functional_units[uf_index].instruction_binary), sizeof(InstructionBinary)));
 
-    break;
   }
 }
 void read_operands(){
