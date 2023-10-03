@@ -6,6 +6,7 @@
 #define NUM_COLS_RESULT_REGISTER_STATUS 32
 #define NUM_COLS_REGISTER_RESULT 32
 
+#include "stdio.h"
 
 typedef enum TABLE_CELL_TYPE{
     T_UF_NAME,
@@ -35,7 +36,7 @@ typedef struct Table{
 } Table;
 
 void table_init(Table *table, TABLE_TYPE type);
-void table_print(Table* table);
+void table_print(Table* table, FILE* output);
 void add_row(Table* table, ...);
 void free_table(Table* table);
 

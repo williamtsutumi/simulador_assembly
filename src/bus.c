@@ -11,20 +11,16 @@ void add_pulse(Bus* bus, Pulse pulse){
   bus->pulse_queue[bus->pulse_count++] = pulse;
 }
 void dispatch_pulses(Bus* bus){
-    printf("dispachando %d pulsos\n", bus->pulse_count);
 
     while(bus->current_pulse < bus->pulse_count){
         int curr = bus->current_pulse;
         
         if(bus->pulse_queue[curr].has_data){
-            printf("pulso de dados\n");
-            printf("dado enviado: %d\n", bus->pulse_queue[curr].data);
+
             memcpy(bus->pulse_queue[curr].to.endpoint, &(bus->pulse_queue[curr].data), bus->pulse_queue[curr].size);
 
         }
         else{
-            printf("pulso de pulso\n");
-            printf("dado enviado: %d\n", bus->pulse_queue[curr].from.endpoint);
             memcpy(bus->pulse_queue[curr].to.endpoint, bus->pulse_queue[curr].from.endpoint, bus->pulse_queue[curr].size);
         }
 

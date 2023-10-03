@@ -290,56 +290,56 @@ void add_row(Table* table, ...){
 
 
 // [starting_column, end_column)
-static void print_headers(Table *table, int starting_column, int end_column){
+static void print_headers(Table *table, int starting_column, int end_column, FILE* output){
     yellow();
-    printf("|");
+    fprintf(output, "|");
     for(int i = starting_column; i < end_column; i++){
         if(table->type == RESULT_REGISTER_STATUS || table->type == REGISTER_RESULT)
-            printf("%-8s|", table->headers[i]);
+            fprintf(output, "%-8s|", table->headers[i]);
         else
-            printf("%-13s|", table->headers[i]);
+            fprintf(output, "%-13s|", table->headers[i]);
 
     }
-    printf("\n");
+    fprintf(output, "\n");
     reset();
 }
 
-static void print_data(Table *table, int starting_column, int end_column){
+static void print_data(Table *table, int starting_column, int end_column, FILE* output){
     for(int i = 0; i < table->num_rows; i++){
-        printf("|");
+        fprintf(output, "|");
         for(int j = starting_column; j < end_column; j++){
             if(table->type == RESULT_REGISTER_STATUS || table->type == REGISTER_RESULT)
             printf("%-8s|", table->data[i][j]);
         else
             printf("%-13s|", table->data[i][j]);
         }
-        printf("\n");
+        fprintf(output, "\n");
     }
 }
 
 // [starting_column, end_column)
-static void __print_table(Table* table, int starting_column, int end_column){
-    print_headers(table, starting_column, end_column);
-    print_data(table, starting_column, end_column);
+static void __print_table(Table* table, int starting_column, int end_column, FILE* output){
+    print_headers(table, starting_column, end_column, output);
+    print_data(table, starting_column, end_column, output);
 }
 
-static void print_title(Table *table){
+static void print_title(Table *table, FILE* output){
     blue_background();
-    printf("%s", table->title);
+    fprintf(output, "%s", table->title);
     reset_background();
-    printf("\n");
+    fprintf(output, "\n");
     
     
 }
 
-void table_print(Table* table){
-    print_title(table);
+void table_print(Table* table, FILE* output){
+    print_title(table, output);
     if(table->num_columns > 16){
-        __print_table(table, 0, 16);
-        __print_table(table, 16, table->num_columns);
+        __print_table(table, 0, 16, output);
+        __print_table(table, 16, table->num_columns, output);
     }
     else{
-        __print_table(table, 0, table->num_columns);
+        __print_table(table, 0, table->num_columns, output);
     }
 }
 

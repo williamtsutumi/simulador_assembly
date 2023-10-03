@@ -33,21 +33,16 @@ void fetch_next_instruction(){
     if (g_score_board.instructions_states[i].current_state != FETCH) continue;
 
     int curr_inst_index = (g_instruction_register.program_counter - PROGRAM_FIRST_ADDRESS) / 4;
-    // printf("i: %d\n", i);
-    // printf("curr inst index: %d\n", curr_inst_index);
+
     if (i == curr_inst_index) continue; // A instrução já foi fetchada
     
     int inst_index = i;
     g_instruction_register.binary = get_instruction_from_memory(inst_index, g_memory);
     g_instruction_register.program_counter = g_program_counter;
-    // add_pulse(&g_bus, 
-    // new_data_pulse(get_instruction_from_memory(inst_index, g_memory), &(g_instruction_register.binary), sizeof(int)));
-    // add_pulse(&g_bus, 
-    // new_data_pulse(g_program_counter, &(g_instruction_register.program_counter), sizeof(int)));
+
 
     g_program_counter += 4;
-    // add_pulse(&g_bus, 
-    // new_data_pulse(g_program_counter + 4, &(g_program_counter), sizeof(int)));
+
     break;
   }
 }
@@ -73,7 +68,7 @@ void read_operands(){
 
     InstructionFormat format = get_inst_format_from_opcode(opcode);
 
-    int operand1_index, operand2_index, operand1, operand2, imm;
+    int operand1_index, operand2_index, operand2, imm;
     if (is_branch(opcode)){
       if (format == FORMAT_I){
         operand1_index = get_rs_from_instruction_binary(binary);
@@ -116,12 +111,6 @@ void read_operands(){
       if (format == FORMAT_R){
         operand1_index = get_rs_from_instruction_binary(binary);
         operand2_index = get_rt_from_instruction_binary(binary);
-        red();
-        printf("Dando read operands na uf de idx %d\n", uf_index);
-        printf("binary: %d\n", binary);
-        printf("operand1 index: %d\n", operand1_index);
-        printf("operand2 index: %d\n", operand2_index);
-        reset();
 
         add_pulse(&g_bus, 
         new_pulse(&(g_registers[operand1_index]), &(g_functional_units[uf_index].operand1), sizeof(int)));
@@ -179,10 +168,7 @@ void execute(){
       else{
         g_functional_units[i].operation_result = result;
       }
-      // printf("opcode: %d\n", opcode);
-      // printf("operand1: %d\n", operand1);
-      // printf("operand2: %d\n", operand2);
-      // printf("op result: %d\n", g_functional_units[i].operation_result);
+
     }
   }
 }
@@ -240,7 +226,6 @@ void update_scoreboard(){
       g_memory,
       g_instruction_count);
   
-  printf("Terminou update_finished_instructions\n");
       
   update_write_result(&g_bus,
       g_memory,
@@ -250,7 +235,6 @@ void update_scoreboard(){
       g_current_cycle,
       g_instruction_count);
   
-  printf("Terminou update_write_result\n");
       
   update_execute(&g_bus,
       g_functional_units,
@@ -258,7 +242,6 @@ void update_scoreboard(){
       g_current_cycle,
       g_instruction_count);
   
-  printf("Terminou update_execute\n");
       
   update_read_operands(&g_bus,
       g_functional_units,
@@ -266,7 +249,6 @@ void update_scoreboard(){
       g_current_cycle,
       g_instruction_count);
   
-  printf("Terminou update_read_operands\n");
       
   update_issue(&g_bus,
       g_functional_units,
@@ -277,7 +259,6 @@ void update_scoreboard(){
       total_ufs,
       g_instruction_count);
   
-  printf("Terminou update_issue\n");
       
   update_fetch(&g_bus,
       g_memory,
@@ -288,7 +269,6 @@ void update_scoreboard(){
       total_ufs,
       g_instruction_count);
   
-  printf("Terminou update_fetch\n");
 }
 
 /************************************/
@@ -297,35 +277,19 @@ void update_scoreboard(){
 
 void run_one_cycle(FILE *output){
   int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-  printf("Começou run one cycle\n");
 
   g_current_cycle++;
   
 
   write_result();
-  printf("Terminou write_result\n");
   execute();
-  printf("Terminou execute\n");
   read_operands();
-  printf("Terminou read_operands\n");
   issue_instruction();
-  printf("Terminou issue_instruction\n");
   fetch_next_instruction();
-  printf("Terminou fetch_next_instruction\n");
 
   update_scoreboard();
-  printf("Terminou update_scoreboard\n");
   dispatch_pulses(&g_bus);
 
-  for (int i = 0; i < NUM_REGISTERS; i++){
-    printf("r%d:%d  ", i, g_registers[i]);
-  }
-  printf("\n");
-
-  for (int i = 0; i < total_ufs; i++){
-    printf("Printando uf de index %d\n", i);
-    print_uf(g_functional_units[i]);
-  }
 
   // Imprimindo tabelas, não fiel à simulação
   Byte inst_opcodes[g_instruction_count];
@@ -333,10 +297,9 @@ void run_one_cycle(FILE *output){
     int inst = get_instruction_from_memory(i, g_memory);
     int opcode = get_opcode_from_binary(inst);
     inst_opcodes[i] = opcode;
-    printf("inst %d: %d\n", i, inst_opcodes[i]);
   }
-  print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs);
-  print_registers(g_registers);
+  print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs, output);
+  print_registers(g_registers, output);
   // ****************************************
 
 }

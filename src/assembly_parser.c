@@ -349,47 +349,6 @@ static int read_instruction(FILE *arq, FILE *output){
 
 
 
-
-static void print_str_int(char *string, FILE *output){
-  fprintf(output, "String:");
-  for(int i=0; i<strlen(string)-1; i++){
-    fprintf(output, "%d ", string[i]);
-  }
-  fprintf(output, "%d", string[strlen(string)-1]);
-  fprintf(output, ":Fim da string\n");
-}
-static void print_str_char(char *string, FILE *output){
-  fprintf(output, "String:");
-  for(int i=0; i<strlen(string)-1; i++){
-    fprintf(output, "%c", string[i]);
-  }
-  fprintf(output, "%c", string[strlen(string)-1]);
-  fprintf(output, ":Fim da string\n");
-}
-
-static void fpeek(FILE* arq, char* peekBuffer, int peekSize){
-  char character;
-  int i=0;
-  fseek(arq, -1, SEEK_CUR);
-  for(i=0; i < peekSize; i++){
-    if((character = fgetc(arq)) != EOF){
-      peekBuffer[i] = character;
-    }
-    else{
-      break;
-    }
-  }
-  peekBuffer[i] = '\0';
-  fseek(arq, -i+1, SEEK_CUR);
-}
-
-static void decapitalize(char *str){
-  int len = strlen(str);
-  for(int i = 0; i < len; i++){
-    if('A' <= str[i] && str[i] <= 'Z') str[i] -= 'A';
-  }
-}
-
 static int get_opcode(char* str){
 
   // puts(str);
@@ -440,9 +399,7 @@ static bool read_data_section(FILE *arq, Byte *memory, int memory_size){
       memory[count_numbers_read + 3] = (num >> 0) & 0b11111111;
 
       count_numbers_read += 4;
-      // printf("num: %d\n", num);
-      // printf("Data index %d: %d\n", i, get_instruction_from_memory(i, memory));
-      // printf("%d\n", memory[i] | memory[i + 1] << 8 | memory[i + 2] << 16 | memory[i + 3] << 24);
+
     }
   }
   return true;
@@ -453,56 +410,6 @@ static bool read_data_section(FILE *arq, Byte *memory, int memory_size){
 
 
 
-// verifica se a partir de SEEK_CUR, existe uma instrução
-// por exemplo, "add rs,rs,rt" e retorna apenas seu opcode.
-// se não existe nenhum, retorna -1
-static int read_instruction_name(FILE *input, FILE *output){
-  // printf("ftell: %li", ftell(input));
-  char c;
-  int cnt=0;
-
-  while((c = fgetc(input)) != EOF){
-    if(c == ' '){
-      break;
-    }
-    buffer[cnt++] = c;
-  }
-  buffer[cnt] = '\0';
-
-  int opcode = get_opcode(buffer);
-
-  skip(input);
-  return opcode;
-}
-
-static int read_register_id(FILE *arq){
-  char reg_start = fgetc(arq);
-
-  if(reg_start != 'r'){
-    die(arq, "Unexpected symbol");
-
-  }
-
-  char c;
-  int cnt=0;
-
-  while((c = fgetc(arq)) != EOF){
-    if(c == ' ' || c == ','){
-      if(c == ',')
-        fseek(arq, -1, SEEK_CUR);
-      break;
-    }
-    buffer[cnt++] = c;
-  }
-  buffer[cnt] = '\0';
-
-  if(!validate_number(buffer)){
-    die(arq, "invalid register id");
-  }
-  return atoi(buffer);
-
-}
-
 
 
 
@@ -511,7 +418,6 @@ static int read_register_id(FILE *arq){
 
 
 static bool read_uf(FILE *input, FILE *output, CPU_Configurations *cpu_configs){
-  fprintf(output, "Lendo Uf\n");
 
   char *expected_tokens[] = CONFIG_SYMBOLS;
   int num_tokens = sizeof(expected_tokens) / sizeof(expected_tokens[0]);

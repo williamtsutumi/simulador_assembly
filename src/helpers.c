@@ -472,11 +472,7 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
       FunctionalUnitState uf_state = (*score_board).ufs_states[uf_index];
       if (uf_state.type == type && !uf_state.busy){
         idle_uf_index = uf_index;
-        // printf("type: %d\n", type);
-        // printf("uf type: %d\n", uf_state.type);
-        // yellow();
-        // printf("Dando issue na uf de idx: %d\n", idle_uf_index);
-        // reset();
+
         break;
       }
     }
@@ -520,13 +516,6 @@ void update_issue(Bus *bus, FunctionalUnit *functional_units, ScoreBoard *score_
     (*score_board).ufs_states[idle_uf_index].qk = uf_idx;
   }
   
-  // red();
-  // printf("Tá no update issue\n");
-  // printf("op1: %d\n", op1);
-  // printf("op2: %d\n", op2);
-  // printf("qj: %d\n", (*score_board).ufs_states[idle_uf_index].qj);
-  // printf("qk: %d\n", (*score_board).ufs_states[idle_uf_index].qk);
-  // reset();
 
   int destination = get_destination_register_from_instruction(ir.binary);
   (*score_board).result_register_state[destination] = &functional_units[idle_uf_index];
@@ -545,22 +534,17 @@ void update_fetch(Bus *bus, Byte *memory, ScoreBoard *score_board, InstructionRe
       return;
 
     (*score_board).can_fetch = false;
-    // printf("inst index: %d\n", instruction_index);
-    // if(instruction_count <= instruction_index){
-    //   assert(false && "acabou as intruções pra serem fetchadas");
-    // }
+
 
     (*score_board).instructions_states[instruction_index].current_state = FETCH;
     (*score_board).instructions_states[instruction_index].fetch = curr_cycle;
 
-    // printf("instruction index no update fetch: %d\n", instruction_index);
-    // printf("ir binary no update fetch: %d\n", (*bus_buffer).ir_binary.data);
   }
 }
 
 
 
-void print_instruction_status(InstructionState** instruction_states, Byte inst_opcodes[], int num_instructions){
+void print_instruction_status(InstructionState** instruction_states, Byte inst_opcodes[], int num_instructions, FILE* output){
   Table t;
 
   table_init(&t, INSTRUCTION_STATUS);
@@ -577,12 +561,12 @@ void print_instruction_status(InstructionState** instruction_states, Byte inst_o
     );
   }
 
-  table_print(&t);
+  table_print(&t, output);
 
   free_table(&t);
 }
 
-void print_functional_unit_status(FunctionalUnitState* functional_unit_states, int num_ufs){
+void print_functional_unit_status(FunctionalUnitState* functional_unit_states, int num_ufs, FILE* output){
 
   Table t;
 
@@ -614,40 +598,40 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states, i
     );
   }
 
-    table_print(&t);
+    table_print(&t, output);
 
     free_table(&t);
 
 }
 
-void print_result_register_status(FunctionalUnit* result_register_state[]){
+void print_result_register_status(FunctionalUnit* result_register_state[], FILE* output){
 
   Table t;
   table_init(&t, RESULT_REGISTER_STATUS);
 
   add_row(&t, result_register_state);
 
-  table_print(&t);
+  table_print(&t, output);
 
   free_table(&t);
 
 }
 
-void print_registers(int* registers){
+void print_registers(int* registers, FILE* output){
   Table t;
   table_init(&t, REGISTER_RESULT);
 
   add_row(&t, registers);
 
-  table_print(&t);
+  table_print(&t, output);
 
   free_table(&t);
 }
 
-void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs){
+void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs, FILE* output){
   printf("*******************************************************************************************\n");
   printf("Ciclo atual: %d\n", curr_cycle);
-  print_instruction_status(&scoreboarding->instructions_states, inst_opcodes, num_instructions);
-  print_functional_unit_status(scoreboarding->ufs_states, num_ufs);
-  print_result_register_status(scoreboarding->result_register_state);
+  print_instruction_status(&scoreboarding->instructions_states, inst_opcodes, num_instructions, output);
+  print_functional_unit_status(scoreboarding->ufs_states, num_ufs, output);
+  print_result_register_status(scoreboarding->result_register_state, output);
 }

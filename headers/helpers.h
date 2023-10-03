@@ -118,8 +118,8 @@ void print_functional_unit_status(FunctionalUnitState* functional_unit_states,
 
 void print_result_register_status(FunctionalUnit* result_register_state[]);
 
-void print_registers(int* registers);
+void print_registers(int* registers, FILE* output);
 
-void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs);
+void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs, FILE* output);
 
 #endif
