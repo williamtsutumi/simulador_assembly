@@ -266,7 +266,7 @@ void add_row(Table* table, ...){
     else if(table->type == REGISTER_RESULT){
         int* register_info = va_arg(args, int*);
         for(int i = 0; i < NUM_REGISTERS; i++){
-            format_num(result, register_info[i]);
+            sprintf(result, "%d", register_info[i]);
             table->data[table->num_rows-1][i] = (char*)malloc(sizeof(char)*strlen(result)+1);
             strcpy(table->data[table->num_rows-1][i], result);
         }
