@@ -150,6 +150,20 @@ void execute(){
 
       if (opcode == LW_OPCODE){
         g_functional_units[i].operation_result = get_data_from_memory(operand1 + operand2, g_memory);
+        /*
+        add_pulse(&g_bus, 
+        new_data_pulse(&g_memory[operand1+operand2], &(g_functional_units[i].operation_result)+sizeof(Byte)*0, sizeof(Byte)));
+
+        add_pulse(&g_bus, 
+        new_data_pulse(&g_memory[operand1+operand2+1], &(g_functional_units[i].operation_result)+sizeof(Byte)*1, sizeof(Byte)));
+
+        add_pulse(&g_bus, 
+        new_data_pulse(&g_memory[operand1+operand2+2], &(g_functional_units[i].operation_result)+sizeof(Byte)*2, sizeof(Byte)));
+
+        add_pulse(&g_bus, 
+        new_data_pulse(&g_memory[operand1+operand2+3], &(g_functional_units[i].operation_result)+sizeof(Byte)*3, sizeof(Byte)));
+        */
+        
       }
       else if (is_branch(opcode)){
         if (result){ // Se o desvio é tomado
@@ -306,21 +320,25 @@ void run_one_cycle(FILE *output){
 
 bool program_has_exited(){
   int output = true;
-  for (int i = 0; i < g_instruction_count - 1; i++){
-    if (g_score_board.instructions_states[i].current_state != FINISHED){
+
+  int count_active_instructions=0;
+  for (int i = 0; i < g_instruction_count; i++){ 
+    printf("estado da instrução %d = %d\n", i, g_score_board.instructions_states[i].current_state);
+    if (g_score_board.instructions_states[i].current_state != FINISHED && g_score_board.instructions_states[i].current_state != AWAIT){
+      count_active_instructions++;
+      //break;
+    }
+  }
+  int g_total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_integer_ufs + g_cpu_configs.size_mul_ufs;
+  for(int i = 0; i < g_total_ufs; i++){
+    if(get_opcode_from_binary(g_instruction_register.binary) != EXIT_OPCODE){
       output = false;
-      break;
     }
   }
-  // Se a exit foi fetchada
-  for (int i = 0; i < g_instruction_count; i++){
-    int binary = get_instruction_from_memory(i, g_memory);
-    if (get_opcode_from_binary(binary) == EXIT_OPCODE){
-      if (g_score_board.instructions_states[i].current_state != FETCH){
-        output = false;
-      }
-    }
+  if(count_active_instructions != 1){
+    output = false;
   }
+
 
   return output;
 }

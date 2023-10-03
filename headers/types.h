@@ -125,6 +125,7 @@ typedef enum FunctionalUnitStatus {
 
 // Indica qual estágio do pipeline a instrução está
 typedef enum InstructionStateType {
+    AWAIT,
     FETCH,
     ISSUE,
     STAY_ISSUE,

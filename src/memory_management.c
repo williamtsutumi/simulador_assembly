@@ -37,7 +37,7 @@ static void malloc_scoreboard(ScoreBoard *score_board, CPU_Configurations cpu_co
   (*score_board).instructions_states = (InstructionState*)malloc(num_instructions * sizeof(InstructionState));
 
   for(int i = 0; i < num_instructions; i++){
-      (*score_board).instructions_states[i].current_state = 
+      (*score_board).instructions_states[i].current_state = AWAIT;
       (*score_board).instructions_states[i].fetch = 
       (*score_board).instructions_states[i].issue = 
       (*score_board).instructions_states[i].read_operands = 
