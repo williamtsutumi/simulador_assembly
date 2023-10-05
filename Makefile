@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Iheaders -O3
-DEBUG_CFLAGS = -O2 -Wall -fsanitize=address -fsanitize=undefined -fno-sanitize-recover -fstack-protector -D_FORTIFY_SOURCE=2 -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -Wunused-variable -Wcast-align -Wlogical-op -Wshadow -Wno-unused-result -Wformat=2 
+DEBUG_CFLAGS = -O2 -Wall -fsanitize=address -fsanitize=undefined -fno-sanitize-recover -fstack-protector -D_FORTIFY_SOURCE=2 -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -Wcast-align -Wlogical-op -Wshadow -Wformat=2 -Wunused-parameter
 SRC_DIR = src
 OBJ_DIR = obj
 

@@ -10,6 +10,8 @@
 #include "headers/helpers.h"
 #include "headers/memory_management.h"
 #include "headers/bus.h"
+#include "headers/scoreboard.h"
+#include "headers/table.h"
 
 CPU_Configurations g_cpu_configs;
 FunctionalUnit *g_functional_units;
@@ -232,65 +234,12 @@ void write_result(){
   }
 }
 
-// Controle do scoreboard
-void update_scoreboard(){
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
-
-  update_finished_instructions(&g_score_board,
-      g_memory,
-      g_instruction_count);
-  
-      
-  update_write_result(&g_bus,
-      g_memory,
-      &g_score_board,
-      g_functional_units,
-      g_cpu_configs,
-      g_current_cycle,
-      g_instruction_count);
-  
-      
-  update_execute(&g_bus,
-      g_functional_units,
-      &g_score_board,
-      g_current_cycle,
-      g_instruction_count);
-  
-      
-  update_read_operands(&g_bus,
-      g_functional_units,
-      &g_score_board,
-      g_current_cycle,
-      g_instruction_count);
-  
-      
-  update_issue(&g_bus,
-      g_functional_units,
-      &g_score_board,
-      g_instruction_register,
-      g_cpu_configs,
-      g_current_cycle,
-      total_ufs,
-      g_instruction_count);
-  
-      
-  update_fetch(&g_bus,
-      g_memory,
-      &g_score_board,
-      &g_instruction_register,
-      g_program_counter,
-      g_current_cycle,
-      total_ufs,
-      g_instruction_count);
-  
-}
 
 /************************************/
 
 
 
 void run_one_cycle(FILE *output){
-  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
 
   g_current_cycle++;
   
@@ -301,7 +250,17 @@ void run_one_cycle(FILE *output){
   issue_instruction();
   fetch_next_instruction();
 
-  update_scoreboard();
+  
+  update_scoreboard(&g_score_board,
+                    &g_bus,
+                    g_memory, 
+                    g_functional_units, 
+                    g_cpu_configs, 
+                    g_current_cycle, 
+                    g_instruction_count, 
+                    g_instruction_register, 
+                    g_program_counter);
+
   dispatch_pulses(&g_bus);
 
 
@@ -312,8 +271,9 @@ void run_one_cycle(FILE *output){
     int opcode = get_opcode_from_binary(inst);
     inst_opcodes[i] = opcode;
   }
-  print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs, output);
-  print_registers(g_registers, output);
+  int total_ufs = g_cpu_configs.size_add_ufs + g_cpu_configs.size_mul_ufs + g_cpu_configs.size_integer_ufs;
+
+  print_table(&g_score_board, g_current_cycle, inst_opcodes, g_instruction_count, total_ufs, g_registers, output);
   // ****************************************
 
 }

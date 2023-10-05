@@ -328,8 +328,6 @@ static void print_title(Table *table, FILE* output){
     fprintf(output, "%s", table->title);
     reset_background();
     fprintf(output, "\n");
-    
-    
 }
 
 void table_print(Table* table, FILE* output){
@@ -364,4 +362,102 @@ void free_table(Table* table){
     free(table->headers);
     free(table->title);
 }
+
+
+
+static void print_instruction_status(InstructionState** instruction_states, Byte inst_opcodes[], int num_instructions, FILE* output){
+  Table t;
+
+  table_init(&t, INSTRUCTION_STATUS);
+
+  for(int i = 0; i < num_instructions; i++){
+    add_row(
+      &t,
+      inst_opcodes[i],
+      (*(instruction_states))[i].fetch,
+      (*(instruction_states))[i].issue,
+      (*(instruction_states))[i].read_operands,
+      (*(instruction_states))[i].start_execute, (*(instruction_states))[i].finish_execute,
+      (*(instruction_states))[i].write_result
+    );
+  }
+
+  table_print(&t, output);
+
+  free_table(&t);
+}
+
+static void print_functional_unit_status(FunctionalUnitState* functional_unit_states, int num_ufs, FILE* output){
+
+  Table t;
+
+  table_init(&t, FUNCTIONAL_UNIT_STATUS);
+
+  
+
+  for(int i = 0; i < num_ufs; i++){
+    int qj = functional_unit_states[i].qj;
+    int qj_type = qj != -1 ? functional_unit_states[qj].type : -1;
+    int qj_type_index = qj != -1 ? functional_unit_states[qj].type_index : -1;
+
+    int qk = functional_unit_states[i].qk;
+    int qk_type = qk != -1 ? functional_unit_states[qk].type : -1;
+    int qk_type_index = qk != -1 ? functional_unit_states[qk].type_index : -1;
+
+    add_row(
+      &t,
+      functional_unit_states[i].type, functional_unit_states[i].type_index,
+      functional_unit_states[i].busy,
+      functional_unit_states[i].op,
+      functional_unit_states[i].fi,
+      functional_unit_states[i].fj,
+      functional_unit_states[i].fk,
+      qj_type, qj_type_index,
+      qk_type, qk_type_index,
+      functional_unit_states[i].rj,
+      functional_unit_states[i].rk
+    );
+  }
+
+    table_print(&t, output);
+
+    free_table(&t);
+
+}
+
+static void print_result_register_status(FunctionalUnit* result_register_state[], FILE* output){
+
+  Table t;
+  table_init(&t, RESULT_REGISTER_STATUS);
+
+  add_row(&t, result_register_state);
+
+  table_print(&t, output);
+
+  free_table(&t);
+
+}
+
+static void print_registers(int* registers, FILE* output){
+  Table t;
+  table_init(&t, REGISTER_RESULT);
+
+  add_row(&t, registers);
+
+  table_print(&t, output);
+
+  free_table(&t);
+}
+
+void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs, int* registers, FILE* output){
+  printf("*******************************************************************************************\n");
+  printf("Ciclo atual: %d\n", curr_cycle);
+  print_instruction_status(&scoreboarding->instructions_states, inst_opcodes, num_instructions, output);
+  print_functional_unit_status(scoreboarding->ufs_states, num_ufs, output);
+  print_result_register_status(scoreboarding->result_register_state, output);
+  print_registers(registers, output);
+}
+
+
+
 

@@ -1,4 +1,5 @@
 #include "../headers/types.h"
+#include "../headers/scoreboard.h"
 
 void free_memory(FILE *input, FILE *output, ScoreBoard *score_board, FunctionalUnit **functional_units){
   free(functional_units);

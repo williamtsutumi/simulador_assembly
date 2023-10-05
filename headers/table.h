@@ -7,6 +7,7 @@
 #define NUM_COLS_REGISTER_RESULT 32
 
 #include "stdio.h"
+#include "scoreboard.h"
 
 typedef enum TABLE_CELL_TYPE{
     T_UF_NAME,
@@ -39,5 +40,8 @@ void table_init(Table *table, TABLE_TYPE type);
 void table_print(Table* table, FILE* output);
 void add_row(Table* table, ...);
 void free_table(Table* table);
+
+void print_table(ScoreBoard* scoreboarding, int curr_cycle, Byte inst_opcodes[], int num_instructions, int num_ufs, int registers[], FILE* output);
+
 
 #endif
